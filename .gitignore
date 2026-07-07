@@ -1,0 +1,12 @@
+.env
+.cache/
+__pycache__/
+*.pyc
+
+sqlite_smoke.db
+sqlite_smoke.db-journal
+chroma_smoke/
+local_chroma_db/
+
+.agents/
+.codex/
