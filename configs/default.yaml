@@ -1,0 +1,38 @@
+project:
+  name: urban-evidence-engine
+  mode: mock
+  random_seed: 42
+
+paths:
+  metadata_csv: ../examples/demo_dataset/scenes.csv
+  runs_dir: ../runs
+  strict_files: true
+
+context:
+  times: [morning, noon, evening]
+  crowd_levels: [low, medium, high]
+  noise_db: [55, 70]
+
+expert:
+  auto_approve: true
+  require_reason: true
+
+vr:
+  ethics_approved: true
+  exposure_seconds: 60
+  max_scenes_per_participant: 6
+
+scoring:
+  dimensions:
+    - biophilia
+    - comfort
+    - safety
+    - restoration
+    - pleasure
+    - stimulation
+    - stay_intention
+
+validation:
+  alpha: 0.05
+  minimum_participants: 8
+  allow_unvalidated_optimization: true

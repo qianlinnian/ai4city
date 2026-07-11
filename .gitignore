@@ -10,3 +10,11 @@ local_chroma_db/
 
 .agents/
 .codex/
+
+runs/
+data/
+.pytest_cache/
+.coverage
+build/
+dist/
+*.egg-info/

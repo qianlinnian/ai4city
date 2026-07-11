@@ -1,0 +1,3 @@
+scene_id,image_path,video_path,space_type,captured_at,gps,noise_db,crowd_level,can_enter,can_sit
+demo_alley,panorama_demo.ppm,,transport_edge,2026-07-15T09:00:00+08:00,"31.2304,121.4737",70,high,true,false
+demo_pocket_park,panorama_demo.ppm,,community_green,2026-07-15T14:00:00+08:00,"31.2310,121.4742",55,medium,true,true
