@@ -1,0 +1,148 @@
+{
+  "session_id": "cfcab9b6b8d7422cbbb300fd832b409f",
+  "created_at": "2026-07-16T13:28:04.767507",
+  "image_path": "F:\\TongJi-Course-Doc\\同济\\26暑期夏令营\\JPG素材\\IMG_20260707_115926_00_051(1).jpg",
+  "experience_targets": {
+    "comfort": 4.0,
+    "restoration": 5.0,
+    "safety": 3.0,
+    "pleasure": 4.0,
+    "stay": 4.0
+  },
+  "baseline_metrics": {
+    "green_view": 0.22215955555555555,
+    "blue_view": 0.14871233333333334,
+    "sky_view": 0.14115155555555556,
+    "built_ratio": 0.5447281111111111,
+    "edge_density": 0.07723111111111111,
+    "color_richness": 10.528224482257766,
+    "skyline_variance": 0.002749909699647134
+  },
+  "design_intent": "优先强化舒适度、恢复感、愉悦感、可停留意愿，营造可感知的正向体验。需要高围合感的自然庇护空间，视觉焦点引导至远处绿色层次。降低硬质界面压迫，增加遮阴与柔和材质过渡。强化停留锚点与边缘可坐性，鼓励短时休憩。提升色彩层次与微景观趣味，避免视觉单调。",
+  "intent_references": [
+    "seed-demo-001",
+    "00c1d543-b5e1-480f-a410-3e20b8a1a9ec"
+  ],
+  "morph_adjustment": {
+    "target_metrics": {
+      "green_view": 0.41431344222222216,
+      "blue_view": 0.13568842833333333,
+      "sky_view": 0.12822700222222222,
+      "built_ratio": 0.4962561294444444,
+      "edge_density": 0.05167104444444444,
+      "color_richness": 10.634999999999998,
+      "skyline_variance": 0.014038677308215943
+    },
+    "delta_from_baseline": {
+      "green_view": 0.1922,
+      "blue_view": -0.013,
+      "sky_view": -0.0129,
+      "built_ratio": -0.0485,
+      "edge_density": -0.0256,
+      "color_richness": 0.1068,
+      "skyline_variance": 0.0113
+    },
+    "layout_actions": [
+      {
+        "区域": "前景与两侧界面",
+        "动作": "增加垂直绿化与灌木层",
+        "植物": "爬藤月季+常春藤 / 耐阴灌木",
+        "材质": "木质格栅",
+        "关联指标": "green_view",
+        "目标增量": 0.192
+      },
+      {
+        "区域": "硬质墙面与地面",
+        "动作": "弱化人造物视觉占比，覆绿或软化铺装",
+        "植物": "墙面攀援植物",
+        "材质": "透水铺装 / 木质坐凳",
+        "关联指标": "built_ratio"
+      },
+      {
+        "区域": "停留节点",
+        "动作": "增加可坐边界与停留锚点",
+        "植物": "树荫下休息点周边绿化",
+        "材质": "木质坐凳 / 树池座椅",
+        "关联指标": "stay"
+      }
+    ],
+    "rationale": "依据体验目标（侧重舒适度、恢复感、愉悦感、可停留意愿）与环境心理学映射规则，建议形态目标：绿视率→0.41, 天空可视率→0.13, 人造物占比→0.50。"
+  },
+  "confirmed_target_metrics": {
+    "green_view": 0.41431344222222216,
+    "blue_view": 0.13568842833333333,
+    "sky_view": 0.12822700222222222,
+    "built_ratio": 0.4962561294444444,
+    "edge_density": 0.05167104444444444,
+    "color_richness": 10.634999999999998,
+    "skyline_variance": 0.014038677308215943
+  },
+  "confirmed_layout_actions": [
+    {
+      "区域": "前景与两侧界面",
+      "动作": "增加垂直绿化与灌木层",
+      "植物": "爬藤月季+常春藤 / 耐阴灌木",
+      "材质": "木质格栅",
+      "关联指标": "green_view",
+      "目标增量": 0.192
+    },
+    {
+      "区域": "硬质墙面与地面",
+      "动作": "弱化人造物视觉占比，覆绿或软化铺装",
+      "植物": "墙面攀援植物",
+      "材质": "透水铺装 / 木质坐凳",
+      "关联指标": "built_ratio"
+    },
+    {
+      "区域": "停留节点",
+      "动作": "增加可坐边界与停留锚点",
+      "植物": "树荫下休息点周边绿化",
+      "材质": "木质坐凳 / 树池座椅",
+      "关联指标": "stay"
+    }
+  ],
+  "prompt_draft": "Edit this equirectangular 360-degree urban micro-space panorama while preserving overall geometry and camera viewpoint. In the 前景与两侧界面 area, 增加垂直绿化与灌木层, using 爬藤月季+常春藤 / 耐阴灌木, mounted or finished with 木质格栅. In the 硬质墙面与地面 area, 弱化人造物视觉占比，覆绿或软化铺装, using 墙面攀援植物, mounted or finished with 透水铺装 / 木质坐凳. In the 停留节点 area, 增加可坐边界与停留锚点, using 树荫下休息点周边绿化, mounted or finished with 木质坐凳 / 树池座椅. Increase green view ratio from about 22% toward 41% with layered foreground shrubs and mid-ground trees, avoiding unsafe blind spots. Keep sky openness near 13%, with soft dappled shadows and a calm restorative atmosphere. Maintain photorealistic lighting consistency, clean edges, and physically plausible materials. Do not invent new buildings or change road topology drastically.",
+  "final_prompt": "Edit this equirectangular 360-degree urban micro-space panorama while preserving overall geometry and camera viewpoint. In the 前景与两侧界面 area, 增加垂直绿化与灌木层, using 爬藤月季+常春藤 / 耐阴灌木, mounted or finished with 木质格栅. In the 硬质墙面与地面 area, 弱化人造物视觉占比，覆绿或软化铺装, using 墙面攀援植物, mounted or finished with 透水铺装 / 木质坐凳. In the 停留节点 area, 增加可坐边界与停留锚点, using 树荫下休息点周边绿化, mounted or finished with 木质坐凳 / 树池座椅. Increase green view ratio from about 22% toward 41% with layered foreground shrubs and mid-ground trees, avoiding unsafe blind spots. Keep sky openness near 13%, with soft dappled shadows and a calm restorative atmosphere. Maintain photorealistic lighting consistency, clean edges, and physically plausible materials. Do not invent new buildings or change road topology drastically.",
+  "generation": {
+    "output_image_path": "F:\\TongJi-Course-Doc\\同济\\26暑期夏令营\\code\\outputs\\images\\pano_edit_20260716_132804_445276.jpg",
+    "prompt_used": "Edit this equirectangular 360-degree urban micro-space panorama while preserving overall geometry and camera viewpoint. In the 前景与两侧界面 area, 增加垂直绿化与灌木层, using 爬藤月季+常春藤 / 耐阴灌木, mounted or finished with 木质格栅. In the 硬质墙面与地面 area, 弱化人造物视觉占比，覆绿或软化铺装, using 墙面攀援植物, mounted or finished with 透水铺装 / 木质坐凳. In the 停留节点 area, 增加可坐边界与停留锚点, using 树荫下休息点周边绿化, mounted or finished with 木质坐凳 / 树池座椅. Increase green view ratio from about 22% toward 41% with layered foreground shrubs and mid-ground trees, avoiding unsafe blind spots. Keep sky openness near 13%, with soft dappled shadows and a calm restorative atmosphere. Maintain photorealistic lighting consistency, clean edges, and physically plausible materials. Do not invent new buildings or change road topology drastically.",
+    "mock": true,
+    "raw": {
+      "mode": "mock",
+      "note": "未配置 WORLDLABS_API_KEY 或 API 失败，已生成本地模拟图"
+    }
+  },
+  "quality_report": {
+    "measured_metrics": {
+      "green_view": 0.3848046666666667,
+      "blue_view": 0.11016077777777777,
+      "sky_view": 0.07836955555555555,
+      "built_ratio": 0.4908588888888889,
+      "edge_density": 0.06341822222222222,
+      "color_richness": 10.857057977634787,
+      "skyline_variance": 0.014919618793587285
+    },
+    "target_metrics": {
+      "green_view": 0.41431344222222216,
+      "blue_view": 0.13568842833333333,
+      "sky_view": 0.12822700222222222,
+      "built_ratio": 0.4962561294444444,
+      "edge_density": 0.05167104444444444,
+      "color_richness": 10.634999999999998,
+      "skyline_variance": 0.014038677308215943
+    },
+    "deviations": {
+      "green_view": -0.0295,
+      "blue_view": -0.0255,
+      "sky_view": -0.0499,
+      "built_ratio": -0.0054,
+      "edge_density": 0.0117,
+      "color_richness": 0.2221,
+      "skyline_variance": 0.0009
+    },
+    "passed": true,
+    "details": "全部指标在允许偏差内。"
+  },
+  "memory_id": "bfe25198-c081-4706-8fce-96e7c79ffb40",
+  "stage": "done"
+}
