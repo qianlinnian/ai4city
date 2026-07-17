@@ -201,7 +201,12 @@ class PipelineOrchestrator:
         if not prompt:
             raise ValueError("缺少修改方案，请先 confirm_morph / confirm_plan")
 
-        gen = self.worldlabs.run(state["image_path"], prompt)
+        # 优先用 session 的图片文件名（从 assets/ 取图）；否则用上传路径
+        image_name = state.get("image_name") or state.get("image_id")
+        if image_name:
+            gen = self.worldlabs.run(image_name=image_name, prompt=prompt)
+        else:
+            gen = self.worldlabs.run(image_path=state["image_path"], prompt=prompt)
         state["generation"] = gen.model_dump()
 
         report = self.quality.run(

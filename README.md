@@ -76,7 +76,7 @@ python run_demo.py path/to/pano.jpg
 | `translator_agent.py` | **翻译官**：接收体验滑块原值→目标值，结合映射规则与知识库，输出形态要素原值 + 目标值 |
 | `cartographer_agent.py` | **制图员**：接收确认后的形态目标，生成可被文生图模型理解的自然语言修改方案 |
 | `learning_agent.py` | **学习 Agent（占位）**：记录体验→形态翻译是否准确，预留多轮学习修正接口（默认不启用） |
-| `worldlabs_agent.py` | **文生图工具封装**：调用 World Labs Pano Edit API，无 Key 时 MOCK 生成演示图 |
+| `worldlabs_agent.py` | **文生图工具**：按图片完整文件名从 `assets/` 取图，调 Marble API，结果写入 `TargetIMG/` |
 | `quality_checker_agent.py` | **质检员**：对修改后全景重新解析形态要素，与目标对比输出偏差报告 |
 | `memory_agent.py` | **记忆 Agent**：将全流程关键数据（体验、形态、方案、多人体验）写入本地知识库 |
 | `prompt_expert_agent.py` | `@deprecated` 已废弃，逻辑合并至 `cartographer_agent.py`，仅保留向后兼容 |

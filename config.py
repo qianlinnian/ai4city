@@ -21,8 +21,11 @@ UPLOAD_DIR = ROOT / "uploads"
 OUTPUT_DIR = ROOT / "outputs"
 IMAGE_OUT_DIR = OUTPUT_DIR / "images"
 SESSION_DIR = OUTPUT_DIR / "sessions"
+# 文生图工具：按图片完整文件名从 assets/ 取原图，结果写入 TargetIMG/
+ASSETS_DIR = ROOT / "assets"
+TARGET_IMG_DIR = ROOT / "TargetIMG"
 
-for _p in (KB_DIR, UPLOAD_DIR, IMAGE_OUT_DIR, SESSION_DIR):
+for _p in (KB_DIR, UPLOAD_DIR, IMAGE_OUT_DIR, SESSION_DIR, ASSETS_DIR, TARGET_IMG_DIR):
     _p.mkdir(parents=True, exist_ok=True)
 
 # ---------- API / 运行模式 ----------
@@ -32,6 +35,8 @@ LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
 
 WORLDLABS_API_KEY = os.getenv("WORLDLABS_API_KEY", "").strip()
 WORLDLABS_BASE_URL = os.getenv("WORLDLABS_BASE_URL", "https://api.worldlabs.ai").rstrip("/")
+# Marble 模型：marble-1.1（默认）/ marble-1.1-plus（更大户外场景，耗更多 credits）
+WORLDLABS_MODEL = os.getenv("WORLDLABS_MODEL", "marble-1.1").strip()
 
 RUN_MODE = os.getenv("RUN_MODE", "auto").lower()  # auto | mock | live
 
