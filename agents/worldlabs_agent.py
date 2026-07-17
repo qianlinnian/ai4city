@@ -58,8 +58,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import cv2
-import numpy as np
 import requests
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -574,6 +572,8 @@ class WorldLabsAgent:
     # ------------------------------------------------------------------ #
     @staticmethod
     def _imread_unicode(image_path: Path):
+        import cv2
+        import numpy as np
         from PIL import Image
 
         try:
@@ -591,6 +591,9 @@ class WorldLabsAgent:
         out_path: Path,
         image_id: str,
     ) -> GenerationResult:
+        import cv2
+        import numpy as np
+
         img = self._imread_unicode(image_path)
         if img is None:
             shutil.copy(image_path, out_path)
