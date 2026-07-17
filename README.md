@@ -4,8 +4,8 @@
 
 ## v2 流程变更
 
-- **翻译官**：体验滑块原值→目标值 → 形态要素原值+目标值（不再输出设计意图文本）
-- **制图员**：形态要素目标 → 自然语言修改方案（承接原提示词专家职责）
+- **翻译官**：七项体验原值→目标值 + 原始全景 → 七项形态要素原值+目标值（规则/RAG/LangChain 多模态 LLM）
+- **制图员**：原始全景 + 确认后的形态目标 + 专家建议 → 结构化空间布局方案 + World Labs 修改文本
 - **提示词专家**：已废弃，合并至制图员
 - **学习 Agent**：占位接口，记录体验→形态翻译准确度（默认不启用修正）
 - **多人体验**：支持修改前/修改后多人体验指标 JSON 输入
@@ -18,7 +18,7 @@ code/
   morph_metrics_extractor.py   # 工具：SegFormer 形态要素解析
   agents/
     translator_agent.py        # 翻译官：体验变化 → 形态目标
-    cartographer_agent.py      # 制图员：形态目标 → 自然语言方案
+    cartographer_agent.py      # 制图员：形态目标 → 结构化空间布局方案与修改文本
     learning_agent.py          # 学习 Agent（占位）
     worldlabs_agent.py         # 工具：World Labs Pano Edit 文生图
     quality_checker_agent.py   # 质检员
@@ -50,8 +50,8 @@ python run_demo.py path/to/pano.jpg
 
 1. 上传全景 + 情景要素 +（可选）修改前多人体验
 2. `morph_metrics_extractor` 解析 7 维形态基线
-3. 前端调节五个体验滑块 → **翻译官** → 形态原值/目标值 → 人工干预①
-4. **制图员** 生成自然语言修改方案 → 人工干预②
+3. 前端调节七个体验滑块 → **翻译官** → 形态原值/目标值 → 人工干预①
+4. **制图员** 生成结构化空间布局方案与自然语言修改文本 → 人工干预②
 5. **World Labs** 文生图 → 质检
 6. 填写修改后多人体验 → **记忆 Agent** + **学习 Agent** 入库
 
@@ -73,8 +73,8 @@ python run_demo.py path/to/pano.jpg
 
 | 文件 | 职责 |
 |------|------|
-| `translator_agent.py` | **翻译官**：接收体验滑块原值→目标值，结合映射规则与知识库，输出形态要素原值 + 目标值 |
-| `cartographer_agent.py` | **制图员**：接收确认后的形态目标，生成可被文生图模型理解的自然语言修改方案 |
+| `translator_agent.py` | **翻译官**：接收七项体验原值→目标值与原图，结合参数、RAG 和 LangChain 多模态 LLM，输出七项形态目标及依据 |
+| `cartographer_agent.py` | **制图员**：接收原图、确认后的形态目标和专家建议，输出对象级空间布局方案及可执行修改文本 |
 | `learning_agent.py` | **学习 Agent（占位）**：记录体验→形态翻译是否准确，预留多轮学习修正接口（默认不启用） |
 | `worldlabs_agent.py` | **文生图工具封装**：调用 World Labs Pano Edit API，无 Key 时 MOCK 生成演示图 |
 | `quality_checker_agent.py` | **质检员**：对修改后全景重新解析形态要素，与目标对比输出偏差报告 |
@@ -107,15 +107,16 @@ python run_demo.py path/to/pano.jpg
 
 | 文件 | 职责 |
 |------|------|
-| `llm_client.py` | OpenAI 兼容 LLM 客户端；无 API Key 时返回 None，各 Agent 走规则兜底 |
+| `llm_client.py` | LangChain 模型适配层：`ChatPromptTemplate | ChatOpenAI | StrOutputParser`；支持全景图输入，无 API Key 时返回 None，各 Agent 走规则/RAG兜底 |
 | `__init__.py` | utils 包标识 |
 
 ### knowledge_base/ — 本地知识库
 
 | 文件 | 职责 |
 |------|------|
-| `kb_store.py` | 知识库读写与 Few-shot 检索（体验旋钮余弦相似度匹配历史案例） |
-| `data/mapping_rules.json` | 体验感受→形态要素的默认映射规则（翻译官使用） |
+| `kb_store.py` | 知识库读写与 RAG 检索（按七项体验改善方向与情景相似度匹配案例） |
+| `data/mapping_rules.json` | 七项体验→七项形态的基础映射参数（启发式初值，待实验校准） |
+| `data/experience_morph_cases.json` | 由本地 p1/p2 数据整理的基础 RAG 示例（明确标记为非实测） |
 | `data/memories.json` | 历史记忆条目（各 Agent 决策时检索参考） |
 | `data/learning_feedback.json` | 学习 Agent 反馈记录（翻译准确度，默认 `enabled: false`） |
 | `__init__.py` | knowledge_base 包标识 |

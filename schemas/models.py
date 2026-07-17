@@ -4,19 +4,37 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from config import normalize_experience_values
 
 
 class ExperienceTargets(BaseModel):
-    """单人体验感受指标（1-5）"""
+    """单人七项 VR 体验感受指标（1-5）。"""
+
+    model_config = ConfigDict(extra="ignore")
 
     comfort: float = Field(3, ge=1, le=5, description="舒适度")
-    restoration: float = Field(3, ge=1, le=5, description="恢复感")
+    naturalness: float = Field(3, ge=1, le=5, description="自然感")
     safety: float = Field(3, ge=1, le=5, description="安全感")
-    pleasure: float = Field(3, ge=1, le=5, description="愉悦感")
-    stay: float = Field(3, ge=1, le=5, description="可停留意愿")
+    relaxation: float = Field(3, ge=1, le=5, description="放松感")
+    environmental_disturbance: float = Field(
+        3,
+        ge=1,
+        le=5,
+        description="环境干扰感，反向指标，分值越低越好",
+    )
+    stay_intention: float = Field(3, ge=1, le=5, description="可停留意愿")
+    overall_impression: float = Field(3, ge=1, le=5, description="总体感")
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_legacy_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            return normalize_experience_values(data)
+        return data
 
     def as_dict(self) -> dict[str, float]:
         return self.model_dump()
@@ -51,38 +69,62 @@ class MultiPersonExperience(BaseModel):
 
 
 class SceneContext(BaseModel):
-    """情景要素（与全景图配套）"""
+    """七项情景要素（与全景图配套）。"""
 
-    location_type: str = Field("", description="空间类型，如街巷、广场、口袋公园")
-    time_of_day: str = Field("", description="时段，如清晨、午后、傍晚")
-    weather: str = Field("", description="天气")
-    crowd_level: str = Field("", description="人流密度")
+    model_config = ConfigDict(extra="ignore")
+
+    observation_time: str = Field("", description="观测时间")
+    observation_weather: str = Field("", description="观测天气")
+    people_flow: str = Field("", description="人流量")
+    space_type: str = Field("", description="空间类型，如社区、蓝绿、商办")
+    sound_type: str = Field("", description="声音类型")
+    maintenance_status: str = Field("", description="管理维护状态")
+    traffic_flow: str = Field("", description="交通流量")
     description: str = Field("", description="补充描述")
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_legacy_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        normalized = dict(data)
+        aliases = {
+            "time_of_day": "observation_time",
+            "weather": "observation_weather",
+            "crowd_level": "people_flow",
+            "location_type": "space_type",
+        }
+        for old_key, new_key in aliases.items():
+            if new_key not in normalized and old_key in normalized:
+                normalized[new_key] = normalized[old_key]
+        return normalized
 
     def as_text(self) -> str:
         parts = []
-        if self.location_type:
-            parts.append(f"空间类型: {self.location_type}")
-        if self.time_of_day:
-            parts.append(f"时段: {self.time_of_day}")
-        if self.weather:
-            parts.append(f"天气: {self.weather}")
-        if self.crowd_level:
-            parts.append(f"人流: {self.crowd_level}")
+        fields = [
+            ("观测时间", self.observation_time),
+            ("观测天气", self.observation_weather),
+            ("人流量", self.people_flow),
+            ("空间类型", self.space_type),
+            ("声音类型", self.sound_type),
+            ("管理维护状态", self.maintenance_status),
+            ("交通流量", self.traffic_flow),
+        ]
+        parts.extend(f"{label}: {value}" for label, value in fields if value)
         if self.description:
             parts.append(f"描述: {self.description}")
         return "；".join(parts) if parts else ""
 
 
 class MorphMetrics(BaseModel):
-    """形态要素指标（比例类多为 0-1，色彩数量为有效色数）"""
+    """七项形态要素指标（比例类多为 0-1，色彩数量为有效色数）。"""
 
     green_view: float = 0.0
     blue_view: float = 0.0
     sky_view: float = 0.0
     built_ratio: float = 0.0
-    edge_density: float = 0.0
     color_richness: float = 1.0
+    edge_density: float = 0.0
     skyline_variance: float = 0.0
 
     def as_dict(self) -> dict[str, float]:
@@ -106,6 +148,15 @@ class MorphMetrics(BaseModel):
         return out
 
 
+class TranslationEvidence(BaseModel):
+    """Task 2 转换依据的结构化记录。"""
+
+    method: Literal["rule", "rag", "learning", "llm", "expert"]
+    summary: str
+    reference_id: str = ""
+    score: Optional[float] = None
+
+
 class MorphTranslationResult(BaseModel):
     """翻译官输出：体验旋钮变化 → 形态要素目标"""
 
@@ -116,17 +167,42 @@ class MorphTranslationResult(BaseModel):
     experience_targets: dict[str, float] = Field(default_factory=dict)
     experience_delta: dict[str, float] = Field(default_factory=dict)
     rationale: str = ""
+    conversion_basis: list[TranslationEvidence] = Field(default_factory=list)
     references_used: list[str] = Field(default_factory=list)
     learning_applied: bool = False
 
 
+class SpatialObjectAction(BaseModel):
+    """空间对象级修改动作。"""
+
+    action: Literal["add", "remove", "adjust"]
+    object_type: str
+    position: str
+    quantity: str = "按目标增量适量配置"
+    attributes: list[str] = Field(default_factory=list)
+    rationale: str = ""
+
+
 class ModificationPlan(BaseModel):
-    """制图员输出：形态要素目标 → 文生图自然语言修改方案"""
+    """制图员输出：结构化空间布局方案 + 可执行修改文本。"""
 
     draft_text: str
     language: str = "en"
+    plan_summary: str = ""
     rationale: str = ""
     layout_hints: list[str] = Field(default_factory=list)
+    object_actions: list[SpatialObjectAction] = Field(default_factory=list)
+    spatial_relations: list[str] = Field(default_factory=list)
+    unchanged_regions: list[str] = Field(default_factory=list)
+    constraints: list[str] = Field(default_factory=list)
+    expert_advice: str = ""
+    original_image_path: str = ""
+    rag_references: list[str] = Field(default_factory=list)
+
+    @property
+    def worldlabs_prompt(self) -> str:
+        """World Labs Pano Edit 当前消费的最终修改文本。"""
+        return self.draft_text
 
 
 class GenerationResult(BaseModel):

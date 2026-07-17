@@ -6,8 +6,8 @@ Gradio 前端（人机协同主界面）v2
 【新流程】
   Step0 上传全景 JPG + 情景要素 +（可选）修改前多人体验
   Step1 形态解析 → 展示 7 维形态基线
-  Step2 调节五个体验滑块 → 确认 → 翻译官（体验→形态目标）
-  Step3 人工干预形态要素目标 → 确认 → 制图员（自然语言方案）
+  Step2 调节七个体验滑块 → 确认 → 翻译官（体验→形态目标）
+  Step3 人工干预形态要素目标 → 确认 → 制图员（结构化空间布局方案）
   Step4 人工干预修改方案文本 → 确认 → World Labs 文生图 + 质检
   Step5 填写修改后多人体验 → 沉淀知识库
 
@@ -38,8 +38,8 @@ SESSION: dict = {"state": None}
 
 DEFAULT_PRE_EDIT_JSON = json.dumps(
     [
-        {"person_id": "p1", "person_name": "参与者A", "experience": {"comfort": 3, "restoration": 3, "safety": 3, "pleasure": 3, "stay": 3}},
-        {"person_id": "p2", "person_name": "参与者B", "experience": {"comfort": 3, "restoration": 3, "safety": 3, "pleasure": 3, "stay": 3}},
+        {"person_id": "p1", "person_name": "参与者A", "experience": {key: 3 for key in EXPERIENCE_KEYS}},
+        {"person_id": "p2", "person_name": "参与者B", "experience": {key: 3 for key in EXPERIENCE_KEYS}},
     ],
     ensure_ascii=False,
     indent=2,
@@ -47,8 +47,8 @@ DEFAULT_PRE_EDIT_JSON = json.dumps(
 
 DEFAULT_POST_EDIT_JSON = json.dumps(
     [
-        {"person_id": "p1", "person_name": "参与者A", "experience": {"comfort": 4, "restoration": 4, "safety": 4, "pleasure": 4, "stay": 4}},
-        {"person_id": "p2", "person_name": "参与者B", "experience": {"comfort": 4, "restoration": 4, "safety": 4, "pleasure": 4, "stay": 4}},
+        {"person_id": "p1", "person_name": "参与者A", "experience": {key: (2 if key == "environmental_disturbance" else 4) for key in EXPERIENCE_KEYS}},
+        {"person_id": "p2", "person_name": "参与者B", "experience": {key: (2 if key == "environmental_disturbance" else 4) for key in EXPERIENCE_KEYS}},
     ],
     ensure_ascii=False,
     indent=2,
@@ -101,7 +101,18 @@ def _parse_person_experience(raw: str) -> list[dict]:
     return data
 
 
-def step_parse(image, location_type, time_of_day, weather, crowd_level, scene_desc, pre_edit_json):
+def step_parse(
+    image,
+    observation_time,
+    observation_weather,
+    people_flow,
+    space_type,
+    sound_type,
+    maintenance_status,
+    traffic_flow,
+    scene_desc,
+    pre_edit_json,
+):
     if image is None:
         raise gr.Error("请先上传全景图")
     src = Path(image)
@@ -114,10 +125,13 @@ def step_parse(image, location_type, time_of_day, weather, crowd_level, scene_de
         raise gr.Error(f"修改前多人体验 JSON 无效: {e}") from e
 
     scene = {
-        "location_type": location_type or "",
-        "time_of_day": time_of_day or "",
-        "weather": weather or "",
-        "crowd_level": crowd_level or "",
+        "observation_time": observation_time or "",
+        "observation_weather": observation_weather or "",
+        "people_flow": people_flow or "",
+        "space_type": space_type or "",
+        "sound_type": sound_type or "",
+        "maintenance_status": maintenance_status or "",
+        "traffic_flow": traffic_flow or "",
         "description": scene_desc or "",
     }
     state = pipe.start_session(dest, scene_context=scene, pre_edit_experience=pre_edit)
@@ -136,20 +150,14 @@ def step_parse(image, location_type, time_of_day, weather, crowd_level, scene_de
     return info
 
 
-def step_translate(comfort, restoration, safety, pleasure, stay):
+def step_translate(*experience_values):
     state = SESSION.get("state")
     if not state:
         raise gr.Error("请先完成「解析全景」")
     if state.get("stage") not in ("await_experience_confirm", "await_morph_confirm"):
         pass  # 允许重新调节
 
-    targets = {
-        "comfort": comfort,
-        "restoration": restoration,
-        "safety": safety,
-        "pleasure": pleasure,
-        "stay": stay,
-    }
+    targets = dict(zip(EXPERIENCE_KEYS, experience_values))
     state = pipe.run_translator(state, targets)
     SESSION["state"] = state
 
@@ -160,26 +168,55 @@ def step_translate(comfort, restoration, safety, pleasure, stay):
         f"- {EXPERIENCE_LABELS_ZH[k]}: {exp_base.get(k,3)} → {exp_tgt.get(k,3)}"
         for k in EXPERIENCE_KEYS
     )
+    basis_lines = []
+    for item in tr.get("conversion_basis") or []:
+        reference = f"（{item.get('reference_id')}）" if item.get("reference_id") else ""
+        score = (
+            f"，相似度 {float(item['score']):.3f}"
+            if item.get("score") is not None
+            else ""
+        )
+        basis_lines.append(
+            f"- {item.get('method', 'unknown')}{reference}{score}: {item.get('summary', '')}"
+        )
     info = (
         f"### 翻译官：体验变化\n{exp_lines}\n\n"
         f"### 原先形态要素\n{_fmt_metrics(tr.get('baseline_metrics'))}\n\n"
         f"### 目标形态要素（可下方滑块修改）\n{_fmt_metrics(tr.get('target_metrics'))}\n\n"
         f"### 翻译理由\n{tr.get('rationale', '')}\n\n"
+        f"### 转换依据\n{chr(10).join(basis_lines) or '- 规则兜底'}\n\n"
         f"学习Agent: {'已参考' if tr.get('learning_applied') else '未启用（占位）'}"
     )
     sliders = _metrics_to_sliders(state["confirmed_target_metrics"])
     return info, *sliders
 
 
-def step_confirm_morph(*slider_vals):
+def _fmt_layout_plan(plan: dict) -> str:
+    actions = []
+    for item in plan.get("object_actions") or []:
+        actions.append(
+            f"- **{item.get('action', 'adjust')} {item.get('object_type', '空间对象')}**："
+            f"{item.get('position', '')}；{item.get('quantity', '')}"
+        )
+    return (
+        f"### 空间布局方案\n{plan.get('plan_summary', '')}\n\n"
+        f"### 对象级修改\n{chr(10).join(actions) or '- 轻量优化现有空间对象'}\n\n"
+        f"### 保持不变区域\n"
+        + "\n".join(f"- {x}" for x in plan.get("unchanged_regions") or [])
+        + f"\n\n### 生成依据\n{plan.get('rationale', '')}"
+    )
+
+
+def step_confirm_morph(expert_advice, *slider_vals):
     state = SESSION.get("state")
     if not state:
         raise gr.Error("请先完成「确认体验滑块 → 翻译官」")
     human_metrics = _sliders_to_metrics(list(slider_vals))
-    state = pipe.confirm_morph(state, human_metrics=human_metrics, note="前端人工确认形态要素")
+    note = (expert_advice or "").strip() or "前端人工确认形态要素"
+    state = pipe.confirm_morph(state, human_metrics=human_metrics, note=note)
     SESSION["state"] = state
     plan = state.get("modification_plan") or {}
-    return plan.get("draft_text", ""), plan.get("rationale", "")
+    return plan.get("draft_text", ""), _fmt_layout_plan(plan)
 
 
 def step_generate(final_plan):
@@ -233,7 +270,7 @@ def step_save_memory(score, notes, post_edit_json, *corrected_sliders):
 
 
 def build_ui():
-    with gr.Blocks(title="高密度微空间 · 多智能体优化 v2", theme=gr.themes.Soft()) as demo:
+    with gr.Blocks(title="高密度微空间 · 多智能体优化 v2") as demo:
         gr.Markdown(
             """
             # 高密度情境下微空间优化 · 人机多智能体流水线 v2
@@ -245,10 +282,16 @@ def build_ui():
             with gr.Column(scale=1):
                 image = gr.Image(type="filepath", label="上传全景 JPG/PNG", height=260)
                 gr.Markdown("### 情景要素")
-                location_type = gr.Textbox(label="空间类型", placeholder="街巷 / 广场 / 口袋公园")
-                time_of_day = gr.Textbox(label="时段", placeholder="清晨 / 午后 / 傍晚")
-                weather = gr.Textbox(label="天气", placeholder="晴 / 阴 / 雨")
-                crowd_level = gr.Textbox(label="人流密度", placeholder="稀疏 / 中等 / 拥挤")
+                observation_time = gr.Textbox(label="观测时间", placeholder="清晨 / 午后 / 傍晚")
+                observation_weather = gr.Textbox(label="观测天气", placeholder="晴 / 阴 / 雨")
+                people_flow = gr.Textbox(label="人流量", placeholder="人数或低 / 中 / 高")
+                space_type = gr.Textbox(
+                    label="空间类型（社区、蓝绿、商办）",
+                    placeholder="社区 / 蓝绿 / 商办",
+                )
+                sound_type = gr.Textbox(label="声音类型", placeholder="自然声 / 人声 / 交通声 / 混合声")
+                maintenance_status = gr.Textbox(label="管理维护状态", placeholder="良好 / 一般 / 较差")
+                traffic_flow = gr.Textbox(label="交通流量", placeholder="数量或低 / 中 / 高")
                 scene_desc = gr.Textbox(label="补充描述", lines=2)
                 pre_edit_json = gr.Textbox(
                     label="修改前多人体验（JSON，可选）",
@@ -259,12 +302,26 @@ def build_ui():
 
             with gr.Column(scale=1):
                 parse_md = gr.Markdown("等待解析…")
-                gr.Markdown("### Step2 体验感受目标（五个滑块，确认后送翻译官）")
-                comfort = gr.Slider(1, 5, value=4, step=1, label=EXPERIENCE_LABELS_ZH["comfort"])
-                restoration = gr.Slider(1, 5, value=5, step=1, label=EXPERIENCE_LABELS_ZH["restoration"])
-                safety = gr.Slider(1, 5, value=3, step=1, label=EXPERIENCE_LABELS_ZH["safety"])
-                pleasure = gr.Slider(1, 5, value=4, step=1, label=EXPERIENCE_LABELS_ZH["pleasure"])
-                stay = gr.Slider(1, 5, value=4, step=1, label=EXPERIENCE_LABELS_ZH["stay"])
+                gr.Markdown("### Step2 七项体验感受目标（1–5分；环境干扰感越低越好）")
+                experience_defaults = {
+                    "comfort": 4,
+                    "naturalness": 4,
+                    "safety": 4,
+                    "relaxation": 4,
+                    "environmental_disturbance": 2,
+                    "stay_intention": 4,
+                    "overall_impression": 4,
+                }
+                experience_sliders = [
+                    gr.Slider(
+                        1,
+                        5,
+                        value=experience_defaults[key],
+                        step=1,
+                        label=EXPERIENCE_LABELS_ZH[key],
+                    )
+                    for key in EXPERIENCE_KEYS
+                ]
                 btn_translate = gr.Button("② 确认体验滑块 → 翻译官", variant="primary")
 
         translate_md = gr.Markdown("翻译官结果将显示在这里")
@@ -277,7 +334,12 @@ def build_ui():
                 morph_sliders.append(
                     gr.Slider(0, 80, value=15, step=0.1, label=f"{MORPH_LABELS_ZH[k]} (%)")
                 )
-        btn_morph = gr.Button("③ 确认形态要素 → 制图员生成方案", variant="primary")
+        expert_advice = gr.Textbox(
+            label="专家建议（可选，将传给制图员 Agent）",
+            placeholder="例如：保持左侧历史建筑立面不变，优先优化右侧停留空间",
+            lines=2,
+        )
+        btn_morph = gr.Button("③ 确认形态要素 → 制图员生成空间布局方案", variant="primary")
 
         plan_box = gr.Textbox(label="人工干预②：自然语言修改方案（可润色）", lines=8)
         plan_rationale = gr.Markdown("")
@@ -312,17 +374,28 @@ def build_ui():
 
         btn_parse.click(
             step_parse,
-            inputs=[image, location_type, time_of_day, weather, crowd_level, scene_desc, pre_edit_json],
+            inputs=[
+                image,
+                observation_time,
+                observation_weather,
+                people_flow,
+                space_type,
+                sound_type,
+                maintenance_status,
+                traffic_flow,
+                scene_desc,
+                pre_edit_json,
+            ],
             outputs=[parse_md],
         )
         btn_translate.click(
             step_translate,
-            inputs=[comfort, restoration, safety, pleasure, stay],
+            inputs=experience_sliders,
             outputs=[translate_md, *morph_sliders],
         )
         btn_morph.click(
             step_confirm_morph,
-            inputs=morph_sliders,
+            inputs=[expert_advice, *morph_sliders],
             outputs=[plan_box, plan_rationale],
         )
         btn_gen.click(
@@ -341,4 +414,8 @@ def build_ui():
 
 if __name__ == "__main__":
     demo = build_ui()
-    demo.launch(server_name="127.0.0.1", server_port=7860, share=False)
+    demo.launch(
+        server_name="127.0.0.1",
+        server_port=7860,
+        share=False,
+    )

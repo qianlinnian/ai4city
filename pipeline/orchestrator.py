@@ -50,10 +50,11 @@ from agents.memory_agent import MemoryAgent
 from agents.quality_checker_agent import QualityCheckerAgent
 from agents.translator_agent import TranslatorAgent
 from agents.worldlabs_agent import WorldLabsAgent
-from config import EXPERIENCE_KEYS, SESSION_DIR
+from config import EXPERIENCE_KEYS, EXPERIENCE_SCALE, SESSION_DIR
 from morph_metrics_extractor import MorphMetricsExtractor
 from schemas.models import (
     ExperienceTargets,
+    ModificationPlan,
     MorphTranslationResult,
     MultiPersonExperience,
     PersonExperience,
@@ -101,8 +102,10 @@ class PipelineOrchestrator:
             "baseline_metrics": baseline,
             "morph_translation": None,
             "confirmed_target_metrics": None,
+            "expert_morph_note": "",
             "modification_plan": None,
             "final_prompt": None,
+            "expert_plan_edited": False,
             "generation": None,
             "quality_report": None,
             "post_edit_experience": [],
@@ -122,7 +125,7 @@ class PipelineOrchestrator:
         state = deepcopy(state)
         targets = ExperienceTargets(**experience_targets).as_dict()
         exp_base = experience_baseline or state.get("experience_baseline") or {
-            k: 3.0 for k in EXPERIENCE_KEYS
+            k: EXPERIENCE_SCALE["neutral"] for k in EXPERIENCE_KEYS
         }
 
         result = self.translator.run(
@@ -130,6 +133,7 @@ class PipelineOrchestrator:
             baseline_metrics=state["baseline_metrics"],
             experience_baseline=exp_base,
             scene_context=state.get("scene_context_text", ""),
+            original_image_path=state.get("image_path", ""),
             learning_agent=self.learning,
         )
 
@@ -160,6 +164,7 @@ class PipelineOrchestrator:
         )
         state["morph_translation"] = translation.model_dump()
         state["confirmed_target_metrics"] = translation.target_metrics.model_dump()
+        state["expert_morph_note"] = note
 
         # 学习 Agent：记录翻译准确度
         self.learning.record_translation_feedback(
@@ -175,8 +180,11 @@ class PipelineOrchestrator:
             baseline_metrics=state["baseline_metrics"],
             target_metrics=state["confirmed_target_metrics"],
             experience_targets=state["experience_targets"],
+            experience_baseline=state["experience_baseline"],
             scene_context=state.get("scene_context_text", ""),
             language=language,
+            original_image_path=state.get("image_path", ""),
+            expert_advice=note,
         )
         state["modification_plan"] = plan.model_dump()
         state["final_prompt"] = plan.draft_text
@@ -187,9 +195,15 @@ class PipelineOrchestrator:
     def confirm_plan(self, state: dict[str, Any], human_plan: str) -> dict[str, Any]:
         """人工干预②：润色自然语言修改方案。"""
         state = deepcopy(state)
-        state["final_prompt"] = human_plan.strip()
         if state.get("modification_plan"):
-            state["modification_plan"]["draft_text"] = state["final_prompt"]
+            original = ModificationPlan(**state["modification_plan"])
+            edited = self.cartographer.apply_human_edit(original, human_plan)
+            state["modification_plan"] = edited.model_dump()
+            state["expert_plan_edited"] = edited.draft_text != original.draft_text
+            state["final_prompt"] = edited.worldlabs_prompt
+        else:
+            state["final_prompt"] = human_plan.strip()
+            state["expert_plan_edited"] = True
         state["stage"] = "ready_to_generate"
         self._persist(state)
         return state
@@ -267,7 +281,7 @@ class PipelineOrchestrator:
     @staticmethod
     def _resolve_experience_baseline(pre_edit_experience: list[dict] | None) -> dict[str, float]:
         if not pre_edit_experience:
-            return {k: 3.0 for k in EXPERIENCE_KEYS}
+            return {k: EXPERIENCE_SCALE["neutral"] for k in EXPERIENCE_KEYS}
         persons = []
         for i, p in enumerate(pre_edit_experience):
             exp = p.get("experience", p)
@@ -276,11 +290,11 @@ class PipelineOrchestrator:
                     PersonExperience(
                         person_id=p.get("person_id", f"p{i+1}"),
                         person_name=p.get("person_name", f"参与者{i+1}"),
-                        experience=ExperienceTargets(**{k: exp.get(k, 3) for k in EXPERIENCE_KEYS}),
+                        experience=ExperienceTargets(**exp),
                     )
                 )
         if not persons:
-            return {k: 3.0 for k in EXPERIENCE_KEYS}
+            return {k: EXPERIENCE_SCALE["neutral"] for k in EXPERIENCE_KEYS}
         return MultiPersonExperience(persons=persons).average_experience()
 
     def _persist(self, state: dict[str, Any]) -> None:
@@ -296,12 +310,18 @@ def run_full_demo(
     """无人工干预的一键演示。"""
     experience_targets = experience_targets or {
         "comfort": 4,
-        "restoration": 5,
-        "safety": 3,
-        "pleasure": 4,
-        "stay": 4,
+        "naturalness": 4,
+        "safety": 4,
+        "relaxation": 4,
+        "environmental_disturbance": 2,
+        "stay_intention": 4,
+        "overall_impression": 4,
     }
-    scene_context = scene_context or {"location_type": "高密度街巷", "time_of_day": "午后"}
+    scene_context = scene_context or {
+        "space_type": "社区",
+        "observation_time": "午后",
+        "observation_weather": "晴",
+    }
     pipe = PipelineOrchestrator(force_metrics_fallback=True)
     state = pipe.start_session(image_path, scene_context=scene_context)
     state = pipe.run_translator(state, experience_targets)

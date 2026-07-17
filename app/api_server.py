@@ -36,25 +36,30 @@ from config import UPLOAD_DIR
 from morph_metrics_extractor import MorphMetricsExtractor
 from pipeline.orchestrator import PipelineOrchestrator
 
-app = FastAPI(title="Micro-Space Multi-Agent API", version="0.2.0")
+app = FastAPI(title="Micro-Space Multi-Agent API", version="0.3.0")
 pipe = PipelineOrchestrator(force_metrics_fallback=True)
 extractor = MorphMetricsExtractor(force_fallback=True)
 SESSIONS: dict[str, dict] = {}
 
 
 class ExperienceIn(BaseModel):
-    comfort: float = 4
-    restoration: float = 5
-    safety: float = 3
-    pleasure: float = 4
-    stay: float = 4
+    comfort: float = Field(4, ge=1, le=5)
+    naturalness: float = Field(4, ge=1, le=5)
+    safety: float = Field(4, ge=1, le=5)
+    relaxation: float = Field(4, ge=1, le=5)
+    environmental_disturbance: float = Field(2, ge=1, le=5)
+    stay_intention: float = Field(4, ge=1, le=5)
+    overall_impression: float = Field(4, ge=1, le=5)
 
 
 class SceneContextIn(BaseModel):
-    location_type: str = ""
-    time_of_day: str = ""
-    weather: str = ""
-    crowd_level: str = ""
+    observation_time: str = ""
+    observation_weather: str = ""
+    people_flow: str = ""
+    space_type: str = ""
+    sound_type: str = ""
+    maintenance_status: str = ""
+    traffic_flow: str = ""
     description: str = ""
 
 
@@ -99,7 +104,7 @@ class MemoryIn(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"ok": True, "version": "0.2.0"}
+    return {"ok": True, "version": "0.3.0"}
 
 
 @app.post("/extract_metrics")

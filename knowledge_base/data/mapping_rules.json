@@ -1,0 +1,94 @@
+{
+  "version": "task2-3-v1",
+  "description": "七项VR体感变化 → 七项形态要素目标的启发式初始参数",
+  "scale": {
+    "min": 1.0,
+    "max": 5.0,
+    "neutral": 3.0
+  },
+  "disclaimer": "用于基础框架和演示，系启发式初值，后续应由专家样本与VR实验校准。",
+  "rules": [
+    {
+      "experience_key": "comfort",
+      "direction": "higher_is_better",
+      "adjust_per_point": {
+        "green_view": 0.03,
+        "sky_view": 0.015,
+        "built_ratio": -0.025,
+        "edge_density": -0.008,
+        "color_richness": 0.2
+      },
+      "layout_hint": "增加遮阴、柔和材质与适量绿化，降低硬质界面压迫"
+    },
+    {
+      "experience_key": "naturalness",
+      "direction": "higher_is_better",
+      "adjust_per_point": {
+        "green_view": 0.05,
+        "blue_view": 0.01,
+        "built_ratio": -0.02,
+        "edge_density": -0.005,
+        "color_richness": 0.3
+      },
+      "layout_hint": "采用乔灌草复层绿化和自然材质，增强亲自然特征"
+    },
+    {
+      "experience_key": "safety",
+      "direction": "higher_is_better",
+      "adjust_per_point": {
+        "sky_view": 0.03,
+        "built_ratio": -0.015,
+        "edge_density": -0.015,
+        "skyline_variance": -0.002
+      },
+      "layout_hint": "打开视线通廊，减少死角与过密遮挡，提升界面整洁"
+    },
+    {
+      "experience_key": "relaxation",
+      "direction": "higher_is_better",
+      "adjust_per_point": {
+        "green_view": 0.04,
+        "blue_view": 0.01,
+        "edge_density": -0.012,
+        "color_richness": -0.1
+      },
+      "layout_hint": "弱化视觉噪声，增加连续绿化与安静的半围合停留空间"
+    },
+    {
+      "experience_key": "environmental_disturbance",
+      "direction": "lower_is_better",
+      "adjust_per_point": {
+        "green_view": 0.02,
+        "built_ratio": -0.02,
+        "edge_density": -0.012,
+        "color_richness": -0.2
+      },
+      "layout_hint": "以绿化缓冲和界面整合减少交通、标识与杂乱设施干扰"
+    },
+    {
+      "experience_key": "stay_intention",
+      "direction": "higher_is_better",
+      "adjust_per_point": {
+        "green_view": 0.025,
+        "sky_view": -0.01,
+        "built_ratio": -0.01,
+        "color_richness": 0.15,
+        "skyline_variance": 0.003
+      },
+      "layout_hint": "强化可坐停留节点与边界绿化，形成停留锚点"
+    },
+    {
+      "experience_key": "overall_impression",
+      "direction": "higher_is_better",
+      "adjust_per_point": {
+        "green_view": 0.02,
+        "blue_view": 0.005,
+        "sky_view": 0.005,
+        "built_ratio": -0.01,
+        "edge_density": -0.005,
+        "color_richness": 0.2
+      },
+      "layout_hint": "综合协调绿化、水体、开敞度与材质色彩，保持整体一致性"
+    }
+  ]
+}
