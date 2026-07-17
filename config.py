@@ -24,8 +24,29 @@ SESSION_DIR = OUTPUT_DIR / "sessions"
 # 文生图工具：按图片完整文件名从 assets/ 取原图，结果写入 TargetIMG/
 ASSETS_DIR = ROOT / "assets"
 TARGET_IMG_DIR = ROOT / "TargetIMG"
+# 前端只读取后端维护的数据目录，不要求浏览器重复上传原图或项目大表。
+DATA_DIR = Path(os.getenv("AI4CITY_DATA_DIR", str(ROOT / "data"))).resolve()
+PANORAMA_DIR = Path(os.getenv("AI4CITY_PANORAMA_DIR", str(DATA_DIR))).resolve()
+METRICS_TABLE_DIR = Path(
+    os.getenv("AI4CITY_METRICS_TABLE_DIR", str(DATA_DIR))
+).resolve()
+SCENE_MANIFEST_PATH = Path(
+    os.getenv("AI4CITY_SCENE_MANIFEST", str(DATA_DIR / "scenes.csv"))
+).resolve()
+_metrics_table_path_raw = os.getenv("AI4CITY_METRICS_TABLE", "").strip()
+METRICS_TABLE_PATH = (
+    Path(_metrics_table_path_raw).resolve() if _metrics_table_path_raw else None
+)
 
-for _p in (KB_DIR, UPLOAD_DIR, IMAGE_OUT_DIR, SESSION_DIR, ASSETS_DIR, TARGET_IMG_DIR):
+for _p in (
+    KB_DIR,
+    UPLOAD_DIR,
+    IMAGE_OUT_DIR,
+    SESSION_DIR,
+    ASSETS_DIR,
+    TARGET_IMG_DIR,
+    DATA_DIR,
+):
     _p.mkdir(parents=True, exist_ok=True)
 
 # ---------- API / 运行模式 ----------

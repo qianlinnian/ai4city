@@ -1,19 +1,8 @@
-"""
-可选 FastAPI 接口（组员也可不用 Gradio，直接 HTTP 联调）v2
+"""Optional FastAPI interface for the Excel-driven workflow.
 
-启动:
-  cd code
-  uvicorn app.api_server:app --reload --port 8000
-
-主要端点:
-  POST /extract_metrics              仅形态解析（SegFormer / fallback）
-  POST /pipeline/start_session       上传+情景+解析
-  POST /pipeline/run_translator      体验滑块 → 翻译官
-  POST /pipeline/confirm_morph       人工确认形态 → 制图员
-  POST /pipeline/confirm_plan        人工润色自然语言方案
-  POST /pipeline/generate            文生图+质检
-  POST /pipeline/post_experience     修改后多人体验
-  POST /pipeline/memory              入库
+The API never computes Task 1 metrics.  ``start_session`` receives the seven
+baseline values selected from the project table, and post-edit values can be
+submitted later through the quality endpoint.
 """
 
 from __future__ import annotations
@@ -32,14 +21,13 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from config import UPLOAD_DIR
-from morph_metrics_extractor import MorphMetricsExtractor
+from app.generation_backend import generate as generate_image
+from config import SESSION_DIR, UPLOAD_DIR
 from pipeline.orchestrator import PipelineOrchestrator
 
-app = FastAPI(title="Micro-Space Multi-Agent API", version="0.3.0")
-pipe = PipelineOrchestrator(force_metrics_fallback=True)
-extractor = MorphMetricsExtractor(force_fallback=True)
-SESSIONS: dict[str, dict] = {}
+
+app = FastAPI(title="Panorama Multi-Agent API", version="0.4.0")
+pipe = PipelineOrchestrator()
 
 
 class ExperienceIn(BaseModel):
@@ -52,22 +40,6 @@ class ExperienceIn(BaseModel):
     environmental_disturbance: float = Field(..., ge=1, le=5)
     stay_intention: float = Field(..., ge=1, le=5)
     overall_impression: float = Field(..., ge=1, le=5)
-
-
-class SceneContextIn(BaseModel):
-    observation_time: str = ""
-    observation_weather: str = ""
-    people_flow: str = ""
-    space_type: str = ""
-    sound_type: str = ""
-    maintenance_status: str = ""
-    traffic_flow: str = ""
-    description: str = ""
-
-
-class StartSessionIn(BaseModel):
-    scene_context: SceneContextIn = Field(default_factory=SceneContextIn)
-    pre_edit_experience: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class RunTranslatorIn(BaseModel):
@@ -91,6 +63,13 @@ class ConfirmPlanIn(BaseModel):
 
 class GenerateIn(BaseModel):
     session_id: str
+    backend: Optional[str] = None
+
+
+class QualityMetricsIn(BaseModel):
+    session_id: str
+    modified_metrics: dict[str, float]
+    thresholds: Optional[dict[str, float]] = None
 
 
 class PostExperienceIn(BaseModel):
@@ -105,155 +84,167 @@ class MemoryIn(BaseModel):
     notes: str = ""
 
 
+def _load_state(session_id: str) -> dict[str, Any]:
+    if not session_id or not session_id.replace("-", "").replace("_", "").isalnum():
+        raise HTTPException(400, "session_id 格式无效")
+    path = SESSION_DIR / f"{session_id}.json"
+    if not path.is_file():
+        raise HTTPException(404, "找不到会话")
+    try:
+        state = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise HTTPException(500, "会话数据无法读取") from exc
+    if not isinstance(state, dict) or state.get("session_id") != session_id:
+        raise HTTPException(500, "会话数据格式错误")
+    return state
+
+
+def _bad_request(operation):
+    try:
+        return operation()
+    except (ValueError, TypeError, FileNotFoundError, RuntimeError) as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
 @app.get("/health")
 def health():
-    return {"ok": True, "version": "0.3.0"}
+    return {"ok": True, "version": "0.4.0", "task1_mode": "offline_table"}
 
 
-@app.post("/extract_metrics")
-async def extract_metrics(file: UploadFile = File(...), fallback: bool = True):
-    suffix = Path(file.filename or "pano.jpg").suffix or ".jpg"
-    path = UPLOAD_DIR / f"api_{uuid.uuid4().hex}{suffix}"
-    with open(path, "wb") as f:
-        f.write(await file.read())
-    ex = MorphMetricsExtractor(force_fallback=fallback)
-    metrics = ex.calculate(path)
-    return {"image_path": str(path), "metrics": metrics.as_dict(), "display": metrics.as_percent_display()}
+@app.post("/extract_metrics", status_code=410)
+def extract_metrics_removed():
+    raise HTTPException(
+        410,
+        "在线指标提取已移除；请离线运行 Task 1，并把大表格中的七项指标传给 start_session。",
+    )
 
 
 @app.post("/pipeline/start_session")
 async def pipeline_start_session(
     file: UploadFile = File(...),
+    baseline_metrics_json: str = Form(...),
     scene_context_json: str = Form("{}"),
     pre_edit_experience_json: str = Form("[]"),
 ):
-    suffix = Path(file.filename or "pano.jpg").suffix or ".jpg"
-    path = UPLOAD_DIR / f"api_{uuid.uuid4().hex}{suffix}"
-    with open(path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
-
     try:
+        baseline = json.loads(baseline_metrics_json)
         scene = json.loads(scene_context_json or "{}")
         pre_edit = json.loads(pre_edit_experience_json or "[]")
-    except json.JSONDecodeError as e:
-        raise HTTPException(400, f"JSON invalid: {e}") from e
+    except json.JSONDecodeError as exc:
+        raise HTTPException(400, f"JSON 格式错误：{exc.msg}") from exc
+    if not isinstance(baseline, dict):
+        raise HTTPException(400, "baseline_metrics_json 必须是 JSON 对象")
+    if not isinstance(scene, dict) or not isinstance(pre_edit, list):
+        raise HTTPException(400, "情景要素必须是对象，体验记录必须是数组")
 
-    state = pipe.start_session(path, scene_context=scene, pre_edit_experience=pre_edit)
-    SESSIONS[state["session_id"]] = state
-    return state
+    suffix = Path(file.filename or "pano.jpg").suffix or ".jpg"
+    path = UPLOAD_DIR / f"api_{uuid.uuid4().hex}{suffix}"
+    try:
+        with path.open("wb") as handle:
+            shutil.copyfileobj(file.file, handle)
+        return _bad_request(
+            lambda: pipe.start_session(
+                path,
+                baseline,
+                scene_context=scene,
+                pre_edit_experience=pre_edit,
+            )
+        )
+    except HTTPException:
+        path.unlink(missing_ok=True)
+        raise
+
+
+@app.get("/pipeline/session/{session_id}")
+def pipeline_get_session(session_id: str):
+    return _load_state(session_id)
 
 
 @app.post("/pipeline/run_translator")
 def pipeline_run_translator(body: RunTranslatorIn):
-    state = SESSIONS.get(body.session_id)
-    if not state:
-        raise HTTPException(404, "session not found")
-    state = pipe.run_translator(
-        state,
-        body.experience_targets.model_dump(),
-        experience_records=body.experience_records,
-        experience_baseline=body.experience_baseline,
+    state = _load_state(body.session_id)
+    return _bad_request(
+        lambda: pipe.run_translator(
+            state,
+            body.experience_targets.model_dump(),
+            experience_records=body.experience_records,
+            experience_baseline=body.experience_baseline,
+        )
     )
-    SESSIONS[body.session_id] = state
-    return state
 
 
 @app.post("/pipeline/confirm_morph")
 def pipeline_confirm_morph(body: ConfirmMorphIn):
-    state = SESSIONS.get(body.session_id)
-    if not state:
-        raise HTTPException(404, "session not found")
-    state = pipe.confirm_morph(
-        state,
-        human_metrics=body.human_metrics,
-        note=body.note,
-        language=body.language,
+    state = _load_state(body.session_id)
+    return _bad_request(
+        lambda: pipe.confirm_morph(
+            state,
+            human_metrics=body.human_metrics,
+            note=body.note,
+            language=body.language,
+        )
     )
-    SESSIONS[body.session_id] = state
-    return state
 
 
 @app.post("/pipeline/confirm_plan")
 def pipeline_confirm_plan(body: ConfirmPlanIn):
-    state = SESSIONS.get(body.session_id)
-    if not state:
-        raise HTTPException(404, "session not found")
-    state = pipe.confirm_plan(state, body.human_plan)
-    SESSIONS[body.session_id] = state
-    return state
+    state = _load_state(body.session_id)
+    return _bad_request(lambda: pipe.confirm_plan(state, body.human_plan))
 
 
 @app.post("/pipeline/generate")
 def pipeline_generate(body: GenerateIn):
-    state = SESSIONS.get(body.session_id)
-    if not state:
-        raise HTTPException(404, "session not found")
-    state = pipe.generate_and_check(state)
-    SESSIONS[body.session_id] = state
-    return state
+    state = _load_state(body.session_id)
+
+    def operation():
+        if state.get("stage") != "plan_confirmed":
+            raise ValueError("当前阶段不允许生成；请先确认空间布局方案")
+        result = generate_image(
+            state["image_path"],
+            state.get("final_prompt") or "",
+            backend=body.backend,
+        )
+        return pipe.record_generation(state, result)
+
+    return _bad_request(operation)
+
+
+@app.post("/pipeline/quality_metrics")
+def pipeline_quality_metrics(body: QualityMetricsIn):
+    state = _load_state(body.session_id)
+    return _bad_request(
+        lambda: pipe.record_quality_metrics(
+            state,
+            body.modified_metrics,
+            thresholds=body.thresholds,
+        )
+    )
 
 
 @app.post("/pipeline/post_experience")
 def pipeline_post_experience(body: PostExperienceIn):
-    state = SESSIONS.get(body.session_id)
-    if not state:
-        raise HTTPException(404, "session not found")
-    state = pipe.record_post_experience(state, body.post_edit_experience)
-    SESSIONS[body.session_id] = state
-    return state
+    state = _load_state(body.session_id)
+    return _bad_request(
+        lambda: pipe.record_post_experience(state, body.post_edit_experience)
+    )
 
 
 @app.post("/pipeline/memory")
 def pipeline_memory(body: MemoryIn):
-    state = SESSIONS.get(body.session_id)
-    if not state:
-        raise HTTPException(404, "session not found")
-    state = pipe.save_memory(
-        state,
-        human_corrected_metrics=body.human_corrected_metrics,
-        score=body.score,
-        notes=body.notes,
+    state = _load_state(body.session_id)
+    return _bad_request(
+        lambda: pipe.save_memory(
+            state,
+            human_corrected_metrics=body.human_corrected_metrics,
+            score=body.score,
+            notes=body.notes,
+        )
     )
-    SESSIONS[body.session_id] = state
-    return state
 
 
-# ---------- 兼容旧端点（deprecated）----------
-@app.post("/pipeline/start")
-async def pipeline_start_legacy(
-    file: UploadFile = File(...),
-    comfort: float = Form(4),
-    restoration: float = Form(5),
-    safety: float = Form(3),
-    pleasure: float = Form(4),
-    stay: float = Form(4),
-):
-    """@deprecated 请使用 start_session + run_translator"""
-    suffix = Path(file.filename or "pano.jpg").suffix or ".jpg"
-    path = UPLOAD_DIR / f"api_{uuid.uuid4().hex}{suffix}"
-    with open(path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
-    state = pipe.start_session(path)
-    state = pipe.run_translator(
-        state,
-        {
-            "comfort": comfort,
-            "naturalness": 3,
-            "restoration": restoration,
-            "safety": safety,
-            "environmental_disturbance": 3,
-            "pleasure": pleasure,
-            "stay": stay,
-        },
-        experience_baseline={
-            "comfort": 3,
-            "naturalness": 3,
-            "safety": 3,
-            "relaxation": 3,
-            "environmental_disturbance": 3,
-            "stay_intention": 3,
-            "overall_impression": 3,
-        },
+@app.post("/pipeline/start", status_code=410)
+def pipeline_start_legacy_removed():
+    raise HTTPException(
+        410,
+        "旧版入口依赖在线 Task 1，现已移除；请使用 /pipeline/start_session。",
     )
-    SESSIONS[state["session_id"]] = state
-    return state
