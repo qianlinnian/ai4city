@@ -1,270 +1,236 @@
-"""
-================================================================================
-形态要素解析工具（独立可运行）
-文件: morph_metrics_extractor.py
---------------------------------------------------------------------------------
-【依据】code/数据指标提取技术路线(1).pdf + 指标定义及计算方式(1).xlsx
-
-【做什么】
-  输入一张 2:1 全景 JPG/PNG，计算 7 个可行形态要素指标：
-  1. 绿视率 green_view
-  2. 蓝视率 blue_view
-  3. 天空可视率 sky_view
-  4. 人造物占比 built_ratio
-  5. 色彩丰富度 color_richness
-  6. 边缘密度 edge_density
-  7. 天际线变化率 skyline_variance
-
-【怎么调用】
-  1) 作为库：
-       from morph_metrics_extractor import MorphMetricsExtractor
-       extractor = MorphMetricsExtractor()
-       result = extractor.calculate("path/to/pano.jpg")
-
-  2) 命令行：
-       python morph_metrics_extractor.py path/to/pano.jpg
-       python morph_metrics_extractor.py path/to/pano.jpg --fallback   # 强制纯 OpenCV
-
-【输出到哪里】
-  - 返回 dict / MorphMetrics；命令行默认打印 JSON，可用 -o 写出文件
-
-【技术路线】
-  - 优先 SegFormer (ADE20K) 做语义分割占比类指标
-  - 无 torch/transformers 或 --fallback 时，用 HSV 颜色启发式兜底（Demo 可用）
-================================================================================
-"""
-
-from __future__ import annotations
-
-import argparse
-import json
-import sys
-from pathlib import Path
-from typing import Any, Optional
-
-import cv2
+# ==========================================
+# 🌟 1. 强行修复 NumPy 别名兼容性问题（保持置顶）
 import numpy as np
-from PIL import Image
+np.bool = np.bool_
+# ==========================================
 
-# 允许从 code/ 根目录导入
-_ROOT = Path(__file__).resolve().parent
-if str(_ROOT) not in sys.path:
-    sys.path.insert(0, str(_ROOT))
+import os
+import cv2
+import mxnet as mx
+from mxnet import image
+import gluoncv
+from gluoncv.data.transforms.presets.segmentation import test_transform
+from gluoncv.utils.viz import get_color_pallete
+import pandas as pd
+from tqdm import tqdm
+import warnings
 
-from config import MORPH_LABELS_ZH, SEGFORMER_MODEL  # noqa: E402
-from schemas.models import MorphMetrics  # noqa: E402
+warnings.filterwarnings("ignore")
+
+# ----------------- 2. 配置与环境初始化 -----------------
+IMAGE_DIR = r"./resized_images"  # 存放你 2048*1024 街景图片的路径
+OUTPUT_DIR = r"./output_results"  # 处理结果根目录
+
+# 自动创建 3 个指定的输出存储子文件夹
+SEG_DIR = os.path.join(OUTPUT_DIR, "segmentation_results")  # 语义分割图
+EDGE_DIR = os.path.join(OUTPUT_DIR, "edge_density_maps")    # 计算边缘密度的边缘图
+SKYLINE_DIR = os.path.join(OUTPUT_DIR, "skyline_boundary_maps")  # 计算天际线变化率的边界图
+
+for path in [SEG_DIR, EDGE_DIR, SKYLINE_DIR]:
+    os.makedirs(path, exist_ok=True)
+
+# 设定使用 CPU
+ctx = mx.cpu()
+
+print("正在载入预训练语义分割模型...")
+model = gluoncv.model_zoo.get_model('deeplab_resnet101_citys', pretrained=True, ctx=ctx)
+print("模型载入成功！")
 
 
-# ADE20K 常用类别（SegFormer-ADE20K）
-ADE_SKY = 2
-ADE_BUILDING = 1
-ADE_TREE = 4
-ADE_GRASS = 9
-ADE_EARTH = 13
-ADE_ROAD = 6
-ADE_SIDEWALK = 11
-ADE_PERSON = 12
-ADE_CAR = 20
-ADE_WATER = 21
-ADE_FENCE = 32
-ADE_WALL = 0  # wall 在部分映射中为 0 需谨慎；用 isin 列表覆盖
-ADE_BUILT_IDS = [1, 6, 11, 20, 32, 43, 52, 61]  # building/road/sidewalk/car/fence/pillar/...
+# ----------------- 3. 各指标计算函数定义 -----------------
+
+def get_segmentation_and_save(img_path, img_name):
+    """
+    进行语义分割，保存分割结果图，并返回分割分类矩阵(H, W)
+    """
+    img = image.imread(img_path)
+    img_transformed = test_transform(img, ctx=ctx)
+    output = model.predict(img_transformed)
+    predict = mx.nd.squeeze(mx.nd.argmax(output, 1)).asnumpy().astype(np.uint8)
+    
+    # 自动上色并保存语义分割结果图
+    pred_palette = get_color_pallete(predict, 'citys')
+    # get_color_pallete 返回 Pillow 的调色板模式（P）图像；JPEG 不支持直接
+    # 保存 P 模式，因此统一转成 RGB，避免 "cannot write mode P as JPEG"。
+    pred_palette.convert("RGB").save(os.path.join(SEG_DIR, f"seg_{img_name}"))
+    
+    return predict
 
 
-class MorphMetricsExtractor:
-    """全景图形态要素一键提取器。"""
+def calculate_color_richness(img_path):
+    """
+    指标 5：色彩丰富度 (Color Richness, CR) 
+    """
+    img_bgr = cv2.imread(img_path)
+    img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+    h, s, v = cv2.split(img_hsv)
+    
+    # 过滤 S < 0.1 (OpenCV 中 S 范围 0-255，故 0.1 * 255 ≈ 25.5)
+    valid_mask = s >= 25
+    total_valid_pixels = np.sum(valid_mask)
+    
+    if total_valid_pixels == 0:
+        return 0.0
+        
+    valid_h = h[valid_mask]
+    K = 24
+    bin_edges = np.linspace(0, 180, K + 1)
+    hist, _ = np.histogram(valid_h, bins=bin_edges)
+    p_k = hist / total_valid_pixels
+    
+    tau = 0.005
+    N_color = np.sum(p_k >= tau)
+    cr = N_color / K
+    return float(cr)
 
-    def __init__(self, model_name: str = SEGFORMER_MODEL, force_fallback: bool = False):
-        self.model_name = model_name
-        self.force_fallback = force_fallback
-        self._processor = None
-        self._model = None
-        self._seg_ready = False
-        if not force_fallback:
-            self._try_load_segformer()
 
-    def _try_load_segformer(self) -> None:
-        try:
-            import torch
-            from transformers import SegformerForSemanticSegmentation, SegformerImageProcessor
+def calculate_edge_density_and_save(img_path, img_name):
+    """
+    指标 6：边缘密度 (Edge Density, ED)
+    """
+    img_bgr = cv2.imread(img_path)
+    gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    edges = cv2.Canny(blurred, 50, 150)
+    
+    # 保存边缘图
+    cv2.imwrite(os.path.join(EDGE_DIR, f"edge_{img_name}"), edges)
+    
+    n_edge = np.sum(edges > 0)
+    n_valid = edges.size  
+    edge_density = n_edge / n_valid
+    return float(edge_density)
 
-            self._torch = torch
-            self._processor = SegformerImageProcessor.from_pretrained(self.model_name)
-            self._model = SegformerForSemanticSegmentation.from_pretrained(self.model_name)
-            self._model.eval()
-            self._seg_ready = True
-            print(f"[MorphMetrics] SegFormer 已加载: {self.model_name}")
-        except Exception as e:
-            print(f"[MorphMetrics] SegFormer 不可用，将使用 OpenCV 启发式: {e}")
-            self._seg_ready = False
 
-    @staticmethod
-    def _imread_unicode(image_path: Path) -> Optional[np.ndarray]:
-        """兼容中文路径的 BGR 读取。"""
-        try:
-            pil_img = Image.open(image_path).convert("RGB")
-            rgb = np.array(pil_img)
-            return cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
-        except Exception:
-            data = np.fromfile(str(image_path), dtype=np.uint8)
-            return cv2.imdecode(data, cv2.IMREAD_COLOR)
-
-    # ------------------------------------------------------------------ #
-    # 公开接口
-    # ------------------------------------------------------------------ #
-    def calculate(self, image_path: str | Path) -> MorphMetrics:
-        """
-        输入: 全景图路径
-        输出: MorphMetrics（比例为 0~1，color_richness 为有效色数）
-        """
-        image_path = Path(image_path)
-        if not image_path.exists():
-            raise FileNotFoundError(image_path)
-
-        # Windows 下 cv2.imread 无法可靠处理中文路径，统一经 PIL 读取
-        img_bgr = self._imread_unicode(image_path)
-        if img_bgr is None:
-            raise ValueError(f"无法读取图像: {image_path}")
-
-        h, w = img_bgr.shape[:2]
-        total = float(h * w)
-
-        if self._seg_ready and not self.force_fallback:
-            sky_mask, green_mask, water_mask, built_mask = self._segment_masks(image_path, h, w)
+def calculate_skyline_and_save(predict, img_path, img_name):
+    """
+    指标 7：天际线变化率 (Skyline Variation Rate, SVR)
+    """
+    sky_mask = (predict == 10)
+    H, W = predict.shape
+    y_coords = np.zeros(W, dtype=np.int32)
+    
+    for x in range(W):
+        col = sky_mask[:, x]
+        sky_indices = np.where(col)[0]
+        if len(sky_indices) > 0:
+            y_coords[x] = sky_indices[-1] # 取该列天空最底部的 y 坐标作为边界
         else:
-            sky_mask, green_mask, water_mask, built_mask = self._heuristic_masks(img_bgr)
+            y_coords[x] = 0
+            
+    diff_sum = np.sum(np.abs(np.diff(y_coords)))
+    svr = (diff_sum / ((W - 1) * H)) * 100.0
+    
+    # 在原图上画出天际线并保存
+    img_bgr = cv2.imread(img_path)
+    for x in range(W - 1):
+        pt1 = (x, y_coords[x])
+        pt2 = (x + 1, y_coords[x+1])
+        cv2.line(img_bgr, pt1, pt2, (0, 0, 255), 3) 
+        
+    cv2.imwrite(os.path.join(SKYLINE_DIR, f"skyline_{img_name}"), img_bgr)
+    return float(svr)
 
-        sky_ratio = float(np.sum(sky_mask) / total)
-        green_ratio = float(np.sum(green_mask) / total)
-        blue_ratio = float(np.sum(water_mask) / total)
-        built_ratio = float(np.sum(built_mask) / total)
-        edge_density = self._edge_density(img_bgr)
-        color_richness = self._color_richness(img_bgr)
-        skyline_var = self._skyline_variance(sky_mask, h, w)
 
-        return MorphMetrics(
-            green_view=green_ratio,
-            blue_view=blue_ratio,
-            sky_view=sky_ratio,
-            built_ratio=built_ratio,
-            edge_density=edge_density,
-            color_richness=color_richness,
-            skyline_variance=skyline_var,
-        )
+# ----------------- 4. 批处理主循环流程 -----------------
 
-    def calculate_dict(self, image_path: str | Path, percent: bool = False) -> dict[str, Any]:
-        metrics = self.calculate(image_path)
-        if percent:
-            display = metrics.as_percent_display()
-            return {
-                MORPH_LABELS_ZH.get(k, k): display[k] for k in metrics.as_dict()
+def process_pipeline():
+    if not os.path.exists(IMAGE_DIR):
+        print(f"❌ 错误：配置的图像文件夹 {IMAGE_DIR} 不存在，请检查！")
+        return
+        
+    img_names = [f for f in os.listdir(IMAGE_DIR) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp'))]
+    if len(img_names) == 0:
+        print(f"⚠️ 警告：没有在 {IMAGE_DIR} 中找到有效图片。")
+        return
+
+    # 存储最终指标的记录列表
+    records = []
+
+    # 🌟 完整保留的 19 类分割标签字典
+    col_map = {
+        0: 'road', 1: 'sidewalk', 2: 'building', 3: 'wall', 4: 'fence', 5: 'pole', 6: 'traffic light',
+        7: 'traffic sign', 8: 'vegetation', 9: 'terrain', 10: 'sky', 11: 'person', 12: 'rider',
+        13: 'car', 14: 'truck', 15: 'bus', 16: 'train', 17: 'motorcycle', 18: 'bicycle'
+    }
+
+    print(f"\n🚀 开始处理全景街景图片，共找到 {len(img_names)} 张图像...")
+    
+    for img_name in tqdm(img_names, desc="街景图像多指标提取中"):
+        img_path = os.path.join(IMAGE_DIR, img_name)
+        
+        try:
+            # 1. 获取分割预测矩阵
+            predict = get_segmentation_and_save(img_path, img_name)
+            total_pixels = predict.size
+            
+            # 2. 🌟 核心保留：通过字典计算原始 19 类别的独立占比
+            raw_seg_results = {}
+            for class_id, class_name in col_map.items():
+                pixel_count = np.sum(predict == class_id)
+                raw_seg_results[class_name] = pixel_count / total_pixels
+            
+            # 3. 依据 19 类占比，精确计算前 4 项形态指标
+            # [指标 1] 绿视率 = vegetation + terrain
+            green_rate = raw_seg_results['vegetation'] + raw_seg_results['terrain']
+            
+            # [指标 2] 蓝视率 (Cityscapes默认无水体分类，保留 0.0)
+            blue_rate = 0.0 
+            
+            # [指标 3] 人造物占比 (道路+人行道+建筑+墙+篱笆+杆+红绿灯+指示牌+所有交通工具)
+            built_rate = (
+                raw_seg_results['building'] + raw_seg_results['road'] + raw_seg_results['sidewalk'] +
+                raw_seg_results['wall'] + raw_seg_results['fence'] + raw_seg_results['pole'] +
+                raw_seg_results['traffic light'] + raw_seg_results['traffic sign'] +
+                raw_seg_results['car'] + raw_seg_results['truck'] + raw_seg_results['bus'] +
+                raw_seg_results['train'] + raw_seg_results['motorcycle'] + raw_seg_results['bicycle']
+            )
+            
+            # [指标 4] 天空可视率
+            sky_rate = raw_seg_results['sky']
+            
+            # [指标 5] 色彩丰富度 (自定义 HSV 算法)
+            color_richness = calculate_color_richness(img_path)
+            
+            # [指标 6] 边缘密度 (Canny 算法提取)
+            edge_density = calculate_edge_density_and_save(img_path, img_name)
+            
+            # [指标 7] 天际线变化率
+            svr = calculate_skyline_and_save(predict, img_path, img_name)
+            
+            # 4. 整合 19 类详细占比 + 7 项核心评估指标
+            record = {
+                "图像名称": img_name,
+                # --- 7项综合指标 ---
+                "综合-绿视率(GVI)": f"{green_rate:.4%}",
+                "综合-蓝视率(BVI)": f"{blue_rate:.4%}",
+                "综合-人造物占比": f"{built_rate:.4%}",
+                "综合-天空可视率": f"{sky_rate:.4%}",
+                "综合-色彩丰富度(CR)": f"{color_richness:.4f}",
+                "综合-边缘密度(ED)": f"{edge_density:.4%}",
+                "综合-天际线变化率(SVR)": f"{svr:.4f}%"
             }
-        return metrics.as_dict()
+            
+            # --- 19类原始分割细分指标（格式化为百分比存入） ---
+            for class_name, ratio in raw_seg_results.items():
+                record[f"原始-{class_name}"] = f"{ratio:.4%}"
+                
+            records.append(record)
+            
+        except Exception as e:
+            print(f"\n❌ 图片 {img_name} 处理出错，跳过。错误原因: {e}")
+            continue
 
-    # ------------------------------------------------------------------ #
-    # SegFormer 分割
-    # ------------------------------------------------------------------ #
-    def _segment_masks(self, image_path: Path, h: int, w: int):
-        torch = self._torch
-        pil_img = Image.open(image_path).convert("RGB")
-        inputs = self._processor(images=pil_img, return_tensors="pt")
-        with torch.no_grad():
-            outputs = self._model(**inputs)
-        logits = outputs.logits
-        upsampled = torch.nn.functional.interpolate(
-            logits, size=(h, w), mode="bilinear", align_corners=False
-        )
-        seg = upsampled.argmax(dim=1)[0].cpu().numpy()
-
-        sky_mask = seg == ADE_SKY
-        green_mask = (seg == ADE_TREE) | (seg == ADE_GRASS) | (seg == ADE_EARTH)
-        # plant / palm 等若存在：ADE20K plant=17
-        green_mask = green_mask | (seg == 17)
-        water_mask = (seg == ADE_WATER) | (seg == 26) | (seg == 60)  # water / sea / river-ish
-        built_mask = np.isin(seg, ADE_BUILT_IDS) | (seg == 0)  # wall often 0 in ADE
-        return sky_mask, green_mask, water_mask, built_mask
-
-    # ------------------------------------------------------------------ #
-    # OpenCV 启发式（无模型时 Demo 兜底）
-    # ------------------------------------------------------------------ #
-    def _heuristic_masks(self, img_bgr: np.ndarray):
-        hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
-        h, w = img_bgr.shape[:2]
-
-        # 天空：上半部高亮低饱和偏蓝
-        upper = np.zeros((h, w), dtype=bool)
-        upper[: h // 2, :] = True
-        sky = (
-            upper
-            & (hsv[:, :, 2] > 140)
-            & (hsv[:, :, 1] < 80)
-            & ((hsv[:, :, 0] < 30) | (hsv[:, :, 0] > 90))
-        )
-
-        # 绿色植被
-        green = (hsv[:, :, 0] >= 35) & (hsv[:, :, 0] <= 95) & (hsv[:, :, 1] > 40) & (hsv[:, :, 2] > 40)
-
-        # 水体偏蓝
-        water = (hsv[:, :, 0] >= 90) & (hsv[:, :, 0] <= 130) & (hsv[:, :, 1] > 50) & (hsv[:, :, 2] > 50)
-
-        # 人造物粗估：非天空非绿非水
-        built = ~(sky | green | water)
-        return sky, green, water, built
-
-    @staticmethod
-    def _edge_density(img_bgr: np.ndarray) -> float:
-        gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
-        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-        edges = cv2.Canny(blurred, 50, 150)
-        return float(np.sum(edges > 0) / edges.size)
-
-    @staticmethod
-    def _color_richness(img_bgr: np.ndarray) -> float:
-        """HSV 色相熵 → 有效色彩数量 N_effective = exp(H)"""
-        hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
-        h_ch, s_ch, v_ch = hsv[:, :, 0], hsv[:, :, 1], hsv[:, :, 2]
-        valid = (s_ch > 25) & (v_ch > 25)
-        valid_h = h_ch[valid]
-        if valid_h.size == 0:
-            return 1.0
-        counts, _ = np.histogram(valid_h, bins=24, range=(0, 180))
-        # 仅保留占比 >= 0.5% 的色相参与熵（与指标表一致）
-        probs = counts.astype(np.float64) / valid_h.size
-        probs = probs[probs >= 0.005]
-        if probs.size == 0:
-            return 1.0
-        probs = probs / probs.sum()
-        entropy = -np.sum(probs * np.log(probs + 1e-12))
-        return float(np.exp(entropy))
-
-    @staticmethod
-    def _skyline_variance(sky_mask: np.ndarray, h: int, w: int) -> float:
-        """SVR = sum(|y_{x+1}-y_x|) / ((W-1)*H)"""
-        ys = []
-        for col in range(w):
-            idxs = np.where(sky_mask[:, col])[0]
-            ys.append(int(idxs[-1]) if len(idxs) else h)
-        ys = np.asarray(ys, dtype=np.float64)
-        diffs = np.abs(np.diff(ys))
-        return float(np.sum(diffs) / ((w - 1) * h)) if w > 1 else 0.0
-
-
-def main():
-    parser = argparse.ArgumentParser(description="全景图形态要素解析工具")
-    parser.add_argument("image", help="全景 JPG/PNG 路径")
-    parser.add_argument("--fallback", action="store_true", help="强制使用 OpenCV 启发式")
-    parser.add_argument("-o", "--output", help="将 JSON 结果写入该文件")
-    parser.add_argument("--percent", action="store_true", help="以百分比中文标签输出")
-    args = parser.parse_args()
-
-    extractor = MorphMetricsExtractor(force_fallback=args.fallback)
-    result = extractor.calculate_dict(args.image, percent=args.percent)
-    text = json.dumps(result, ensure_ascii=False, indent=2)
-    print(text)
-    if args.output:
-        Path(args.output).write_text(text, encoding="utf-8")
-        print(f"已写入: {args.output}")
-
+    # ----------------- 5. 输出写入 Excel -----------------
+    df_results = pd.DataFrame(records)
+    excel_output_path = os.path.join(OUTPUT_DIR, "metrics_results.xlsx")
+    df_results.to_excel(excel_output_path, index=False)
+    
+    print("\n" + "="*50)
+    print("🎉 处理完成！")
+    print(f"📊 包含 19类细分占比 与 7项指标 的 Excel 结果已保存至: {excel_output_path}")
+    print(f"📂 分割结果图、边缘密度图、天际线图分别存储在 {OUTPUT_DIR} 下。")
+    print("="*50)
 
 if __name__ == "__main__":
-    main()
+    process_pipeline()
