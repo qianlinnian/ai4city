@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
@@ -36,25 +36,32 @@ from config import UPLOAD_DIR
 from morph_metrics_extractor import MorphMetricsExtractor
 from pipeline.orchestrator import PipelineOrchestrator
 
-app = FastAPI(title="Micro-Space Multi-Agent API", version="0.2.0")
+app = FastAPI(title="Micro-Space Multi-Agent API", version="0.3.0")
 pipe = PipelineOrchestrator(force_metrics_fallback=True)
 extractor = MorphMetricsExtractor(force_fallback=True)
 SESSIONS: dict[str, dict] = {}
 
 
 class ExperienceIn(BaseModel):
-    comfort: float = 4
-    restoration: float = 5
-    safety: float = 3
-    pleasure: float = 4
-    stay: float = 4
+    model_config = ConfigDict(extra="forbid")
+
+    comfort: float = Field(..., ge=1, le=5)
+    naturalness: float = Field(..., ge=1, le=5)
+    safety: float = Field(..., ge=1, le=5)
+    relaxation: float = Field(..., ge=1, le=5)
+    environmental_disturbance: float = Field(..., ge=1, le=5)
+    stay_intention: float = Field(..., ge=1, le=5)
+    overall_impression: float = Field(..., ge=1, le=5)
 
 
 class SceneContextIn(BaseModel):
-    location_type: str = ""
-    time_of_day: str = ""
-    weather: str = ""
-    crowd_level: str = ""
+    observation_time: str = ""
+    observation_weather: str = ""
+    people_flow: str = ""
+    space_type: str = ""
+    sound_type: str = ""
+    maintenance_status: str = ""
+    traffic_flow: str = ""
     description: str = ""
 
 
@@ -66,6 +73,7 @@ class StartSessionIn(BaseModel):
 class RunTranslatorIn(BaseModel):
     session_id: str
     experience_targets: ExperienceIn
+    experience_records: Optional[list[dict[str, Any]]] = None
     experience_baseline: Optional[dict[str, float]] = None
 
 
@@ -99,7 +107,7 @@ class MemoryIn(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"ok": True, "version": "0.2.0"}
+    return {"ok": True, "version": "0.3.0"}
 
 
 @app.post("/extract_metrics")
@@ -143,6 +151,7 @@ def pipeline_run_translator(body: RunTranslatorIn):
     state = pipe.run_translator(
         state,
         body.experience_targets.model_dump(),
+        experience_records=body.experience_records,
         experience_baseline=body.experience_baseline,
     )
     SESSIONS[body.session_id] = state
@@ -227,8 +236,24 @@ async def pipeline_start_legacy(
     state = pipe.start_session(path)
     state = pipe.run_translator(
         state,
-        {"comfort": comfort, "restoration": restoration, "safety": safety,
-         "pleasure": pleasure, "stay": stay},
+        {
+            "comfort": comfort,
+            "naturalness": 3,
+            "restoration": restoration,
+            "safety": safety,
+            "environmental_disturbance": 3,
+            "pleasure": pleasure,
+            "stay": stay,
+        },
+        experience_baseline={
+            "comfort": 3,
+            "naturalness": 3,
+            "safety": 3,
+            "relaxation": 3,
+            "environmental_disturbance": 3,
+            "stay_intention": 3,
+            "overall_impression": 3,
+        },
     )
     SESSIONS[state["session_id"]] = state
     return state

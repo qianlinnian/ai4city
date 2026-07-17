@@ -12,6 +12,8 @@ from schemas.models import (
     PersonExperience,
     QualityReport,
     SceneContext,
+    SpatialObjectAction,
+    TranslationEvidence,
     # deprecated
     DesignIntent,
     MorphAdjustment,
@@ -30,6 +32,8 @@ __all__ = [
     "PersonExperience",
     "QualityReport",
     "SceneContext",
+    "SpatialObjectAction",
+    "TranslationEvidence",
     "DesignIntent",
     "MorphAdjustment",
     "PromptDraft",

@@ -11,8 +11,8 @@
   2. 蓝视率 blue_view
   3. 天空可视率 sky_view
   4. 人造物占比 built_ratio
-  5. 边缘密度 edge_density
-  6. 有效色彩数量 color_richness
+  5. 色彩丰富度 color_richness
+  6. 边缘密度 edge_density
   7. 天际线变化率 skyline_variance
 
 【怎么调用】
