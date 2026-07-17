@@ -1,0 +1,162 @@
+{
+  "session_id": "5e079e05d220432eb043a58435948623",
+  "created_at": "2026-07-16T17:38:50.153974",
+  "image_path": "example.jpg",
+  "scene_context": {
+    "location_type": "高密度街巷",
+    "time_of_day": "午后",
+    "weather": "",
+    "crowd_level": "",
+    "description": ""
+  },
+  "scene_context_text": "空间类型: 高密度街巷；时段: 午后",
+  "pre_edit_experience": [],
+  "experience_baseline": {
+    "comfort": 3.0,
+    "restoration": 3.0,
+    "safety": 3.0,
+    "pleasure": 3.0,
+    "stay": 3.0
+  },
+  "experience_targets": {
+    "comfort": 4.0,
+    "restoration": 5.0,
+    "safety": 3.0,
+    "pleasure": 4.0,
+    "stay": 4.0
+  },
+  "baseline_metrics": {
+    "green_view": 0.15028235541449653,
+    "blue_view": 0.20986887613932292,
+    "sky_view": 0.13373843722873263,
+    "built_ratio": 0.5527170138888889,
+    "edge_density": 0.059593912760416666,
+    "color_richness": 6.381833307721844,
+    "skyline_variance": 0.018600681783652387
+  },
+  "morph_translation": {
+    "baseline_metrics": {
+      "green_view": 0.15028235541449653,
+      "blue_view": 0.20986887613932292,
+      "sky_view": 0.13373843722873263,
+      "built_ratio": 0.5527170138888889,
+      "edge_density": 0.059593912760416666,
+      "color_richness": 6.381833307721844,
+      "skyline_variance": 0.018600681783652387
+    },
+    "target_metrics": {
+      "green_view": 0.36399940212348086,
+      "blue_view": 0.17849800829752605,
+      "sky_view": 0.12303781939344616,
+      "built_ratio": 0.5018483613888889,
+      "edge_density": 0.03932500559895833,
+      "color_richness": 7.75228331540529,
+      "skyline_variance": 0.025134217767019622
+    },
+    "delta_from_baseline": {
+      "green_view": 0.2137,
+      "blue_view": -0.0314,
+      "sky_view": -0.0107,
+      "built_ratio": -0.0509,
+      "edge_density": -0.0203,
+      "color_richness": 1.3705,
+      "skyline_variance": 0.0065
+    },
+    "experience_baseline": {
+      "comfort": 3.0,
+      "restoration": 3.0,
+      "safety": 3.0,
+      "pleasure": 3.0,
+      "stay": 3.0
+    },
+    "experience_targets": {
+      "comfort": 4.0,
+      "restoration": 5.0,
+      "safety": 3.0,
+      "pleasure": 4.0,
+      "stay": 4.0
+    },
+    "experience_delta": {
+      "comfort": 1.0,
+      "restoration": 2.0,
+      "safety": 0.0,
+      "pleasure": 1.0,
+      "stay": 1.0
+    },
+    "rationale": "依据体验变化（舒适度3.0→4.0、恢复感3.0→5.0、愉悦感3.0→4.0、可停留意愿3.0→4.0）与环境心理学映射规则，建议形态目标：绿视率目标0.36, 天空可视率目标0.12, 人造物占比目标0.50。",
+    "references_used": [
+      "seed-demo-001",
+      "00c1d543-b5e1-480f-a410-3e20b8a1a9ec"
+    ],
+    "learning_applied": false
+  },
+  "confirmed_target_metrics": {
+    "green_view": 0.36399940212348086,
+    "blue_view": 0.17849800829752605,
+    "sky_view": 0.12303781939344616,
+    "built_ratio": 0.5018483613888889,
+    "edge_density": 0.03932500559895833,
+    "color_richness": 7.75228331540529,
+    "skyline_variance": 0.025134217767019622
+  },
+  "modification_plan": {
+    "draft_text": "Edit this equirectangular 360-degree urban micro-space panorama while preserving overall geometry and camera viewpoint. Apply: 提升绿视率（0.15→0.36）. Apply: 降低蓝视率（0.21→0.18）. Apply: 降低人造物占比（0.55→0.50）. Apply: 降低边缘密度（0.06→0.04）. Apply: 提升有效色彩数量（6.38→7.75）. Apply: 提高前景灌木与中景乔木围合，形成自然庇护感. Apply: 降低硬质界面压迫，增加柔和材质与遮阴. Apply: 增加花色层次与水体/反射点缀，丰富视觉趣味. Apply: 强化可坐停留节点与边界绿化，形成停留锚点. Increase green view from about 15% toward 36% with layered shrubs and climbing plants on walls. Soften hard paved surfaces with permeable materials and add wooden seating edges. Add seasonal flowering shrubs in the mid-ground for richer color layers. Maintain photorealistic lighting, clean edges, and physically plausible materials. Do not invent new buildings or change road topology drastically.",
+    "language": "en",
+    "rationale": "依据形态目标变化（绿视率 0.15→0.36, 蓝视率 0.21→0.18, 天空可视率 0.13→0.12, 人造物占比 0.55→0.50, 边缘密度 0.06→0.04, 有效色彩数量 6.38→7.75）与体验侧重（舒适度、恢复感、愉悦感、可停留意愿）生成文生图修改方案。",
+    "layout_hints": [
+      "提升绿视率（0.15→0.36）",
+      "降低蓝视率（0.21→0.18）",
+      "降低人造物占比（0.55→0.50）",
+      "降低边缘密度（0.06→0.04）",
+      "提升有效色彩数量（6.38→7.75）",
+      "提高前景灌木与中景乔木围合，形成自然庇护感",
+      "降低硬质界面压迫，增加柔和材质与遮阴",
+      "增加花色层次与水体/反射点缀，丰富视觉趣味",
+      "强化可坐停留节点与边界绿化，形成停留锚点"
+    ]
+  },
+  "final_prompt": "Edit this equirectangular 360-degree urban micro-space panorama while preserving overall geometry and camera viewpoint. Apply: 提升绿视率（0.15→0.36）. Apply: 降低蓝视率（0.21→0.18）. Apply: 降低人造物占比（0.55→0.50）. Apply: 降低边缘密度（0.06→0.04）. Apply: 提升有效色彩数量（6.38→7.75）. Apply: 提高前景灌木与中景乔木围合，形成自然庇护感. Apply: 降低硬质界面压迫，增加柔和材质与遮阴. Apply: 增加花色层次与水体/反射点缀，丰富视觉趣味. Apply: 强化可坐停留节点与边界绿化，形成停留锚点. Increase green view from about 15% toward 36% with layered shrubs and climbing plants on walls. Soften hard paved surfaces with permeable materials and add wooden seating edges. Add seasonal flowering shrubs in the mid-ground for richer color layers. Maintain photorealistic lighting, clean edges, and physically plausible materials. Do not invent new buildings or change road topology drastically.",
+  "generation": {
+    "output_image_path": "D:\\GitHubZY\\ai4city\\outputs\\images\\pano_edit_20260716_173850_333120.jpg",
+    "prompt_used": "Edit this equirectangular 360-degree urban micro-space panorama while preserving overall geometry and camera viewpoint. Apply: 提升绿视率（0.15→0.36）. Apply: 降低蓝视率（0.21→0.18）. Apply: 降低人造物占比（0.55→0.50）. Apply: 降低边缘密度（0.06→0.04）. Apply: 提升有效色彩数量（6.38→7.75）. Apply: 提高前景灌木与中景乔木围合，形成自然庇护感. Apply: 降低硬质界面压迫，增加柔和材质与遮阴. Apply: 增加花色层次与水体/反射点缀，丰富视觉趣味. Apply: 强化可坐停留节点与边界绿化，形成停留锚点. Increase green view from about 15% toward 36% with layered shrubs and climbing plants on walls. Soften hard paved surfaces with permeable materials and add wooden seating edges. Add seasonal flowering shrubs in the mid-ground for richer color layers. Maintain photorealistic lighting, clean edges, and physically plausible materials. Do not invent new buildings or change road topology drastically.",
+    "mock": true,
+    "raw": {
+      "mode": "mock",
+      "note": "未配置 WORLDLABS_API_KEY 或 API 失败，已生成本地模拟图"
+    }
+  },
+  "quality_report": {
+    "measured_metrics": {
+      "green_view": 0.3968283420138889,
+      "blue_view": 0.15834191216362847,
+      "sky_view": 0.059023234049479165,
+      "built_ratio": 0.44163028293185763,
+      "edge_density": 0.050927361382378473,
+      "color_richness": 10.00478907805297,
+      "skyline_variance": 0.016925625081390807
+    },
+    "target_metrics": {
+      "green_view": 0.36399940212348086,
+      "blue_view": 0.17849800829752605,
+      "sky_view": 0.12303781939344616,
+      "built_ratio": 0.5018483613888889,
+      "edge_density": 0.03932500559895833,
+      "color_richness": 7.75228331540529,
+      "skyline_variance": 0.025134217767019622
+    },
+    "deviations": {
+      "green_view": 0.0328,
+      "blue_view": -0.0202,
+      "sky_view": -0.064,
+      "built_ratio": -0.0602,
+      "edge_density": 0.0116,
+      "color_richness": 2.2525,
+      "skyline_variance": -0.0082
+    },
+    "passed": false,
+    "details": "未达标: 天空可视率 偏差 -0.064（阈值±0.06）; 有效色彩数量 偏差 +2.253（阈值±1.5）"
+  },
+  "post_edit_experience": [],
+  "memory_id": "f39958e2-c2e5-48c8-99d5-e3bab3eebeac",
+  "stage": "done"
+}
