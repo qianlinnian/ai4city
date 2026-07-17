@@ -1,0 +1,94 @@
+{
+  "version": "task2-3-v1",
+  "description": "由仓库 data/p1.jpg、data/p2.jpg 的 fallback 图像指标和 runs/local-images 历史启发式评分整理的基础 RAG 示例。它们仅用于框架演示，不是专家实测或因果结论。",
+  "records": [
+    {
+      "id": "seed-local-p1",
+      "source": "data/p1.jpg + runs/local-images/artifacts/06_ai_scoring.json",
+      "evidence_level": "synthetic_seed_from_local_heuristics",
+      "derivation_note": "对 p1 的18个历史情境评分取均值；naturalness←biophilia，relaxation←restoration，overall_impression←pleasure，environmental_disturbance←6-stimulation。",
+      "scene_context": "community_green；平均时段与人流情境",
+      "experience_baseline": {
+        "comfort": 2.944,
+        "naturalness": 3.158,
+        "safety": 2.785,
+        "relaxation": 3.05,
+        "environmental_disturbance": 3.038,
+        "stay_intention": 2.996,
+        "overall_impression": 2.959
+      },
+      "experience_targets": {
+        "comfort": 4.0,
+        "naturalness": 4.2,
+        "safety": 4.0,
+        "relaxation": 4.2,
+        "environmental_disturbance": 2.0,
+        "stay_intention": 4.0,
+        "overall_impression": 4.0
+      },
+      "baseline_metrics": {
+        "green_view": 0.266714,
+        "blue_view": 0.184028,
+        "sky_view": 0.170255,
+        "built_ratio": 0.463954,
+        "edge_density": 0.079822,
+        "color_richness": 10.007253,
+        "skyline_variance": 0.008019
+      },
+      "target_metrics": {
+        "green_view": 0.463174,
+        "blue_view": 0.211153,
+        "sky_view": 0.21771,
+        "built_ratio": 0.357279,
+        "edge_density": 0.02,
+        "color_richness": 10.567253,
+        "skyline_variance": 0.008601
+      },
+      "modification_plan": "增加连续复层绿化和遮阴，在保持道路与建筑结构不变的前提下整合杂乱设施，打开主要视线通廊并补充可停留节点。"
+    },
+    {
+      "id": "seed-local-p2",
+      "source": "data/p2.jpg + runs/local-images/artifacts/06_ai_scoring.json",
+      "evidence_level": "synthetic_seed_from_local_heuristics",
+      "derivation_note": "对 p2 的18个历史情境评分取均值；naturalness←biophilia，relaxation←restoration，overall_impression←pleasure，environmental_disturbance←6-stimulation。",
+      "scene_context": "urban_park_lawn；平均时段与人流情境",
+      "experience_baseline": {
+        "comfort": 3.043,
+        "naturalness": 3.383,
+        "safety": 2.957,
+        "relaxation": 3.244,
+        "environmental_disturbance": 2.904,
+        "stay_intention": 3.175,
+        "overall_impression": 3.133
+      },
+      "experience_targets": {
+        "comfort": 4.0,
+        "naturalness": 4.2,
+        "safety": 4.0,
+        "relaxation": 4.2,
+        "environmental_disturbance": 1.8,
+        "stay_intention": 4.0,
+        "overall_impression": 4.1
+      },
+      "baseline_metrics": {
+        "green_view": 0.107043,
+        "blue_view": 0.168595,
+        "sky_view": 0.275814,
+        "built_ratio": 0.517279,
+        "edge_density": 0.033129,
+        "color_richness": 5.720346,
+        "skyline_variance": 0.005463
+      },
+      "target_metrics": {
+        "green_view": 0.276888,
+        "blue_view": 0.19116,
+        "sky_view": 0.318044,
+        "built_ratio": 0.421369,
+        "edge_density": 0.02,
+        "color_richness": 6.157596,
+        "skyline_variance": 0.005852
+      },
+      "modification_plan": "在草坪边缘与硬质界面补充乔灌草层次，增设适量遮阴和停留设施，清理视觉噪声并保持开敞视野。"
+    }
+  ]
+}

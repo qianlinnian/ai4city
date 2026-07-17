@@ -191,8 +191,24 @@ def run_learning_record(**kwargs) -> LearningFeedback:
 if __name__ == "__main__":
     agent = LearningAgent()
     fb = agent.record_translation_feedback(
-        experience_baseline={"comfort": 3, "restoration": 3, "safety": 3, "pleasure": 3, "stay": 3},
-        experience_targets={"comfort": 4, "restoration": 5, "safety": 3, "pleasure": 4, "stay": 4},
+        experience_baseline={
+            "comfort": 3,
+            "naturalness": 3,
+            "safety": 3,
+            "relaxation": 3,
+            "environmental_disturbance": 3,
+            "stay_intention": 3,
+            "overall_impression": 3,
+        },
+        experience_targets={
+            "comfort": 4,
+            "naturalness": 4,
+            "safety": 4,
+            "relaxation": 4,
+            "environmental_disturbance": 2,
+            "stay_intention": 4,
+            "overall_impression": 4,
+        },
         predicted_target_metrics={"green_view": 0.30},
         human_corrected_metrics={"green_view": 0.35},
         notes="demo",

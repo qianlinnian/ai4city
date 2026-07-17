@@ -1,0 +1,186 @@
+{
+  "dataset_name": "bluegreen_01_03_task2_3_mock",
+  "data_status": "临时模拟数据，仅用于打通 Task 2、Task 3、Task 4，不得作为真实VR实测结果",
+  "metric_order": {
+    "morphology": [
+      "green_view",
+      "blue_view",
+      "sky_view",
+      "built_ratio",
+      "color_richness",
+      "edge_density",
+      "skyline_variance"
+    ],
+    "experience": [
+      "comfort",
+      "naturalness",
+      "safety",
+      "relaxation",
+      "environmental_disturbance",
+      "stay_intention",
+      "overall_impression"
+    ]
+  },
+  "provenance": {
+    "baseline_morphology": "从对应全景JPG使用 MorphMetricsExtractor 的 OpenCV fallback 计算",
+    "experience_baseline": "根据图像与情景要素人为编造的联调值",
+    "experience_targets": "人为设定的蓝绿空间优化目标",
+    "normalization": "进入流程前按当前 MORPH_BOUNDS 归一化；色彩丰富度最大12，边缘密度最小0.02",
+    "known_limitation": "fallback 的 blue_view 可能把蓝色天空或蓝色店招识别为水体，只用于临时联调"
+  },
+  "records": [
+    {
+      "scene_id": "蓝绿-01",
+      "image_name": "VID_20260709_164915_00_114",
+      "original_image_path": "D:\\course\\ai4city-data\\蓝绿\\VID_20260709_164915_00_114_2026-07-16_14-22-01_截图.jpg",
+      "scene_context": {
+        "observation_time": "晚",
+        "observation_weather": "32℃",
+        "people_flow": "5",
+        "space_type": "社区",
+        "sound_type": "交通机械声",
+        "maintenance_status": "1",
+        "traffic_flow": "4"
+      },
+      "scene_context_text": "观测时间: 晚；观测天气: 32℃；人流量: 5；空间类型: 社区；声音类型: 交通机械声；管理维护状态: 1；交通流量: 4",
+      "raw_computed_metrics": {
+        "green_view": 0.034568,
+        "blue_view": 0.197432,
+        "sky_view": 0.286875,
+        "built_ratio": 0.603081,
+        "color_richness": 5.021327,
+        "edge_density": 0.017243,
+        "skyline_variance": 0.005762
+      },
+      "baseline_metrics": {
+        "green_view": 0.034568,
+        "blue_view": 0.197432,
+        "sky_view": 0.286875,
+        "built_ratio": 0.603081,
+        "color_richness": 5.021327,
+        "edge_density": 0.02,
+        "skyline_variance": 0.005762
+      },
+      "experience_baseline": {
+        "comfort": 2.4,
+        "naturalness": 1.9,
+        "safety": 2.8,
+        "relaxation": 2.1,
+        "environmental_disturbance": 4.2,
+        "stay_intention": 2.2,
+        "overall_impression": 2.4
+      },
+      "experience_targets": {
+        "comfort": 4.1,
+        "naturalness": 4.0,
+        "safety": 4.0,
+        "relaxation": 4.0,
+        "environmental_disturbance": 2.0,
+        "stay_intention": 4.0,
+        "overall_impression": 4.1
+      }
+    },
+    {
+      "scene_id": "蓝绿-02",
+      "image_name": "VID_20260709_165325_00_117",
+      "original_image_path": "D:\\course\\ai4city-data\\蓝绿\\VID_20260709_165325_00_117_2026-07-16_14-22-21_截图.jpg",
+      "scene_context": {
+        "observation_time": "晚",
+        "observation_weather": "32℃",
+        "people_flow": "4",
+        "space_type": "社区",
+        "sound_type": "交通机械声",
+        "maintenance_status": "1",
+        "traffic_flow": "4"
+      },
+      "scene_context_text": "观测时间: 晚；观测天气: 32℃；人流量: 4；空间类型: 社区；声音类型: 交通机械声；管理维护状态: 1；交通流量: 4",
+      "raw_computed_metrics": {
+        "green_view": 0.146381,
+        "blue_view": 0.028648,
+        "sky_view": 0.115336,
+        "built_ratio": 0.716602,
+        "color_richness": 14.652424,
+        "edge_density": 0.024346,
+        "skyline_variance": 0.006891
+      },
+      "baseline_metrics": {
+        "green_view": 0.146381,
+        "blue_view": 0.028648,
+        "sky_view": 0.115336,
+        "built_ratio": 0.716602,
+        "color_richness": 12.0,
+        "edge_density": 0.024346,
+        "skyline_variance": 0.006891
+      },
+      "experience_baseline": {
+        "comfort": 2.8,
+        "naturalness": 3.0,
+        "safety": 2.7,
+        "relaxation": 2.8,
+        "environmental_disturbance": 3.9,
+        "stay_intention": 2.7,
+        "overall_impression": 2.8
+      },
+      "experience_targets": {
+        "comfort": 4.2,
+        "naturalness": 4.2,
+        "safety": 4.0,
+        "relaxation": 4.2,
+        "environmental_disturbance": 2.0,
+        "stay_intention": 4.1,
+        "overall_impression": 4.2
+      }
+    },
+    {
+      "scene_id": "蓝绿-03",
+      "image_name": "VID_20260709_165516_00_118",
+      "original_image_path": "D:\\course\\ai4city-data\\蓝绿\\VID_20260709_165516_00_118_2026-07-16_14-22-42_截图.jpg",
+      "scene_context": {
+        "observation_time": "晚",
+        "observation_weather": "32℃",
+        "people_flow": "2",
+        "space_type": "社区",
+        "sound_type": "混合声",
+        "maintenance_status": "1",
+        "traffic_flow": "3"
+      },
+      "scene_context_text": "观测时间: 晚；观测天气: 32℃；人流量: 2；空间类型: 社区；声音类型: 混合声；管理维护状态: 1；交通流量: 3",
+      "raw_computed_metrics": {
+        "green_view": 0.05139,
+        "blue_view": 0.094197,
+        "sky_view": 0.272354,
+        "built_ratio": 0.634838,
+        "color_richness": 8.089285,
+        "edge_density": 0.014745,
+        "skyline_variance": 0.00573
+      },
+      "baseline_metrics": {
+        "green_view": 0.05139,
+        "blue_view": 0.094197,
+        "sky_view": 0.272354,
+        "built_ratio": 0.634838,
+        "color_richness": 8.089285,
+        "edge_density": 0.02,
+        "skyline_variance": 0.00573
+      },
+      "experience_baseline": {
+        "comfort": 2.8,
+        "naturalness": 2.5,
+        "safety": 3.2,
+        "relaxation": 2.7,
+        "environmental_disturbance": 3.3,
+        "stay_intention": 2.8,
+        "overall_impression": 2.9
+      },
+      "experience_targets": {
+        "comfort": 4.0,
+        "naturalness": 4.0,
+        "safety": 4.1,
+        "relaxation": 4.0,
+        "environmental_disturbance": 2.0,
+        "stay_intention": 4.0,
+        "overall_impression": 4.1
+      }
+    }
+  ]
+}
