@@ -57,6 +57,30 @@ def use_mock_worldlabs() -> bool:
     return not bool(WORLDLABS_API_KEY)
 
 
+# ---------- 豆包 Seedream（火山方舟图生图）----------
+SEEDREAM_API_KEY = os.getenv("SEEDREAM_API_KEY", os.getenv("ARK_API_KEY", "")).strip()
+SEEDREAM_BASE_URL = os.getenv(
+    "SEEDREAM_BASE_URL", "https://ark.cn-beijing.volces.com"
+).rstrip("/")
+SEEDREAM_MODEL = os.getenv("SEEDREAM_MODEL", "doubao-seedream-5-0-260128").strip()
+# 2K / 3K / 4K / 2048x1024 / auto（auto=按原图比例估算）
+SEEDREAM_SIZE = os.getenv("SEEDREAM_SIZE", "2K").strip()
+SEEDREAM_RESPONSE_FORMAT = os.getenv("SEEDREAM_RESPONSE_FORMAT", "url").strip()
+SEEDREAM_WATERMARK = os.getenv("SEEDREAM_WATERMARK", "false").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+)
+
+
+def use_mock_seedream() -> bool:
+    if RUN_MODE == "mock":
+        return True
+    if RUN_MODE == "live":
+        return False
+    return not bool(SEEDREAM_API_KEY)
+
+
 # ---------- 体验感受旋钮（Step1 / 翻译官输入）----------
 EXPERIENCE_KEYS = [
     "comfort",       # 舒适度
@@ -106,5 +130,13 @@ MORPH_BOUNDS = {
     "skyline_variance": (0.005, 0.15),
 }
 
-# SegFormer 模型（形态要素解析）
-SEGFORMER_MODEL = "nvidia/segformer-b0-finetuned-ade20k"
+# 语义分割后端：auto | gluoncv | segformer | fallback
+# auto 优先 GluonCV（文章方案），不可用时回退 SegFormer，再回退 OpenCV
+MORPH_SEG_BACKEND = os.getenv("MORPH_SEG_BACKEND", "auto").lower()
+
+# GluonCV DeepLabV3（腾讯云文章方案，需 Python 3.8/3.9 + mxnet）
+# 可选: deeplab_resnet101_ade | deeplab_resnet101_citys
+GLUONCV_MODEL = os.getenv("GLUONCV_MODEL", "deeplab_resnet101_ade")
+
+# SegFormer（现代 Windows / Python 3.10+ 推荐）
+SEGFORMER_MODEL = os.getenv("SEGFORMER_MODEL", "nvidia/segformer-b0-finetuned-ade-512-512")
