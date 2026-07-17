@@ -6,6 +6,7 @@ from agents.translator_agent import TranslatorAgent
 from agents.cartographer_agent import CartographerAgent
 from agents.learning_agent import LearningAgent
 from agents.worldlabs_agent import WorldLabsAgent
+from agents.seedream_agent import SeedreamAgent
 from agents.quality_checker_agent import QualityCheckerAgent
 from agents.memory_agent import MemoryAgent
 
@@ -17,6 +18,7 @@ __all__ = [
     "CartographerAgent",
     "LearningAgent",
     "WorldLabsAgent",
+    "SeedreamAgent",
     "QualityCheckerAgent",
     "MemoryAgent",
     "PromptExpertAgent",
