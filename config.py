@@ -152,15 +152,17 @@ MORPH_LABELS_ZH = {
     "skyline_variance": "天际线变化率",
 }
 
-# 形态要素合理区间（用于制图员约束 / 质检）
+# 七项形态指标按计算公式定义的理论取值空间。
+# 这些是输入校验和结果裁剪使用的物理边界，不是经验性“最佳区间”。
+# 绿视率等比例指标统一使用 0~1；色彩丰富度使用有效颜色数 0~24。
 MORPH_BOUNDS = {
-    "green_view": (0.05, 0.55),
-    "blue_view": (0.0, 0.25),
-    "sky_view": (0.05, 0.55),
-    "built_ratio": (0.15, 0.80),
-    "edge_density": (0.02, 0.25),
-    "color_richness": (1.0, 12.0),
-    "skyline_variance": (0.005, 0.15),
+    "green_view": (0.0, 1.0),
+    "blue_view": (0.0, 1.0),
+    "sky_view": (0.0, 1.0),
+    "built_ratio": (0.0, 1.0),
+    "edge_density": (0.0, 1.0),
+    "color_richness": (0.0, 24.0),
+    "skyline_variance": (0.0, 1.0),
 }
 
 # SegFormer 模型（形态要素解析）

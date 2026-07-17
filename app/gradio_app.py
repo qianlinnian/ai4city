@@ -137,13 +137,15 @@ def step_parse(
     state = pipe.start_session(dest, scene_context=scene, pre_edit_experience=pre_edit)
     SESSION["state"] = state
 
-    exp_base = state["experience_baseline"]
-    exp_info = "\n".join(
-        f"- {EXPERIENCE_LABELS_ZH[k]}: {exp_base[k]}" for k in EXPERIENCE_KEYS
+    record_count = len(state.get("pre_edit_experience") or [])
+    exp_info = (
+        f"已加载 {record_count} 名参与者的逐人评分；翻译时完整输入，不求平均。"
+        if record_count
+        else "尚未提供逐人评分；Task 2运行前必须补充至少一名参与者的完整七项评分。"
     )
     info = (
         f"### 情景要素\n{state['scene_context_text'] or '(未填写)'}\n\n"
-        f"### 修改前多人体验均值（作为体验原值参考）\n{exp_info}\n\n"
+        f"### 修改前多人体验记录\n{exp_info}\n\n"
         f"### 形态要素基线（图像解析）\n{_fmt_metrics(state['baseline_metrics'])}\n\n"
         f"session_id: `{state['session_id']}`"
     )
@@ -158,7 +160,10 @@ def step_translate(*experience_values):
         pass  # 允许重新调节
 
     targets = dict(zip(EXPERIENCE_KEYS, experience_values))
-    state = pipe.run_translator(state, targets)
+    try:
+        state = pipe.run_translator(state, targets)
+    except ValueError as exc:
+        raise gr.Error(str(exc)) from exc
     SESSION["state"] = state
 
     tr = state["morph_translation"]
@@ -183,7 +188,7 @@ def step_translate(*experience_values):
         f"### 翻译官：体验变化\n{exp_lines}\n\n"
         f"### 原先形态要素\n{_fmt_metrics(tr.get('baseline_metrics'))}\n\n"
         f"### 目标形态要素（可下方滑块修改）\n{_fmt_metrics(tr.get('target_metrics'))}\n\n"
-        f"### 翻译理由\n{tr.get('rationale', '')}\n\n"
+        f"### 运行方式\n{tr.get('rationale', '')}\n\n"
         f"### 转换依据\n{chr(10).join(basis_lines) or '- 规则兜底'}\n\n"
         f"学习Agent: {'已参考' if tr.get('learning_applied') else '未启用（占位）'}"
     )

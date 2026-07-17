@@ -4,7 +4,7 @@
 
 ## v2 流程变更
 
-- **翻译官**：七项体验原值→目标值 + 原始全景 → 七项形态要素原值+目标值（规则/RAG/LangChain 多模态 LLM）
+- **翻译官**：同一图像全部参与者逐人七项评分 + 体验目标 + 形态初始值 + 原始全景 → 七项形态目标（LangChain 多模态 Prompt；规则仅离线兜底）
 - **制图员**：原始全景 + 确认后的形态目标 + 专家建议 → 结构化空间布局方案 + World Labs 修改文本
 - **提示词专家**：已废弃，合并至制图员
 - **学习 Agent**：占位接口，记录体验→形态翻译准确度（默认不启用修正）
@@ -73,7 +73,7 @@ python run_demo.py path/to/pano.jpg
 
 | 文件 | 职责 |
 |------|------|
-| `translator_agent.py` | **翻译官**：接收七项体验原值→目标值与原图，结合参数、RAG 和 LangChain 多模态 LLM，输出七项形态目标及依据 |
+| `translator_agent.py` | **翻译官**：逐人保留全部七项评分，以 LangChain 多模态 Prompt 直接生成七项形态目标；RAG 暂留接口，规则仅作无模型兜底 |
 | `cartographer_agent.py` | **制图员**：接收原图、确认后的形态目标和专家建议，输出对象级空间布局方案及可执行修改文本 |
 | `learning_agent.py` | **学习 Agent（占位）**：记录体验→形态翻译是否准确，预留多轮学习修正接口（默认不启用） |
 | `worldlabs_agent.py` | **文生图工具封装**：调用 World Labs Pano Edit API，无 Key 时 MOCK 生成演示图 |
@@ -107,16 +107,16 @@ python run_demo.py path/to/pano.jpg
 
 | 文件 | 职责 |
 |------|------|
-| `llm_client.py` | LangChain 模型适配层：`ChatPromptTemplate | ChatOpenAI | StrOutputParser`；支持全景图输入，无 API Key 时返回 None，各 Agent 走规则/RAG兜底 |
+| `llm_client.py` | LangChain 模型适配层：`ChatPromptTemplate | ChatOpenAI | StrOutputParser`；支持全景图输入，无 API Key 时返回 None，各 Agent 走本地规则兜底 |
 | `__init__.py` | utils 包标识 |
 
 ### knowledge_base/ — 本地知识库
 
 | 文件 | 职责 |
 |------|------|
-| `kb_store.py` | 知识库读写与 RAG 检索（按七项体验改善方向与情景相似度匹配案例） |
+| `kb_store.py` | 旧版知识库读写与案例检索能力；当前 Task 2/3 默认不调用 |
 | `data/mapping_rules.json` | 七项体验→七项形态的基础映射参数（启发式初值，待实验校准） |
-| `data/experience_morph_cases.json` | 由本地 p1/p2 数据整理的基础 RAG 示例（明确标记为非实测） |
+| `data/experience_morph_cases.json` | 旧版非实测案例样例；当前不参与 Task 2/3 计算 |
 | `data/memories.json` | 历史记忆条目（各 Agent 决策时检索参考） |
 | `data/learning_feedback.json` | 学习 Agent 反馈记录（翻译准确度，默认 `enabled: false`） |
 | `__init__.py` | knowledge_base 包标识 |

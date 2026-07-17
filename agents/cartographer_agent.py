@@ -63,6 +63,7 @@ from config import (
     normalize_experience_values,
 )
 from knowledge_base.kb_store import KnowledgeBase, kb as default_kb
+from knowledge_base.rag_provider import LayoutRagProvider
 from schemas.models import ModificationPlan, SpatialObjectAction
 from utils import llm_client
 
@@ -79,8 +80,14 @@ SYSTEM_PROMPT = (
 
 
 class CartographerAgent:
-    def __init__(self, knowledge_base: KnowledgeBase | None = None):
+    def __init__(
+        self,
+        knowledge_base: KnowledgeBase | None = None,
+        rag_provider: LayoutRagProvider | None = None,
+    ):
         self.kb = knowledge_base or default_kb
+        # 当前默认不配置 RAG；只保留未来可注入的检索接口。
+        self.rag_provider = rag_provider
 
     def run(
         self,
@@ -95,14 +102,19 @@ class CartographerAgent:
     ) -> ModificationPlan:
         exp_base = normalize_experience_values(experience_baseline)
         exp_targets = normalize_experience_values(experience_targets)
-        refs = []
-        if experience_targets:
-            refs = self.kb.retrieve_experience_cases(
-                exp_base,
-                exp_targets,
-                scene_context=scene_context,
-                top_k=2,
+        refs = (
+            list(
+                self.rag_provider.retrieve(
+                    baseline_metrics=baseline_metrics,
+                    target_metrics=target_metrics,
+                    scene_context=scene_context,
+                    expert_advice=expert_advice,
+                )
+                or []
             )
+            if self.rag_provider is not None
+            else []
+        )
 
         templates = [
             (r.get("final_prompt") or r.get("modification_plan") or "")

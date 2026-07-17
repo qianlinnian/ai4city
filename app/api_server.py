@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
@@ -43,13 +43,15 @@ SESSIONS: dict[str, dict] = {}
 
 
 class ExperienceIn(BaseModel):
-    comfort: float = Field(4, ge=1, le=5)
-    naturalness: float = Field(4, ge=1, le=5)
-    safety: float = Field(4, ge=1, le=5)
-    relaxation: float = Field(4, ge=1, le=5)
-    environmental_disturbance: float = Field(2, ge=1, le=5)
-    stay_intention: float = Field(4, ge=1, le=5)
-    overall_impression: float = Field(4, ge=1, le=5)
+    model_config = ConfigDict(extra="forbid")
+
+    comfort: float = Field(..., ge=1, le=5)
+    naturalness: float = Field(..., ge=1, le=5)
+    safety: float = Field(..., ge=1, le=5)
+    relaxation: float = Field(..., ge=1, le=5)
+    environmental_disturbance: float = Field(..., ge=1, le=5)
+    stay_intention: float = Field(..., ge=1, le=5)
+    overall_impression: float = Field(..., ge=1, le=5)
 
 
 class SceneContextIn(BaseModel):
@@ -71,6 +73,7 @@ class StartSessionIn(BaseModel):
 class RunTranslatorIn(BaseModel):
     session_id: str
     experience_targets: ExperienceIn
+    experience_records: Optional[list[dict[str, Any]]] = None
     experience_baseline: Optional[dict[str, float]] = None
 
 
@@ -148,6 +151,7 @@ def pipeline_run_translator(body: RunTranslatorIn):
     state = pipe.run_translator(
         state,
         body.experience_targets.model_dump(),
+        experience_records=body.experience_records,
         experience_baseline=body.experience_baseline,
     )
     SESSIONS[body.session_id] = state
@@ -232,8 +236,24 @@ async def pipeline_start_legacy(
     state = pipe.start_session(path)
     state = pipe.run_translator(
         state,
-        {"comfort": comfort, "restoration": restoration, "safety": safety,
-         "pleasure": pleasure, "stay": stay},
+        {
+            "comfort": comfort,
+            "naturalness": 3,
+            "restoration": restoration,
+            "safety": safety,
+            "environmental_disturbance": 3,
+            "pleasure": pleasure,
+            "stay": stay,
+        },
+        experience_baseline={
+            "comfort": 3,
+            "naturalness": 3,
+            "safety": 3,
+            "relaxation": 3,
+            "environmental_disturbance": 3,
+            "stay_intention": 3,
+            "overall_impression": 3,
+        },
     )
     SESSIONS[state["session_id"]] = state
     return state

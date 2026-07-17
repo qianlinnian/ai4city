@@ -8,32 +8,37 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from config import normalize_experience_values
+from config import LEGACY_EXPERIENCE_ALIASES
 
 
 class ExperienceTargets(BaseModel):
     """单人七项 VR 体验感受指标（1-5）。"""
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="forbid")
 
-    comfort: float = Field(3, ge=1, le=5, description="舒适度")
-    naturalness: float = Field(3, ge=1, le=5, description="自然感")
-    safety: float = Field(3, ge=1, le=5, description="安全感")
-    relaxation: float = Field(3, ge=1, le=5, description="放松感")
+    comfort: float = Field(..., ge=1, le=5, description="舒适度")
+    naturalness: float = Field(..., ge=1, le=5, description="自然感")
+    safety: float = Field(..., ge=1, le=5, description="安全感")
+    relaxation: float = Field(..., ge=1, le=5, description="放松感")
     environmental_disturbance: float = Field(
-        3,
+        ...,
         ge=1,
         le=5,
         description="环境干扰感，反向指标，分值越低越好",
     )
-    stay_intention: float = Field(3, ge=1, le=5, description="可停留意愿")
-    overall_impression: float = Field(3, ge=1, le=5, description="总体感")
+    stay_intention: float = Field(..., ge=1, le=5, description="可停留意愿")
+    overall_impression: float = Field(..., ge=1, le=5, description="总体感")
 
     @model_validator(mode="before")
     @classmethod
     def normalize_legacy_fields(cls, data: Any) -> Any:
         if isinstance(data, dict):
-            return normalize_experience_values(data)
+            normalized = dict(data)
+            for old_key, new_key in LEGACY_EXPERIENCE_ALIASES.items():
+                if new_key not in normalized and old_key in normalized:
+                    normalized[new_key] = normalized[old_key]
+                normalized.pop(old_key, None)
+            return normalized
         return data
 
     def as_dict(self) -> dict[str, float]:
@@ -45,27 +50,20 @@ class PersonExperience(BaseModel):
 
     person_id: str
     person_name: str = ""
-    experience: ExperienceTargets = Field(default_factory=ExperienceTargets)
+    experience: ExperienceTargets
 
     def experience_dict(self) -> dict[str, float]:
         return self.experience.as_dict()
 
 
 class MultiPersonExperience(BaseModel):
-    """多人体验指标集合"""
+    """同一图像的多人体验指标集合；始终保留逐人记录。"""
 
     persons: list[PersonExperience] = Field(default_factory=list)
 
-    def average_experience(self) -> dict[str, float]:
-        """计算多人体验均值，作为体验基线参考。"""
-        if not self.persons:
-            return ExperienceTargets().as_dict()
-        keys = ExperienceTargets().as_dict().keys()
-        out: dict[str, float] = {}
-        for k in keys:
-            vals = [p.experience_dict()[k] for p in self.persons]
-            out[k] = round(sum(vals) / len(vals), 2)
-        return out
+    def as_prompt_records(self) -> list[dict[str, Any]]:
+        """返回逐人记录，不求平均、不丢弃个体差异。"""
+        return [person.model_dump() for person in self.persons]
 
 
 class SceneContext(BaseModel):
@@ -164,6 +162,7 @@ class MorphTranslationResult(BaseModel):
     target_metrics: MorphMetrics
     delta_from_baseline: dict[str, float] = Field(default_factory=dict)
     experience_baseline: dict[str, float] = Field(default_factory=dict)
+    experience_records: list[dict[str, Any]] = Field(default_factory=list)
     experience_targets: dict[str, float] = Field(default_factory=dict)
     experience_delta: dict[str, float] = Field(default_factory=dict)
     rationale: str = ""

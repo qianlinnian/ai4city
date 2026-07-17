@@ -7,9 +7,11 @@ import uuid
 from pathlib import Path
 from unittest.mock import patch
 
+from pydantic import ValidationError
+
 from agents.cartographer_agent import CartographerAgent
 from agents.translator_agent import TranslatorAgent
-from config import EXPERIENCE_KEYS, MORPH_KEYS
+from config import EXPERIENCE_KEYS, MORPH_BOUNDS, MORPH_KEYS
 from knowledge_base.kb_store import KnowledgeBase
 from schemas.models import ExperienceTargets, SceneContext
 
@@ -46,6 +48,22 @@ class Task23TestCase(unittest.TestCase):
             "stay_intention": 4.0,
             "overall_impression": 4.0,
         }
+        self.experience_records = [
+            {
+                "person_id": "student-1",
+                "person_name": "同学甲",
+                "experience": {**self.experience_baseline, "comfort": 2.0},
+            },
+            {
+                "person_id": "student-2",
+                "person_name": "同学乙",
+                "experience": {
+                    **self.experience_baseline,
+                    "naturalness": 4.0,
+                    "environmental_disturbance": 4.0,
+                },
+            },
+        ]
 
     def tearDown(self) -> None:
         cache_root = (ROOT / ".cache" / "test_task2_3").resolve()
@@ -56,8 +74,10 @@ class Task23TestCase(unittest.TestCase):
     def test_seven_experience_fields_and_legacy_aliases(self) -> None:
         model = ExperienceTargets(
             comfort=4,
+            naturalness=3,
             restoration=4.5,
             safety=4,
+            environmental_disturbance=3,
             pleasure=4.2,
             stay=4.1,
         )
@@ -69,6 +89,29 @@ class Task23TestCase(unittest.TestCase):
         self.assertEqual(values["stay_intention"], 4.1)
         self.assertEqual(values["naturalness"], 3.0)
         self.assertEqual(values["environmental_disturbance"], 3.0)
+
+    def test_experience_scores_are_complete_and_reject_six(self) -> None:
+        with self.assertRaises(ValidationError):
+            ExperienceTargets(
+                **{**self.experience_targets, "environmental_disturbance": 6}
+            )
+        incomplete = dict(self.experience_targets)
+        incomplete.pop("overall_impression")
+        with self.assertRaises(ValidationError):
+            ExperienceTargets(**incomplete)
+
+        invalid_records = [
+            {
+                "person_id": "student-with-typo",
+                "experience": {**self.experience_baseline, "comfort": 6},
+            }
+        ]
+        with self.assertRaisesRegex(ValueError, "student-with-typo"):
+            TranslatorAgent(knowledge_base=self.kb).run(
+                experience_records=invalid_records,
+                experience_targets=self.experience_targets,
+                baseline_metrics=self.baseline_metrics,
+            )
 
     def test_parameter_names_and_legacy_scene_aliases(self) -> None:
         self.assertEqual(len(EXPERIENCE_KEYS), 7)
@@ -100,14 +143,19 @@ class Task23TestCase(unittest.TestCase):
         self.assertEqual(scene.people_flow, "中")
         self.assertIn("管理维护状态: 良好", scene.as_text())
 
-    def test_task2_rule_rag_translation(self) -> None:
+    def test_task2_rule_fallback_keeps_all_people_and_does_not_use_rag(self) -> None:
         translator = TranslatorAgent(knowledge_base=self.kb)
         with (
             patch("agents.translator_agent.llm_client.chat", return_value=None),
             patch("agents.translator_agent.llm_client.chat_with_image", return_value=None),
+            patch.object(
+                self.kb,
+                "retrieve_experience_cases",
+                side_effect=AssertionError("Task 2当前不应调用RAG"),
+            ),
         ):
             result = translator.run(
-                experience_baseline=self.experience_baseline,
+                experience_records=self.experience_records,
                 experience_targets=self.experience_targets,
                 baseline_metrics=self.baseline_metrics,
                 scene_context="城市口袋公园；午后",
@@ -115,16 +163,51 @@ class Task23TestCase(unittest.TestCase):
             )
 
         self.assertEqual(set(result.experience_targets), set(EXPERIENCE_KEYS))
-        self.assertEqual(result.experience_delta["environmental_disturbance"], -1.0)
+        self.assertEqual(len(result.experience_records), 2)
         self.assertGreater(result.target_metrics.green_view, self.baseline_metrics["green_view"])
         self.assertLess(result.target_metrics.built_ratio, self.baseline_metrics["built_ratio"])
         self.assertLess(result.target_metrics.edge_density, self.baseline_metrics["edge_density"])
-        self.assertTrue(result.references_used)
-        self.assertIn("环境干扰感", result.rationale)
+        self.assertFalse(result.references_used)
+        self.assertIn("规则兜底", result.rationale)
         methods = {item.method for item in result.conversion_basis}
-        self.assertIn("rule", methods)
-        self.assertIn("rag", methods)
-        self.assertNotIn("llm", methods)
+        self.assertEqual(methods, {"rule"})
+
+    def test_task2_prompt_receives_every_person_and_returns_only_targets(self) -> None:
+        model_target = {
+            "green_view": 0.31,
+            "blue_view": 0.09,
+            "sky_view": 0.28,
+            "built_ratio": 0.43,
+            "color_richness": 7.0,
+            "edge_density": 0.07,
+            "skyline_variance": 0.025,
+        }
+        with (
+            patch(
+                "agents.translator_agent.llm_client.chat_with_image",
+                return_value=json.dumps(model_target),
+            ) as mocked_chat,
+            patch.object(
+                self.kb,
+                "retrieve_experience_cases",
+                side_effect=AssertionError("Task 2当前不应调用RAG"),
+            ),
+        ):
+            result = TranslatorAgent(knowledge_base=self.kb).run(
+                experience_records=self.experience_records,
+                experience_targets=self.experience_targets,
+                baseline_metrics=self.baseline_metrics,
+                scene_context="蓝绿社区空间",
+                original_image_path=str(ROOT / "data" / "p1.jpg"),
+            )
+
+        prompt_text = mocked_chat.call_args.args[1]
+        self.assertIn("student-1", prompt_text)
+        self.assertIn("student-2", prompt_text)
+        self.assertIn('"baseline_metrics"', prompt_text)
+        self.assertEqual(result.target_metrics.as_dict(), model_target)
+        self.assertEqual({item.method for item in result.conversion_basis}, {"llm"})
+        self.assertFalse(result.references_used)
 
     def test_task2_rejects_incomplete_or_invalid_morph_baseline(self) -> None:
         translator = TranslatorAgent(knowledge_base=self.kb)
@@ -145,6 +228,41 @@ class Task23TestCase(unittest.TestCase):
                 baseline_metrics=invalid,
             )
 
+        invalid_color = {**self.baseline_metrics, "color_richness": 24.1}
+        with self.assertRaisesRegex(ValueError, "color_richness必须位于0到24之间"):
+            translator.run(
+                experience_baseline=self.experience_baseline,
+                experience_targets=self.experience_targets,
+                baseline_metrics=invalid_color,
+            )
+
+    def test_morph_bounds_follow_formula_theoretical_ranges(self) -> None:
+        self.assertEqual(
+            MORPH_BOUNDS,
+            {
+                "green_view": (0.0, 1.0),
+                "blue_view": (0.0, 1.0),
+                "sky_view": (0.0, 1.0),
+                "built_ratio": (0.0, 1.0),
+                "edge_density": (0.0, 1.0),
+                "color_richness": (0.0, 24.0),
+                "skyline_variance": (0.0, 1.0),
+            },
+        )
+
+        formula_edge_values = {
+            "green_view": 1.0,
+            "blue_view": 1.0,
+            "sky_view": 1.0,
+            "built_ratio": 1.0,
+            "edge_density": 1.0,
+            "color_richness": 24.0,
+            "skyline_variance": 1.0,
+        }
+        TranslatorAgent(knowledge_base=self.kb)._normalize_baseline(
+            formula_edge_values
+        )
+
     def test_task3_returns_structured_layout_and_edit_text(self) -> None:
         cartographer = CartographerAgent(knowledge_base=self.kb)
         target_metrics = {
@@ -157,6 +275,11 @@ class Task23TestCase(unittest.TestCase):
         with (
             patch("agents.cartographer_agent.llm_client.chat", return_value=None),
             patch("agents.cartographer_agent.llm_client.chat_with_image", return_value=None),
+            patch.object(
+                self.kb,
+                "retrieve_experience_cases",
+                side_effect=AssertionError("Task 3当前不应调用RAG"),
+            ),
         ):
             plan = cartographer.run(
                 baseline_metrics=self.baseline_metrics,
@@ -177,7 +300,7 @@ class Task23TestCase(unittest.TestCase):
         self.assertTrue(plan.constraints)
         self.assertIn("保持原有360°全景几何结构", plan.draft_text)
         self.assertEqual(plan.expert_advice, "保留左侧建筑立面，优先改善右侧停留区")
-        self.assertTrue(plan.rag_references)
+        self.assertFalse(plan.rag_references)
         self.assertIn(plan.expert_advice, plan.draft_text)
         self.assertTrue(any("保留左侧建筑立面" in item for item in plan.unchanged_regions))
         self.assertTrue(any("优先改善右侧停留区" in item.position for item in plan.object_actions))
