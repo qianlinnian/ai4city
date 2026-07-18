@@ -131,3 +131,77 @@ def chat_with_image(
     except Exception as e:
         print(f"[LangChain] 多模态调用失败，回退本地规则/RAG: {e}")
         return None
+
+
+def _view_payload(view: Any) -> dict[str, Any]:
+    if hasattr(view, "model_dump"):
+        return dict(view.model_dump())
+    if isinstance(view, dict):
+        return dict(view)
+    return {
+        "view_id": Path(view).stem,
+        "output_path": str(view),
+        "is_overview": False,
+    }
+
+
+def build_multi_image_messages(
+    system: str,
+    user: str,
+    views: list[Any],
+) -> list[Any]:
+    """构造带视图方位说明的 LangChain 多图消息，便于本地单元测试。"""
+    *_, HumanMessage, SystemMessage = _langchain_components()
+    content: list[dict[str, Any]] = [{"type": "text", "text": user}]
+    valid_count = 0
+    for raw_view in views:
+        view = _view_payload(raw_view)
+        path = Path(str(view.get("output_path") or ""))
+        if not path.is_file():
+            continue
+        view_id = str(view.get("view_id") or path.stem)
+        if view.get("is_overview"):
+            description = f"视图 {view_id}: 完整等距柱状全景概览，保持 2:1。"
+        else:
+            description = (
+                f"视图 {view_id}: yaw={view.get('yaw')}°, "
+                f"pitch={view.get('pitch')}°, FOV={view.get('fov')}°, "
+                f"尺寸={view.get('width')}x{view.get('height')}。"
+            )
+        content.append({"type": "text", "text": description})
+        content.append(
+            {
+                "type": "image_url",
+                "image_url": {"url": _image_data_url(path)},
+            }
+        )
+        valid_count += 1
+    if not valid_count:
+        raise ValueError("多图消息没有任何可读取的视图")
+    return [SystemMessage(content=system), HumanMessage(content=content)]
+
+
+def chat_with_images(
+    system: str,
+    user: str,
+    views: list[Any],
+    temperature: float = 0.2,
+) -> Optional[str]:
+    """通过现有 LangChain 模型客户端发送概览图和多张透视图。"""
+    if use_mock_llm():
+        return None
+    try:
+        messages = build_multi_image_messages(system, user, views)
+        response = _build_model(temperature).invoke(messages)
+        return _content_as_text(response.content) or None
+    except Exception as exc:
+        print(f"[LangChain] 多图场景理解失败，返回降级状态: {exc}")
+        return None
+
+
+__all__ = [
+    "build_multi_image_messages",
+    "chat",
+    "chat_with_image",
+    "chat_with_images",
+]

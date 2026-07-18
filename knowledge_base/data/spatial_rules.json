@@ -1,0 +1,26 @@
+{
+  "version": "task3-spatial-rules-v1",
+  "description": "由只读外部文档《制图员Agent System Prompt的空间逻辑规则样例(1)》整理的 Task 3 参考约束。围合度、界面通透度和边界层数不是七项形态指标，不得加入 Task 2 输出。经验阈值仅作参考。",
+  "rules": [
+    {
+      "id": "spatial-green-view-recovery",
+      "task_scope": "task3_only",
+      "rule": "绿视率较低时可在主要视线前景配置灌木并在中景配置小乔木；绿量较高且遮挡视线时优先疏剪中层并抬高冠下空间。",
+      "constraints": ["保持眼平视线通廊", "阈值是经验参考而非公式上限", "不得以恢复性为由过量堆叠植被"]
+    },
+    {
+      "id": "spatial-prospect-refuge",
+      "task_scope": "task3_only",
+      "rule": "停留区需要在前方瞭望与后侧庇护之间平衡；可在座椅后方或两侧使用半通透绿篱或格栅，但不得封闭主要视线。",
+      "non_morph_reference_fields": ["围合度"],
+      "constraints": ["不新增第八项形态指标", "不改变道路和消防通道", "保持前方可观察性"]
+    },
+    {
+      "id": "spatial-interface-gradient",
+      "task_scope": "task3_only",
+      "rule": "临街边界可形成植物、低矮座墙或座椅、铺装变化的渐进过渡，并使用分段半通透软边界避免突兀封闭。",
+      "non_morph_reference_fields": ["界面通透度", "边界层数"],
+      "constraints": ["只作为对象布局和空间关系参考", "不得加入七项形态目标", "服从专家确认与现场固定设施"]
+    }
+  ]
+}

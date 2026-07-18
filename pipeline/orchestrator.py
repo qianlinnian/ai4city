@@ -25,6 +25,7 @@ from agents.cartographer_agent import CartographerAgent
 from agents.learning_agent import LearningAgent
 from agents.memory_agent import MemoryAgent
 from agents.quality_checker_agent import QualityCheckerAgent, validate_morph_metrics
+from agents.scene_understanding_agent import SceneUnderstandingAgent
 from agents.translator_agent import TranslatorAgent
 from config import SESSION_DIR
 from schemas.models import (
@@ -65,6 +66,7 @@ class PipelineOrchestrator:
         learning: LearningAgent | None = None,
         quality: QualityCheckerAgent | None = None,
         memory: MemoryAgent | None = None,
+        scene_understander: SceneUnderstandingAgent | None = None,
     ) -> None:
         self.generator = generator
         self.learning = learning or LearningAgent()
@@ -72,6 +74,7 @@ class PipelineOrchestrator:
         self.cartographer = cartographer or CartographerAgent()
         self.quality = quality or QualityCheckerAgent()
         self.memory = memory or MemoryAgent()
+        self.scene_understander = scene_understander or SceneUnderstandingAgent()
 
     def start_session(
         self,
@@ -105,6 +108,9 @@ class PipelineOrchestrator:
             "experience_targets": None,
             "baseline_metrics": baseline,
             "morph_translation": None,
+            "panorama_views": [],
+            "scene_understanding": None,
+            "task2_reasonableness": None,
             "confirmed_target_metrics": None,
             "expert_morph_note": "",
             "modification_plan": None,
@@ -138,6 +144,15 @@ class PipelineOrchestrator:
             else updated.get("pre_edit_experience") or []
         )
         exp_base = experience_baseline or updated.get("experience_baseline")
+        if not updated.get("scene_understanding"):
+            inventory = self.scene_understander.run(
+                updated.get("image_path", ""),
+                image_id=Path(updated.get("image_path", "")).stem,
+            )
+            updated["scene_understanding"] = inventory.model_dump()
+            updated["panorama_views"] = [
+                view.model_dump() for view in inventory.view_metadata
+            ]
         result = self.translator.run(
             experience_targets=targets,
             baseline_metrics=updated["baseline_metrics"],
@@ -145,6 +160,7 @@ class PipelineOrchestrator:
             experience_baseline=exp_base,
             scene_context=updated.get("scene_context_text", ""),
             original_image_path=updated.get("image_path", ""),
+            scene_understanding=updated.get("scene_understanding"),
         )
 
         updated["pre_edit_experience"] = result.experience_records
@@ -152,6 +168,9 @@ class PipelineOrchestrator:
         updated["experience_targets"] = targets
         updated["morph_translation"] = result.model_dump()
         updated["confirmed_target_metrics"] = result.target_metrics.model_dump()
+        updated["task2_reasonableness"] = deepcopy(
+            getattr(self.translator, "last_reasonableness_report", {})
+        )
         updated["stage"] = MORPH_REVIEW
         self._persist(updated)
         return updated
@@ -196,6 +215,7 @@ class PipelineOrchestrator:
             language=language,
             original_image_path=updated.get("image_path", ""),
             expert_advice=note,
+            scene_understanding=updated.get("scene_understanding"),
         )
         updated["modification_plan"] = plan.model_dump()
         updated["final_prompt"] = plan.draft_text

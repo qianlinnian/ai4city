@@ -56,7 +56,7 @@
 1. 严格校验每位参与者七项评分；缺项或出现 1～5 之外的值（例如误填 6）立即报错，不自动截断。
 2. 有 LLM Key 时，由 LangChain 把全部逐人评分、体感目标、七项形态初始值、情景与原图交给多模态模型。
 3. 模型直接输出且只输出七项形态目标 JSON，不先运行规则或案例融合。
-4. 当前 RAG 不执行检索，只通过 `TranslationRagProvider` 保留未来注入接口。
+4. RAG 默认关闭；开启时以本地字符 TF-IDF 检索项目规则、指标定义、专家规则和案例，检索内容仅作不可信参考。
 5. 无 LLM、调用失败或模型输出越界时，才对每位参与者分别应用映射规则，再对形态目标取中位数兜底。
 6. 程序计算形态前后差值，并保留专家编辑确认入口。
 
@@ -64,10 +64,10 @@
 
 输入：
 
-- 原始 JPG
+- 原始 JPG 经多视图模块生成的结构化场景理解结果
 - 修改前后的七项形态要素值
 - 七项体感目标、情景要素和专家建议
-- 可选未来 RAG 接口（当前默认关闭）
+- 可选本地 RAG（默认关闭）
 
 输出 `ModificationPlan`：
 
@@ -84,8 +84,9 @@
 ## LangChain 调用层
 
 - 文本链：`ChatPromptTemplate | ChatOpenAI | StrOutputParser`。
-- 多模态链：使用 LangChain `SystemMessage` / `HumanMessage`，把压缩后的全景 JPG 作为 base64 图像内容块输入。
-- RAG：Task 2/3 当前均不执行检索；仅保留可注入 Provider 接口，待课本、案例和专家知识准备完成后再启用。
+- 多模态链：使用 LangChain `SystemMessage` / `HumanMessage`，发送一张 2:1 概览和四张 yaw=0/90/180/270 的水平透视图；每张图前附 yaw、pitch、FOV 和 view_id。向下观察视图仍在迭代，当前链路暂未调用。
+- 场景清单：Qwen 先返回道路、建筑、入口、植被、水体、家具、基础设施、可编辑对象、固定区域、空间关系、接缝约束、歧义和证据视图。失败时返回空清单与 `degraded`，Task 2/3 继续兜底。
+- RAG：`RAG_ENABLED=false` 时不建立索引、不检索；开启时本地 TF-IDF 返回 `text/source/chunk_id/score/metadata`。Prompt 明确其不是系统指令，不得新增第八项指标或覆盖专家确认。
 - 兜底：未配置 Key、依赖不可用或调用失败时，使用本地映射参数与规则方案，便于离线联调。
 
 ## 基础参数与示例数据
@@ -107,6 +108,72 @@
 
 ```bash
 python examples/task2_3_demo.py
+```
+
+## 全景视图配置与缓存
+
+- 输入默认严格要求 2:1；非 2:1 由 `PANORAMA_STRICT_ASPECT` 决定拒绝或明确警告。
+- 概览默认 `2048×1024`；水平透视图默认 `1024×1024`、FOV 90°，可配置为 `1536×1536`。
+- 向下观察视图的球面投影代码和测试继续保留，但生产配置固定关闭，当前 Task 2/3 不生成或发送该视图；后续迭代可通过显式构造 `PanoramaViewConfig(include_downward=True)` 重新启用。
+- 球面投影使用 NumPy/OpenCV，横向经度取模并以环绕边界插值处理左右接缝。
+- 输出路径为 `outputs/panorama_views/<原图名_内容哈希_配置哈希>/`，同一原图和配置再次运行直接复用。
+- 原始图和 `D:\course\ai4city-data` 始终只读；缓存目录若配置到数据目录内会立即拒绝。
+
+## Task 2 内部合理性检查
+
+翻译官生成七项目标后记录内部检查结果，但不增加或改写对外七项目标：理论范围、单次变化幅度、绿视率/天空可视率冲突、固定建筑和道路可实施性、天际线约束，以及无真实水体时蓝视率异常提升。检查只能给出警告或显式降级，最终取舍仍由专家确认。
+
+## RAG 知识范围
+
+主要知识源为只读目录 `D:\course\ai4city-data\knowledge` 中的规范 PDF。系统使用现有 `pdftotext` 按页提取，保留 PDF 文件名、页码与分块编号，并把派生文本缓存到项目 `outputs/rag_cache/`；不会修改原 PDF。仓库内 `knowledge_base/data`、本框架文档和指标定义只作为补充来源。PDF 和长文本按约 900 字切块，中文和英文以 2～5 字符 n-gram TF-IDF 检索；默认约 75% 返回名额优先给达到相关度门槛的外部 PDF 块。
+
+知识整理器和本地 RAG 会发现知识源目录中的全部支持文件；不再维护按文件名排除的隐式名单。`spatial_rules.json` 中的围合度、界面通透度和边界层数仅是 Task 3 对象布局参考，不得进入七项形态目标。
+
+### DeepSeek 离线知识整理
+
+`scripts/build_curated_knowledge.py` 可将 PDF 原文整理为带章节、条款、对象、约束、七指标关联和原文证据的结构化草稿。默认仅 dry-run；只有显式增加 `--execute` 才会调用 DeepSeek。Flash 负责批量整理，`--auto-pro` 只对证据校验失败、低置信度、模型主动标记复核或含高风险规范措辞的批次调用 Pro。结构化抽取默认显式关闭 V4 思考模式，并使用 16000 输出 tokens，避免推理内容挤占 JSON 输出额度；可分别通过 `DEEPSEEK_KNOWLEDGE_THINKING` 和 `DEEPSEEK_KNOWLEDGE_MAX_TOKENS` 调整。
+
+中断后重复执行会跳过已有草稿。`--retry-invalid` 只重做已有但含校验错误的批次，`--retry-empty` 只重做状态为 `empty` 的批次；两者可同时使用，不需要用 `--force` 覆盖整份文档。
+
+草稿写入 `outputs/knowledge_drafts`，不会修改 `ai4city-data`。每条记录必须保存 PDF 来源、页码和可在 OCR 原文中定位的连续引文；程序校验通过只表示格式和证据可定位，不等于专家确认。草稿经过人工抽检后才能进入正式 RAG 来源。
+
+统一证据 Schema 使用 `page + line_ids + quote`。输入给 DeepSeek 的每一行都带稳定编号（如 `P0016-L0021`）；模型可跳过重复 OCR 行并组合多行，程序验证行号确实存在、页码一致且引文由对应行支持。证据校验优先使用去空白后的严格匹配；对 OCR 重复行，仅在证据不少于 12 个字符、字符 n-gram 覆盖率不低于 0.85 且存在足够长的连续锚点时接受 `fuzzy_ocr`，并在 JSON 中记录行号来源、匹配类型和分数。旧草稿会保守推断行号，无法可靠映射的记录继续保留 `needs_review`，不会伪造引用。已有草稿可在不产生 API 费用的情况下迁移和重新校验：
+
+```powershell
+python scripts/build_curated_knowledge.py --revalidate-existing
+```
+
+```powershell
+# 只查看文档和批次数量，不调用 API
+python scripts/build_curated_knowledge.py
+
+# 先从正文页付费试跑一个批次，避免把封面和目录作为首个样本
+python scripts/build_curated_knowledge.py --execute --start-page 10 --limit-batches 1
+
+# 全量运行；需要复核的批次自动升级到 Pro
+python scripts/build_curated_knowledge.py --execute --auto-pro
+```
+
+批量 API 调用属于网络 I/O，脚本使用线程并发而不是 CPU 多进程。默认 `--workers 1`，允许范围为 1～64；大批量任务建议先使用 16～32，根据账号并发配额、429 和网络稳定性调整。每个工作线程拥有独立 API 客户端，每个批次写独立 JSON，已完成批次可断点续跑。不要同时启动多个完全相同的命令，否则它们可能在启动时都判断同一批次尚未完成并重复计费。
+
+```powershell
+# 单进程内同时发出 4 个互相独立的请求
+python scripts/build_curated_knowledge.py --include 公园设计规范 --start-page 10 --execute --workers 4
+
+# 或在 4 个终端中分别运行，index 依次为 0、1、2、3
+python scripts/build_curated_knowledge.py --execute --shard-count 4 --shard-index 0
+```
+
+### 正式 RAG 知识发布
+
+`outputs/knowledge_drafts` 始终是草稿区；正式知识发布到 `rag_knowledge/published`，RAG 只读取后者。项目不设置额外专家批准层：记录经过统一程序门禁并得到 `program_validated` 后即可发布；`needs_review`、`empty`、缺少 OCR 行号或证据无法定位的记录不会进入正式知识库。
+
+```powershell
+# 查看可发布数量，不写文件
+python scripts/publish_rag_knowledge.py --include 公园设计规范
+
+# 发布 program_validated 记录
+python scripts/publish_rag_knowledge.py --include 公园设计规范 --execute
 ```
 
 ## 国内多模态模型配置

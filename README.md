@@ -4,8 +4,10 @@
 
 ## v2 流程变更
 
-- **翻译官**：同一图像全部参与者逐人七项评分 + 体验目标 + 形态初始值 + 原始全景 → 七项形态目标（LangChain 多模态 Prompt；规则仅离线兜底）
-- **制图员**：原始全景 + 确认后的形态目标 + 专家建议 → 结构化空间布局方案 + World Labs 修改文本
+- **场景理解**：原始 2:1 全景 → 1 张概览 + 4 张带方位的球面透视图 → Qwen 结构化场景清单
+- **翻译官**：同一图像全部参与者逐人七项评分 + 体验目标 + 形态初始值 + 场景清单 → 七项形态目标
+- **制图员**：修改前后形态指标 + 场景清单 + 专家建议 → 结构化空间布局方案与最终编辑文本
+- **可插拔 RAG**：默认关闭；开启后以 `ai4city-data/knowledge` 中的规范 PDF 为主要知识源，仓库规则仅作补充
 - **提示词专家**：已废弃，合并至制图员
 - **学习 Agent**：占位接口，记录体验→形态翻译准确度（默认不启用修正）
 - **多人体验**：支持修改前/修改后多人体验指标 JSON 输入
@@ -36,10 +38,9 @@ cd code
 python -m pip install -r requirements.txt
 copy .env.example .env
 
-# 单独测试形态解析
-python morph_metrics_extractor.py ..\JPG素材\某全景.jpg --fallback
-
 # 启动前端
+$env:AI4CITY_DATA_DIR="D:\course\ai4city-data"
+$env:RUN_MODE="mock"
 python app/gradio_app.py
 
 # 命令行一键演示
@@ -48,12 +49,12 @@ python run_demo.py path/to/pano.jpg
 
 ## 数据流
 
-1. 上传全景 + 情景要素 +（可选）修改前多人体验
-2. `morph_metrics_extractor` 解析 7 维形态基线
-3. 前端调节七个体验滑块 → **翻译官** → 形态原值/目标值 → 人工干预①
-4. **制图员** 生成结构化空间布局方案与自然语言修改文本 → 人工干预②
-5. **World Labs** 文生图 → 质检
-6. 填写修改后多人体验 → **记忆 Agent** + **学习 Agent** 入库
+1. 前端从只读后端目录选择全景图和项目大表行，不重复上传原始数据。
+2. Task 1 已离线完成；在线流程直接读取大表中的七项形态基线。
+3. 全景模块生成概览和四向透视图；Qwen 先输出结构化场景清单。
+4. 前端调节七项体验目标 → **翻译官** → 七项形态目标 → 专家确认。
+5. **制图员** 使用场景清单、形态前后值、RAG 参考和专家建议生成同一份可编辑布局/提示词对象。
+6. Task 4 图像生成不属于本次 Task 2/3 自动测试范围。
 
 每个 Agent 文件头部注释写清了：输入 / 输出 / 输出到哪里 / 调用方式。
 
@@ -73,8 +74,10 @@ python run_demo.py path/to/pano.jpg
 
 | 文件 | 职责 |
 |------|------|
-| `translator_agent.py` | **翻译官**：逐人保留全部七项评分，以 LangChain 多模态 Prompt 直接生成七项形态目标；RAG 暂留接口，规则仅作无模型兜底 |
+| `translator_agent.py` | **翻译官**：逐人保留全部七项评分，以 LangChain Prompt 生成七项形态目标；RAG 开启时注入检索参考，规则仅作无模型兜底 |
 | `cartographer_agent.py` | **制图员**：接收原图、确认后的形态目标和专家建议，输出对象级空间布局方案及可执行修改文本 |
+| `scene_understanding_agent.py` | **场景理解**：调用现有 LangChain/Qwen 多图链，输出带证据视图的结构化场景清单，失败时显式降级 |
+| `reasonableness.py` | **合理性检查**：范围、变化幅度、指标冲突、水体和固定区域等内部警告，不静默改写目标 |
 | `learning_agent.py` | **学习 Agent（占位）**：记录体验→形态翻译是否准确，预留多轮学习修正接口（默认不启用） |
 | `worldlabs_agent.py` | **文生图工具**：按图片完整文件名从 `assets/` 取图，调 Marble API，结果写入 `TargetIMG/` |
 | `quality_checker_agent.py` | **质检员**：对修改后全景重新解析形态要素，与目标对比输出偏差报告 |
@@ -107,16 +110,19 @@ python run_demo.py path/to/pano.jpg
 
 | 文件 | 职责 |
 |------|------|
-| `llm_client.py` | LangChain 模型适配层：`ChatPromptTemplate | ChatOpenAI | StrOutputParser`；支持全景图输入，无 API Key 时返回 None，各 Agent 走本地规则兜底 |
+| `llm_client.py` | LangChain 模型适配层；支持单图与带 yaw/pitch/FOV 说明的多图消息，无 Key 时返回 None |
+| `panorama_views.py` | 正确的等距柱状→透视球面投影、左右接缝环绕、确定性缓存和视图元数据 |
 | `__init__.py` | utils 包标识 |
 
 ### knowledge_base/ — 本地知识库
 
 | 文件 | 职责 |
 |------|------|
-| `kb_store.py` | 旧版知识库读写与案例检索能力；当前 Task 2/3 默认不调用 |
+| `rag_provider.py` | `NullRagProvider` 与本地字符 TF-IDF Provider；只读提取 knowledge PDF、保留页码并缓存到项目输出目录 |
+| `knowledge_curator.py` | DeepSeek 离线知识整理：Flash 批处理、可选 Pro 复核、原文证据校验和结构化草稿 |
 | `data/mapping_rules.json` | 七项体验→七项形态的基础映射参数（启发式初值，待实验校准） |
 | `data/experience_morph_cases.json` | 旧版非实测案例样例；当前不参与 Task 2/3 计算 |
+| `data/spatial_rules.json` | Task 3 空间约束参考；围合度、通透度、边界层数不属于七项形态指标 |
 | `data/memories.json` | 历史记忆条目（各 Agent 决策时检索参考） |
 | `data/learning_feedback.json` | 学习 Agent 反馈记录（翻译准确度，默认 `enabled: false`） |
 | `__init__.py` | knowledge_base 包标识 |
@@ -127,6 +133,8 @@ python run_demo.py path/to/pano.jpg
 |-----------|------|
 | `outputs/images/` | World Labs / MOCK 生成的修改后全景图 |
 | `outputs/sessions/` | 每次运行的 session 状态 JSON（断点续跑、调试） |
+| `outputs/panorama_views/` | Task 2/3 场景理解派生图及 `views.json`；相同原图与配置可直接复用 |
+| `outputs/knowledge_drafts/` | DeepSeek 生成的知识草稿；仅 `program_validated` 记录可由发布脚本写入正式 RAG，其他状态继续暂缓 |
 | `uploads/` | 用户上传的全景图缓存 |
 
 ### _extracted_text/ — 项目文档文本（参考）

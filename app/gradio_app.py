@@ -382,6 +382,14 @@ def confirm_inputs(
             f"- {item.get('method', 'unknown').upper()}：{item.get('summary', '')}"
             for item in translation.get("conversion_basis") or []
         ) or "- 暂无额外证据"
+        scene = state.get("scene_understanding") or {}
+        scene_status = scene.get("status", "not_run")
+        view_count = len(state.get("panorama_views") or [])
+        evidence += f"\n- SCENE：{scene_status}，共 {view_count} 张派生视图"
+        if scene.get("degradation_reason"):
+            evidence += f"；{scene['degradation_reason']}"
+        warnings = (state.get("task2_reasonableness") or {}).get("warnings") or []
+        evidence += "".join(f"\n- CHECK：{item}" for item in warnings)
         return (
             state,
             stage_stepper_html(1),

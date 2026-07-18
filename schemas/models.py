@@ -114,6 +114,96 @@ class SceneContext(BaseModel):
         return "；".join(parts) if parts else ""
 
 
+class PanoramaViewMetadata(BaseModel):
+    """一张由等距柱状全景派生的概览图或透视图。"""
+
+    view_id: str
+    source_image_path: str
+    source_image_id: str = ""
+    yaw: Optional[float] = None
+    pitch: Optional[float] = None
+    fov: Optional[float] = None
+    width: int = Field(..., gt=0)
+    height: int = Field(..., gt=0)
+    output_path: str
+    is_overview: bool = False
+
+
+class PanoramaViewSet(BaseModel):
+    """一次全景视图生成的可追溯结果。"""
+
+    source_image_path: str
+    source_image_id: str
+    source_sha256: str
+    source_width: int = Field(..., gt=0)
+    source_height: int = Field(..., gt=0)
+    views: list[PanoramaViewMetadata] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    cache_hit: bool = False
+
+
+class SceneElement(BaseModel):
+    """场景清单中的可定位对象或区域。"""
+
+    name: str
+    description: str = ""
+    position: str = ""
+    quantity: str = ""
+    yaw_range: str = ""
+    pitch: Optional[float] = None
+    image_region: str = ""
+    confidence: float = Field(0.0, ge=0.0, le=1.0)
+    evidence_view_ids: list[str] = Field(default_factory=list)
+
+
+class PanoramaSceneInventory(BaseModel):
+    """Qwen 多图场景理解结果；失败时为空清单并显式标记降级。"""
+
+    status: Literal["ok", "degraded", "disabled"] = "degraded"
+    source_image_path: str = ""
+    view_metadata: list[PanoramaViewMetadata] = Field(default_factory=list)
+    roads: list[SceneElement] = Field(default_factory=list)
+    buildings: list[SceneElement] = Field(default_factory=list)
+    entrances: list[SceneElement] = Field(default_factory=list)
+    vegetation: list[SceneElement] = Field(default_factory=list)
+    water: list[SceneElement] = Field(default_factory=list)
+    street_furniture: list[SceneElement] = Field(default_factory=list)
+    infrastructure: list[SceneElement] = Field(default_factory=list)
+    editable_objects: list[SceneElement] = Field(default_factory=list)
+    fixed_regions: list[SceneElement] = Field(default_factory=list)
+    spatial_relations: list[str] = Field(default_factory=list)
+    panorama_seam_constraints: list[str] = Field(default_factory=list)
+    ambiguities: list[str] = Field(default_factory=list)
+    confidence: float = Field(0.0, ge=0.0, le=1.0)
+    evidence_view_ids: list[str] = Field(default_factory=list)
+    degradation_reason: str = ""
+
+    def compact_for_prompt(self) -> dict[str, Any]:
+        """去掉本地输出路径后提供给 Task 2/3 Prompt。"""
+        payload = self.model_dump(exclude={"view_metadata"})
+        payload["views"] = [
+            {
+                "view_id": view.view_id,
+                "yaw": view.yaw,
+                "pitch": view.pitch,
+                "fov": view.fov,
+                "is_overview": view.is_overview,
+            }
+            for view in self.view_metadata
+        ]
+        return payload
+
+
+class RagSearchResult(BaseModel):
+    """本地 RAG 的统一返回协议。"""
+
+    text: str
+    source: str
+    chunk_id: str
+    score: float = Field(..., ge=0.0)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class MorphMetrics(BaseModel):
     """七项形态要素指标（比例类多为 0-1，色彩数量为有效色数）。"""
 

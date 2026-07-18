@@ -9,6 +9,7 @@ from agents.worldlabs_agent import WorldLabsAgent
 from agents.seedream_agent import SeedreamAgent
 from agents.quality_checker_agent import QualityCheckerAgent
 from agents.memory_agent import MemoryAgent
+from agents.scene_understanding_agent import SceneUnderstandingAgent
 
 # deprecated
 from agents.prompt_expert_agent import PromptExpertAgent
@@ -21,5 +22,6 @@ __all__ = [
     "SeedreamAgent",
     "QualityCheckerAgent",
     "MemoryAgent",
+    "SceneUnderstandingAgent",
     "PromptExpertAgent",
 ]

@@ -13,6 +13,7 @@ from agents.cartographer_agent import CartographerAgent
 from agents.translator_agent import TranslatorAgent
 from config import EXPERIENCE_KEYS, MORPH_BOUNDS, MORPH_KEYS
 from knowledge_base.kb_store import KnowledgeBase
+from knowledge_base.rag_provider import NullRagProvider
 from schemas.models import ExperienceTargets, SceneContext
 
 
@@ -144,7 +145,10 @@ class Task23TestCase(unittest.TestCase):
         self.assertIn("管理维护状态: 良好", scene.as_text())
 
     def test_task2_rule_fallback_keeps_all_people_and_does_not_use_rag(self) -> None:
-        translator = TranslatorAgent(knowledge_base=self.kb)
+        translator = TranslatorAgent(
+            knowledge_base=self.kb,
+            rag_provider=NullRagProvider(),
+        )
         with (
             patch("agents.translator_agent.llm_client.chat", return_value=None),
             patch("agents.translator_agent.llm_client.chat_with_image", return_value=None),
@@ -193,7 +197,10 @@ class Task23TestCase(unittest.TestCase):
                 side_effect=AssertionError("Task 2当前不应调用RAG"),
             ),
         ):
-            result = TranslatorAgent(knowledge_base=self.kb).run(
+            result = TranslatorAgent(
+                knowledge_base=self.kb,
+                rag_provider=NullRagProvider(),
+            ).run(
                 experience_records=self.experience_records,
                 experience_targets=self.experience_targets,
                 baseline_metrics=self.baseline_metrics,
@@ -264,7 +271,10 @@ class Task23TestCase(unittest.TestCase):
         )
 
     def test_task3_returns_structured_layout_and_edit_text(self) -> None:
-        cartographer = CartographerAgent(knowledge_base=self.kb)
+        cartographer = CartographerAgent(
+            knowledge_base=self.kb,
+            rag_provider=NullRagProvider(),
+        )
         target_metrics = {
             **self.baseline_metrics,
             "green_view": 0.38,
@@ -415,6 +425,24 @@ class Task23TestCase(unittest.TestCase):
         self.assertEqual(qwen_action.attributes, ["乡土植物", "低维护"])
         self.assertIn("不得擅自删除或移动电线", plan.draft_text)
         self.assertIn("保持全景左右接缝连续", plan.draft_text)
+
+    def test_task3_accepts_degraded_string_scene_elements(self) -> None:
+        with patch("agents.cartographer_agent.llm_client.chat", return_value=None):
+            plan = CartographerAgent(knowledge_base=self.kb).run(
+                baseline_metrics=self.baseline_metrics,
+                target_metrics={**self.baseline_metrics, "green_view": 0.3},
+                scene_understanding={
+                    "status": "ok",
+                    "fixed_regions": ["既有建筑与道路"],
+                    "infrastructure": ["消防通道"],
+                    "panorama_seam_constraints": ["保持接缝连续"],
+                },
+                language="zh",
+            )
+
+        self.assertIn("场景清单固定区域：既有建筑与道路", plan.unchanged_regions)
+        self.assertIn("已识别基础设施：消防通道", plan.unchanged_regions)
+        self.assertIn("保持接缝连续", plan.constraints)
 
 
 if __name__ == "__main__":

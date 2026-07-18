@@ -48,6 +48,36 @@ class LangChainClientTestCase(unittest.TestCase):
             )
         )
 
+    def test_multi_image_message_includes_each_view_metadata(self) -> None:
+        views = [
+            {
+                "view_id": "overview",
+                "output_path": str(ROOT / "data" / "p1.jpg"),
+                "width": 2048,
+                "height": 1024,
+                "is_overview": True,
+            },
+            {
+                "view_id": "yaw_090",
+                "output_path": str(ROOT / "data" / "p2.jpg"),
+                "yaw": 90,
+                "pitch": 0,
+                "fov": 90,
+                "width": 1024,
+                "height": 1024,
+                "is_overview": False,
+            },
+        ]
+        messages = llm_client.build_multi_image_messages("system", "inventory", views)
+        content = messages[1].content
+        image_blocks = [item for item in content if item["type"] == "image_url"]
+        text = "\n".join(
+            item["text"] for item in content if item["type"] == "text"
+        )
+        self.assertEqual(len(image_blocks), 2)
+        self.assertIn("overview", text)
+        self.assertIn("yaw=90", text)
+
 
 if __name__ == "__main__":
     unittest.main()
