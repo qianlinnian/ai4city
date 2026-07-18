@@ -15,7 +15,28 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parent
 load_dotenv(ROOT / ".env")
 
+
+def _env_path(key: str, default: Path) -> Path:
+    """读取环境变量路径；不存在或无效时回退 default。"""
+    raw = os.getenv(key, "").strip().strip('"').strip("'")
+    if not raw:
+        return default
+    p = Path(raw).expanduser()
+    try:
+        p = p.resolve()
+    except OSError:
+        return default
+    return p if p.exists() else default
+
+
 # ---------- 路径 ----------
+# 同时兼容 main 的 DATA_DIR 与 Task 2/3 分支的 AI4CITY_DATA_DIR；外部数据只读。
+_default_data_dir = ROOT.parent / "ai4city-data"
+DATA_DIR = _env_path(
+    "AI4CITY_DATA_DIR",
+    _env_path("DATA_DIR", _default_data_dir),
+)
+
 KB_DIR = ROOT / "knowledge_base" / "data"
 UPLOAD_DIR = ROOT / "uploads"
 OUTPUT_DIR = ROOT / "outputs"
@@ -34,25 +55,59 @@ RAG_KNOWLEDGE_DIR = Path(
     os.getenv("RAG_KNOWLEDGE_DIR", str(ROOT / "rag_knowledge"))
 ).resolve()
 RAG_PUBLISHED_KNOWLEDGE_DIR = RAG_KNOWLEDGE_DIR / "published"
-# 文生图工具：按图片完整文件名从 assets/ 取原图，结果写入 TargetIMG/
-ASSETS_DIR = ROOT / "assets"
+
+# 原图目录：优先 LOAD_DATA_DIR / DATA_DIR/assets / ROOT/assets
+_load_assets = os.getenv("LOAD_DATA_DIR", "").strip().strip('"').strip("'")
+if _load_assets:
+    _candidate = (ROOT / _load_assets).resolve() if not Path(_load_assets).is_absolute() else Path(_load_assets)
+    ASSETS_DIR = _candidate if _candidate.exists() else (DATA_DIR / "assets")
+else:
+    ASSETS_DIR = DATA_DIR / "assets" if (DATA_DIR / "assets").exists() else ROOT / "assets"
+
+# 派生图、生成结果和缓存只写仓库输出目录，不写外部数据目录。
 TARGET_IMG_DIR = ROOT / "TargetIMG"
-# 前端只读取后端维护的数据目录，不要求浏览器重复上传原图或项目大表。
-DATA_DIR = Path(
-    os.getenv("AI4CITY_DATA_DIR", str(ROOT.parent / "ai4city-data"))
+
+# 指标表与三张分析图目录
+FILLED_METRICS_XLSX = (
+    DATA_DIR / "filled_metrics.xlsx"
+    if (DATA_DIR / "filled_metrics.xlsx").exists()
+    else ROOT / "filled_metrics.xlsx"
+)
+EDGE_MAPS_DIR = (
+    DATA_DIR / "edge_density_maps"
+    if (DATA_DIR / "edge_density_maps").exists()
+    else ROOT / "edge_density_maps"
+)
+SEG_MAPS_DIR = (
+    DATA_DIR / "segmentation_results"
+    if (DATA_DIR / "segmentation_results").exists()
+    else ROOT / "segmentation_results"
+)
+SKYLINE_MAPS_DIR = (
+    DATA_DIR / "skyline_boundary_maps"
+    if (DATA_DIR / "skyline_boundary_maps").exists()
+    else ROOT / "skyline_boundary_maps"
+)
+
+# Excel B 列 / 文件名匹配用的固定前缀长度
+IMAGE_KEY_LEN = 26
+
+# Task 2/3 后端目录与场景分类。
+PANORAMA_DIR = Path(
+    os.getenv("AI4CITY_PANORAMA_DIR", str(ASSETS_DIR))
 ).resolve()
-PANORAMA_DIR = Path(os.getenv("AI4CITY_PANORAMA_DIR", str(DATA_DIR))).resolve()
 METRICS_TABLE_DIR = Path(
     os.getenv("AI4CITY_METRICS_TABLE_DIR", str(DATA_DIR))
 ).resolve()
 SCENE_MANIFEST_PATH = Path(
     os.getenv("AI4CITY_SCENE_MANIFEST", str(DATA_DIR / "scenes.csv"))
 ).resolve()
-# 当前产品流程的三类空间场景；Prompt 细节见 agents/prompt_templates.py。
 SCENE_TYPES_ZH = ("社区", "蓝绿", "商办")
 _metrics_table_path_raw = os.getenv("AI4CITY_METRICS_TABLE", "").strip()
 METRICS_TABLE_PATH = (
-    Path(_metrics_table_path_raw).resolve() if _metrics_table_path_raw else None
+    Path(_metrics_table_path_raw).resolve()
+    if _metrics_table_path_raw
+    else FILLED_METRICS_XLSX if FILLED_METRICS_XLSX.is_file() else None
 )
 KNOWLEDGE_SOURCE_DIR = Path(
     os.getenv("AI4CITY_KNOWLEDGE_DIR", str(DATA_DIR / "knowledge"))
@@ -67,7 +122,6 @@ for _p in (
     RAG_CACHE_DIR,
     KNOWLEDGE_DRAFT_DIR,
     RAG_PUBLISHED_KNOWLEDGE_DIR,
-    ASSETS_DIR,
     TARGET_IMG_DIR,
 ):
     _p.mkdir(parents=True, exist_ok=True)
@@ -92,7 +146,7 @@ PANORAMA_STRICT_ASPECT = os.getenv(
 ).strip().lower() in {"1", "true", "yes"}
 
 SCENE_UNDERSTANDING_ENABLED = os.getenv(
-    "SCENE_UNDERSTANDING_ENABLED", "true"
+    "SCENE_UNDERSTANDING_ENABLED", "false"
 ).strip().lower() in {"1", "true", "yes"}
 
 # RAG 默认关闭。开启后仅在本地以 TF-IDF 检索，不调用远程 Embedding API。

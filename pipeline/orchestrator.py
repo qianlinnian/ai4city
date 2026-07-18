@@ -61,6 +61,7 @@ class PipelineOrchestrator:
         self,
         generator: GeneratorProtocol | GeneratorCallable | None = None,
         *,
+        force_metrics_fallback: bool | None = None,
         translator: TranslatorAgent | None = None,
         cartographer: CartographerAgent | None = None,
         learning: LearningAgent | None = None,
@@ -68,6 +69,14 @@ class PipelineOrchestrator:
         memory: MemoryAgent | None = None,
         scene_understander: SceneUnderstandingAgent | None = None,
     ) -> None:
+        # ``main`` still passes this historical keyword from the Gradio entry
+        # point. Task 1 is no longer run online, so the value is intentionally
+        # ignored; keeping the keyword avoids changing the proven UI contract.
+        _ = force_metrics_fallback
+        if generator is None and force_metrics_fallback is not None:
+            from app.generation_backend import generate
+
+            generator = generate
         self.generator = generator
         self.learning = learning or LearningAgent()
         self.translator = translator or TranslatorAgent()
@@ -79,15 +88,23 @@ class PipelineOrchestrator:
     def start_session(
         self,
         image_path: str | Path,
-        baseline_metrics: Mapping[str, float],
+        baseline_metrics: Mapping[str, float] | None = None,
         scene_context: dict | SceneContext | str | None = None,
         pre_edit_experience: list[dict] | None = None,
+        *,
+        image_name: str | None = None,
+        skip_extract: bool | None = None,
     ) -> dict[str, Any]:
         """Create a session from an image and seven values read from Excel."""
 
+        # Compatibility-only arguments used by the existing ``main`` UI.
+        # No image metric extraction is performed regardless of their value.
+        _ = skip_extract
         source = Path(image_path)
         if not source.is_file():
             raise FileNotFoundError(f"找不到原始全景图：{source}")
+        if baseline_metrics is None:
+            raise ValueError("缺少从项目大表读取的七项形态基线指标")
         baseline = validate_morph_metrics(baseline_metrics, field_name="基线指标")
 
         if isinstance(scene_context, SceneContext):
@@ -101,6 +118,7 @@ class PipelineOrchestrator:
             "session_id": uuid.uuid4().hex,
             "created_at": datetime.now().isoformat(),
             "image_path": str(source.resolve()),
+            "image_name": image_name or source.name,
             "scene_context": scene.model_dump(),
             "scene_context_text": scene.as_text(),
             "pre_edit_experience": pre_edit_experience or [],

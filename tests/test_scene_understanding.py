@@ -89,7 +89,9 @@ class SceneUnderstandingTests(unittest.TestCase):
             },
             ensure_ascii=False,
         )
-        agent = SceneUnderstandingAgent(_FakeViewGenerator(self.view_set))
+        agent = SceneUnderstandingAgent(
+            _FakeViewGenerator(self.view_set), enabled=True
+        )
         with patch(
             "agents.scene_understanding_agent.llm_client.chat_with_images",
             return_value=response,
@@ -103,7 +105,9 @@ class SceneUnderstandingTests(unittest.TestCase):
         self.assertEqual(len(mocked.call_args.args[2]), 1)
 
     def test_model_failure_returns_empty_degraded_inventory(self) -> None:
-        agent = SceneUnderstandingAgent(_FakeViewGenerator(self.view_set))
+        agent = SceneUnderstandingAgent(
+            _FakeViewGenerator(self.view_set), enabled=True
+        )
         with patch(
             "agents.scene_understanding_agent.llm_client.chat_with_images",
             return_value=None,

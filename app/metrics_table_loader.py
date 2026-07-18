@@ -296,6 +296,22 @@ def list_workbook_sheets(path: str | Path) -> list[str]:
         raise UnsupportedTableError(f"无法读取 Excel 文件：{table_path.name}") from exc
 
 
+def read_workbook_rows(
+    path: str | Path, sheet_name: str | None = None
+) -> tuple[tuple[Any, ...], ...]:
+    """读取原始工作表行，供需要情景列和逐人列的前端数据适配器复用。"""
+
+    table_path = Path(path)
+    suffix = table_path.suffix.casefold()
+    if suffix == ".csv":
+        _, rows = _read_csv_rows(table_path)
+    elif suffix in {".xlsx", ".xlsm"}:
+        _, rows = _read_xlsx_rows(table_path, sheet_name)
+    else:
+        raise UnsupportedTableError("仅支持 .xlsx、.xlsm 和 .csv 数据表")
+    return tuple(row.values for row in rows)
+
+
 def resolve_required_columns(headers: Sequence[Any]) -> tuple[str, dict[str, str]]:
     """Resolve the image column and seven metric columns from table headers."""
 

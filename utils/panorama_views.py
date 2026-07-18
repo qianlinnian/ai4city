@@ -281,7 +281,7 @@ class PanoramaViewGenerator:
             for yaw in self.config.horizontal_yaws
         ]
         # 迭代中：默认生产配置固定为 False，当前 Task 2/3 暂未调用；
-        # 投影代码保留，供后续迭代或显式构造 PanoramaViewConfig 的几何测试使用。
+        # 投影代码保留，供后续迭代或显式构造 PanoramaProjectionConfig 的几何测试使用。
         if self.config.include_downward:
             projections.extend(
                 (

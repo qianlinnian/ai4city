@@ -183,6 +183,27 @@ class PipelineExcelFlowTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "当前阶段"):
             self.pipe.confirm_plan(state, "skip")
 
+    def test_main_ui_compatibility_arguments_keep_excel_baseline(self):
+        pipe = PipelineOrchestrator(
+            force_metrics_fallback=True,
+            translator=self.translator,
+            cartographer=FakeCartographer(),
+            learning=FakeLearning(),
+            memory=self.memory,
+        )
+        with patch.object(pipe, "_persist", return_value=None):
+            state = pipe.start_session(
+                self.image,
+                scene_context={"space_type": "社区"},
+                pre_edit_experience=[],
+                baseline_metrics=BASELINE,
+                image_name="scene.jpg",
+                skip_extract=True,
+            )
+
+        self.assertEqual(state["baseline_metrics"], BASELINE)
+        self.assertEqual(state["image_name"], "scene.jpg")
+
     def test_second_translator_run_uses_revision_prompt_context(self):
         state = self.pipe.start_session(self.image, BASELINE)
         state = self.pipe.run_translator(state, EXPERIENCE)

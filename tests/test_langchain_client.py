@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import unittest
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import Mock, patch
 
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableLambda
+from PIL import Image
 
 from utils import llm_client
 
@@ -14,6 +16,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class LangChainClientTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp_dir = TemporaryDirectory()
+        self.image_paths = [
+            Path(self.temp_dir.name) / "p1.jpg",
+            Path(self.temp_dir.name) / "p2.jpg",
+        ]
+        for index, path in enumerate(self.image_paths, start=1):
+            Image.new("RGB", (4, 4), (index * 40, 80, 120)).save(path, "JPEG")
+
+    def tearDown(self) -> None:
+        self.temp_dir.cleanup()
+
     def test_text_chat_uses_langchain_runnable_chain(self) -> None:
         fake_model = RunnableLambda(lambda _: AIMessage(content='{"ok": true}'))
         with (
@@ -34,7 +48,7 @@ class LangChainClientTestCase(unittest.TestCase):
             result = llm_client.chat_with_image(
                 "system",
                 "inspect panorama",
-                ROOT / "data" / "p1.jpg",
+                self.image_paths[0],
             )
 
         self.assertEqual(result, "multimodal-ok")
@@ -52,14 +66,14 @@ class LangChainClientTestCase(unittest.TestCase):
         views = [
             {
                 "view_id": "overview",
-                "output_path": str(ROOT / "data" / "p1.jpg"),
+                "output_path": str(self.image_paths[0]),
                 "width": 2048,
                 "height": 1024,
                 "is_overview": True,
             },
             {
                 "view_id": "yaw_090",
-                "output_path": str(ROOT / "data" / "p2.jpg"),
+                "output_path": str(self.image_paths[1]),
                 "yaw": 90,
                 "pitch": 0,
                 "fov": 90,
