@@ -259,6 +259,7 @@ class MorphTranslationResult(BaseModel):
     conversion_basis: list[TranslationEvidence] = Field(default_factory=list)
     references_used: list[str] = Field(default_factory=list)
     learning_applied: bool = False
+    prompt_variant: Literal["initial", "revision"] = "initial"
 
 
 class SpatialObjectAction(BaseModel):
@@ -287,6 +288,9 @@ class ModificationPlan(BaseModel):
     expert_advice: str = ""
     original_image_path: str = ""
     rag_references: list[str] = Field(default_factory=list)
+    scene_prompt_profile: Literal[
+        "community", "blue_green", "commercial_office", "general"
+    ] = "general"
 
     @property
     def worldlabs_prompt(self) -> str:

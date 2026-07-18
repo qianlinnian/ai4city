@@ -48,6 +48,8 @@ METRICS_TABLE_DIR = Path(
 SCENE_MANIFEST_PATH = Path(
     os.getenv("AI4CITY_SCENE_MANIFEST", str(DATA_DIR / "scenes.csv"))
 ).resolve()
+# 当前产品流程的三类空间场景；Prompt 细节见 agents/prompt_templates.py。
+SCENE_TYPES_ZH = ("社区", "蓝绿", "商办")
 _metrics_table_path_raw = os.getenv("AI4CITY_METRICS_TABLE", "").strip()
 METRICS_TABLE_PATH = (
     Path(_metrics_table_path_raw).resolve() if _metrics_table_path_raw else None

@@ -216,6 +216,88 @@ class Task23TestCase(unittest.TestCase):
         self.assertEqual({item.method for item in result.conversion_basis}, {"llm"})
         self.assertFalse(result.references_used)
 
+    def test_task2_revision_prompt_uses_previous_targets_and_knob_changes(self) -> None:
+        revised_target = {
+            "green_view": 0.34,
+            "blue_view": 0.08,
+            "sky_view": 0.27,
+            "built_ratio": 0.42,
+            "color_richness": 7.5,
+            "edge_density": 0.065,
+            "skyline_variance": 0.026,
+        }
+        previous_experience = dict(self.experience_targets)
+        new_experience = {**previous_experience, "naturalness": 4.8}
+        previous_morph = {**self.baseline_metrics, "green_view": 0.30}
+        with patch(
+            "agents.translator_agent.llm_client.chat_with_image",
+            return_value=json.dumps(revised_target),
+        ) as mocked_chat:
+            result = TranslatorAgent(
+                knowledge_base=self.kb,
+                rag_provider=NullRagProvider(),
+            ).run(
+                experience_records=self.experience_records,
+                experience_targets=new_experience,
+                baseline_metrics=self.baseline_metrics,
+                original_image_path=str(ROOT / "data" / "p1.jpg"),
+                prompt_variant="revision",
+                previous_experience_targets=previous_experience,
+                previous_target_metrics=previous_morph,
+            )
+
+        system_text, user_text = mocked_chat.call_args.args[:2]
+        self.assertIn("修订轮次", system_text)
+        self.assertIn('"previous_experience_targets"', user_text)
+        self.assertIn('"previous_target_metrics"', user_text)
+        self.assertIn('"naturalness": 0.8', user_text)
+        self.assertEqual(result.prompt_variant, "revision")
+        self.assertIn("修订轮次", result.rationale)
+
+    def test_task3_selects_scene_specific_prompt_profiles(self) -> None:
+        scene_cases = [
+            ("社区", "community", "社区场景"),
+            ("蓝绿", "blue_green", "蓝绿场景"),
+            ("商办", "commercial_office", "商办场景"),
+        ]
+        target = {**self.baseline_metrics, "green_view": 0.32}
+        for scene_type, profile_key, profile_label in scene_cases:
+            with self.subTest(scene_type=scene_type), patch(
+                "agents.cartographer_agent.llm_client.chat",
+                return_value=None,
+            ) as mocked_chat:
+                plan = CartographerAgent(
+                    knowledge_base=self.kb,
+                    rag_provider=NullRagProvider(),
+                ).run(
+                    baseline_metrics=self.baseline_metrics,
+                    target_metrics=target,
+                    scene_type=scene_type,
+                    scene_context=f"空间类型: {scene_type}",
+                    scene_understanding={"status": "ok"},
+                    language="zh",
+                )
+
+            system_text, user_text = mocked_chat.call_args.args[:2]
+            self.assertEqual(plan.scene_prompt_profile, profile_key)
+            self.assertIn(profile_label, system_text)
+            self.assertIn("2至5项", system_text)
+            self.assertIn(f"场景Prompt模板: {profile_label}", user_text)
+            self.assertTrue(any(profile_label in item for item in [plan.plan_summary]))
+
+        with patch("agents.cartographer_agent.llm_client.chat", return_value=None):
+            explicit_community = CartographerAgent(
+                knowledge_base=self.kb,
+                rag_provider=NullRagProvider(),
+            ).run(
+                baseline_metrics=self.baseline_metrics,
+                target_metrics=target,
+                scene_type="社区",
+                scene_context="住宅邻里紧邻滨水公园",
+                language="zh",
+            )
+        self.assertEqual(explicit_community.scene_prompt_profile, "community")
+
     def test_task2_rejects_incomplete_or_invalid_morph_baseline(self) -> None:
         translator = TranslatorAgent(knowledge_base=self.kb)
         incomplete = dict(self.baseline_metrics)

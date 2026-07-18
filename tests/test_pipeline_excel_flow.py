@@ -45,7 +45,11 @@ EXPERIENCE = {
 
 
 class FakeTranslator:
+    def __init__(self):
+        self.calls = []
+
     def run(self, **kwargs):
+        self.calls.append(kwargs)
         target = {**kwargs["baseline_metrics"], "green_view": 0.28}
         return MorphTranslationResult(
             baseline_metrics=MorphMetrics(**kwargs["baseline_metrics"]),
@@ -53,6 +57,7 @@ class FakeTranslator:
             experience_baseline=kwargs.get("experience_baseline") or EXPERIENCE,
             experience_records=kwargs.get("experience_records") or [],
             experience_targets=kwargs["experience_targets"],
+            prompt_variant=kwargs.get("prompt_variant", "initial"),
         )
 
     def apply_human_override(self, result, human_metrics=None, note=""):
@@ -108,9 +113,10 @@ class PipelineExcelFlowTests(unittest.TestCase):
         # decodes it, and this keeps the test compatible with read-only runners.
         self.image = Path(__file__)
         self.memory = FakeMemory()
+        self.translator = FakeTranslator()
         self.pipe = PipelineOrchestrator(
             generator=FakeGenerator(),
-            translator=FakeTranslator(),
+            translator=self.translator,
             cartographer=FakeCartographer(),
             learning=FakeLearning(),
             memory=self.memory,
@@ -176,6 +182,21 @@ class PipelineExcelFlowTests(unittest.TestCase):
         state = self.pipe.start_session(self.image, BASELINE)
         with self.assertRaisesRegex(ValueError, "当前阶段"):
             self.pipe.confirm_plan(state, "skip")
+
+    def test_second_translator_run_uses_revision_prompt_context(self):
+        state = self.pipe.start_session(self.image, BASELINE)
+        state = self.pipe.run_translator(state, EXPERIENCE)
+        revised = {**EXPERIENCE, "naturalness": 4.8}
+        state = self.pipe.run_translator(state, revised)
+
+        self.assertEqual(len(self.translator.calls), 2)
+        first, second = self.translator.calls
+        self.assertEqual(first["prompt_variant"], "initial")
+        self.assertEqual(second["prompt_variant"], "revision")
+        self.assertEqual(second["previous_experience_targets"], EXPERIENCE)
+        self.assertEqual(second["previous_target_metrics"]["green_view"], 0.28)
+        self.assertEqual(state["translator_prompt_variant"], "revision")
+        self.assertEqual(state["translator_round"], 2)
 
 
 if __name__ == "__main__":

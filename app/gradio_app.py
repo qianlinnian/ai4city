@@ -41,10 +41,12 @@ from config import (
     EXPERIENCE_LABELS_ZH,
     MORPH_KEYS,
     MORPH_LABELS_ZH,
+    SCENE_TYPES_ZH,
     SESSION_DIR,
     UPLOAD_DIR,
 )
 from pipeline.orchestrator import PipelineOrchestrator
+from schemas.models import SceneContext
 
 
 PIPELINE = PipelineOrchestrator()
@@ -111,7 +113,11 @@ def parse_participants(value: Any, *, required: bool = True) -> list[dict[str, A
                 )
             scores[key] = score
         records.append(
-            {"person_id": person_id, "person_name": name, "experience": scores}
+            {
+                "person_id": person_id,
+                "person_name": name or f"参与者{row_number}",
+                "experience": scores,
+            }
         )
         seen_ids.add(person_id)
     if required and not records:
@@ -342,6 +348,7 @@ def _scene_context(
 
 
 def confirm_inputs(
+    existing_state: dict[str, Any] | None,
     image_path: str | None,
     table_path: str | None,
     sheet_name: str | None,
@@ -361,13 +368,33 @@ def confirm_inputs(
         records = parse_participants(participants)
         targets = {key: float(value) for key, value in zip(EXPERIENCE_KEYS, target_values)}
         context = _scene_context(space_type, current_use, main_people, time_weather, description)
-        state = PIPELINE.start_session(
-            image_path, metrics, scene_context=context, pre_edit_experience=records
+        resolved_image = str(Path(image_path).resolve())
+        resolved_table = str(Path(table_path).resolve())
+        normalized_context = SceneContext(**context).model_dump()
+        same_inputs = bool(
+            existing_state
+            and existing_state.get("morph_translation")
+            and existing_state.get("image_path") == resolved_image
+            and existing_state.get("metrics_table_path") == resolved_table
+            and existing_state.get("metrics_sheet", "") == (sheet_name or "")
+            and existing_state.get("metrics_row_index") == row_index
+            and existing_state.get("baseline_metrics") == metrics
+            and existing_state.get("scene_context") == normalized_context
+            and existing_state.get("pre_edit_experience") == records
         )
+        if same_inputs and existing_state.get("stage") in {INPUT_PENDING, MORPH_REVIEW}:
+            # 用户只调整体验旋钮：保留上一轮结果，触发 Translator revision Prompt。
+            state = existing_state
+        elif same_inputs:
+            raise ValueError("当前流程已进入后续阶段，请先点击“返回重新设定体验目标”再调整旋钮")
+        else:
+            state = PIPELINE.start_session(
+                image_path, metrics, scene_context=context, pre_edit_experience=records
+            )
         state.update(
             {
-                "image_path": str(Path(image_path).resolve()),
-                "metrics_table_path": str(Path(table_path).resolve()),
+                "image_path": resolved_image,
+                "metrics_table_path": resolved_table,
                 "metrics_sheet": sheet_name or "",
                 "metrics_row_index": row_index,
                 "metrics_match_type": match_type,
@@ -377,6 +404,7 @@ def confirm_inputs(
         state = PIPELINE.run_translator(state, targets, experience_records=records)
         state = SESSION_STORE.save_session(state)
         translation = state["morph_translation"]
+        prompt_variant = state.get("translator_prompt_variant", "initial")
         agent = translation["target_metrics"]
         evidence = "\n".join(
             f"- {item.get('method', 'unknown').upper()}：{item.get('summary', '')}"
@@ -386,6 +414,11 @@ def confirm_inputs(
         scene_status = scene.get("status", "not_run")
         view_count = len(state.get("panorama_views") or [])
         evidence += f"\n- SCENE：{scene_status}，共 {view_count} 张派生视图"
+        evidence += (
+            "\n- PROMPT：REVISION（根据本轮旋钮变化修订上一轮结果）"
+            if prompt_variant == "revision"
+            else "\n- PROMPT：INITIAL（首次生成形态目标）"
+        )
         if scene.get("degradation_reason"):
             evidence += f"；{scene['degradation_reason']}"
         warnings = (state.get("task2_reasonableness") or {}).get("warnings") or []
@@ -393,7 +426,15 @@ def confirm_inputs(
         return (
             state,
             stage_stepper_html(1),
-            status_html(f"翻译官已完成 · 会话 {state['session_id']}", "ok"),
+            status_html(
+                (
+                    "翻译官已按调整后的旋钮完成二次修订"
+                    if prompt_variant == "revision"
+                    else "翻译官已完成首次形态翻译"
+                )
+                + f" · 会话 {state['session_id']}",
+                "ok",
+            ),
             state["session_id"],
             state["image_path"],
             state.get("scene_context_text", ""),
@@ -696,7 +737,12 @@ def build_ui() -> gr.Blocks:
                     with gr.Column(scale=7, min_width=520):
                         _section_header("CONTEXT", "情景要素与逐人体验")
                         with gr.Row():
-                            space_type = gr.Textbox(label="地点 / 场景类型", placeholder="社区街巷、滨水空间…")
+                            space_type = gr.Dropdown(
+                                choices=list(SCENE_TYPES_ZH),
+                                value="社区",
+                                label="场景类型",
+                                allow_custom_value=False,
+                            )
                             current_use = gr.Textbox(label="当前用途", placeholder="通行、休憩、活动…")
                         with gr.Row():
                             main_people = gr.Textbox(label="主要人群", placeholder="居民、儿童、访客…")
@@ -726,7 +772,9 @@ def build_ui() -> gr.Blocks:
                     label="从大表读取的七项形态基线", elem_classes=["metric-grid"],
                 )
                 confirm_input_button = gr.Button(
-                    "确认体验目标并运行翻译官", variant="primary", elem_classes=["primary-action"]
+                    "首次生成 / 调整后重新运行翻译官",
+                    variant="primary",
+                    elem_classes=["primary-action"],
                 )
 
             with gr.Tab("02 · 形态目标审核", id=1):
@@ -876,7 +924,7 @@ def build_ui() -> gr.Blocks:
         confirm_input_button.click(
             confirm_inputs,
             [
-                image_selector, metrics_file, metrics_sheet, metrics_candidate,
+                browser_state, image_selector, metrics_file, metrics_sheet, metrics_candidate,
                 space_type, current_use, main_people, time_weather, context_description,
                 pre_participants, *experience_sliders,
             ],

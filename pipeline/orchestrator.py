@@ -108,12 +108,15 @@ class PipelineOrchestrator:
             "experience_targets": None,
             "baseline_metrics": baseline,
             "morph_translation": None,
+            "translator_prompt_variant": None,
+            "translator_round": 0,
             "panorama_views": [],
             "scene_understanding": None,
             "task2_reasonableness": None,
             "confirmed_target_metrics": None,
             "expert_morph_note": "",
             "modification_plan": None,
+            "cartographer_scene_profile": None,
             "final_prompt": None,
             "expert_plan_edited": False,
             "generation": None,
@@ -144,6 +147,10 @@ class PipelineOrchestrator:
             else updated.get("pre_edit_experience") or []
         )
         exp_base = experience_baseline or updated.get("experience_baseline")
+        previous_translation = updated.get("morph_translation") or {}
+        previous_experience_targets = updated.get("experience_targets")
+        is_revision = bool(previous_translation and previous_experience_targets)
+        prompt_variant = "revision" if is_revision else "initial"
         if not updated.get("scene_understanding"):
             inventory = self.scene_understander.run(
                 updated.get("image_path", ""),
@@ -161,12 +168,17 @@ class PipelineOrchestrator:
             scene_context=updated.get("scene_context_text", ""),
             original_image_path=updated.get("image_path", ""),
             scene_understanding=updated.get("scene_understanding"),
+            prompt_variant=prompt_variant,
+            previous_experience_targets=previous_experience_targets,
+            previous_target_metrics=previous_translation.get("target_metrics"),
         )
 
         updated["pre_edit_experience"] = result.experience_records
         updated["experience_baseline"] = result.experience_baseline
         updated["experience_targets"] = targets
         updated["morph_translation"] = result.model_dump()
+        updated["translator_prompt_variant"] = prompt_variant
+        updated["translator_round"] = int(updated.get("translator_round") or 0) + 1
         updated["confirmed_target_metrics"] = result.target_metrics.model_dump()
         updated["task2_reasonableness"] = deepcopy(
             getattr(self.translator, "last_reasonableness_report", {})
@@ -216,8 +228,10 @@ class PipelineOrchestrator:
             original_image_path=updated.get("image_path", ""),
             expert_advice=note,
             scene_understanding=updated.get("scene_understanding"),
+            scene_type=str((updated.get("scene_context") or {}).get("space_type", "")),
         )
         updated["modification_plan"] = plan.model_dump()
+        updated["cartographer_scene_profile"] = plan.scene_prompt_profile
         updated["final_prompt"] = plan.draft_text
         updated["stage"] = PLAN_REVIEW
         self._persist(updated)
