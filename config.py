@@ -29,15 +29,32 @@ def _env_path(key: str, default: Path) -> Path:
     return p if p.exists() else default
 
 
-# ---------- 路径（本机默认：D:\\GitHubZY\\ai4city）----------
-# DATA_DIR 可为外部数据盘；未配置或不存在时使用仓库根目录
-DATA_DIR = _env_path("DATA_DIR", ROOT)
+# ---------- 路径 ----------
+# 同时兼容 main 的 DATA_DIR 与 Task 2/3 分支的 AI4CITY_DATA_DIR；外部数据只读。
+_default_data_dir = ROOT.parent / "ai4city-data"
+DATA_DIR = _env_path(
+    "AI4CITY_DATA_DIR",
+    _env_path("DATA_DIR", _default_data_dir),
+)
 
 KB_DIR = ROOT / "knowledge_base" / "data"
 UPLOAD_DIR = ROOT / "uploads"
 OUTPUT_DIR = ROOT / "outputs"
 IMAGE_OUT_DIR = OUTPUT_DIR / "images"
 SESSION_DIR = OUTPUT_DIR / "sessions"
+PANORAMA_VIEW_CACHE_DIR = Path(
+    os.getenv("PANORAMA_VIEW_CACHE_DIR", str(OUTPUT_DIR / "panorama_views"))
+).resolve()
+RAG_CACHE_DIR = Path(
+    os.getenv("RAG_CACHE_DIR", str(OUTPUT_DIR / "rag_cache"))
+).resolve()
+KNOWLEDGE_DRAFT_DIR = Path(
+    os.getenv("KNOWLEDGE_DRAFT_DIR", str(OUTPUT_DIR / "knowledge_drafts"))
+).resolve()
+RAG_KNOWLEDGE_DIR = Path(
+    os.getenv("RAG_KNOWLEDGE_DIR", str(ROOT / "rag_knowledge"))
+).resolve()
+RAG_PUBLISHED_KNOWLEDGE_DIR = RAG_KNOWLEDGE_DIR / "published"
 
 # 原图目录：优先 LOAD_DATA_DIR / DATA_DIR/assets / ROOT/assets
 _load_assets = os.getenv("LOAD_DATA_DIR", "").strip().strip('"').strip("'")
@@ -47,8 +64,8 @@ if _load_assets:
 else:
     ASSETS_DIR = DATA_DIR / "assets" if (DATA_DIR / "assets").exists() else ROOT / "assets"
 
-# Seedream 输出目录（Windows 大小写不敏感；统一用 TargetIMG）
-TARGET_IMG_DIR = DATA_DIR / "TargetIMG" if DATA_DIR != ROOT and (DATA_DIR / "TargetIMG").exists() else ROOT / "TargetIMG"
+# 派生图、生成结果和缓存只写仓库输出目录，不写外部数据目录。
+TARGET_IMG_DIR = ROOT / "TargetIMG"
 
 # 指标表与三张分析图目录
 FILLED_METRICS_XLSX = (
@@ -75,18 +92,92 @@ SKYLINE_MAPS_DIR = (
 # Excel B 列 / 文件名匹配用的固定前缀长度
 IMAGE_KEY_LEN = 26
 
+# Task 2/3 后端目录与场景分类。
+PANORAMA_DIR = Path(
+    os.getenv("AI4CITY_PANORAMA_DIR", str(ASSETS_DIR))
+).resolve()
+METRICS_TABLE_DIR = Path(
+    os.getenv("AI4CITY_METRICS_TABLE_DIR", str(DATA_DIR))
+).resolve()
+SCENE_MANIFEST_PATH = Path(
+    os.getenv("AI4CITY_SCENE_MANIFEST", str(DATA_DIR / "scenes.csv"))
+).resolve()
+SCENE_TYPES_ZH = ("社区", "蓝绿", "商办")
+_metrics_table_path_raw = os.getenv("AI4CITY_METRICS_TABLE", "").strip()
+METRICS_TABLE_PATH = (
+    Path(_metrics_table_path_raw).resolve()
+    if _metrics_table_path_raw
+    else FILLED_METRICS_XLSX if FILLED_METRICS_XLSX.is_file() else None
+)
+KNOWLEDGE_SOURCE_DIR = Path(
+    os.getenv("AI4CITY_KNOWLEDGE_DIR", str(DATA_DIR / "knowledge"))
+).resolve()
+
 for _p in (
     KB_DIR,
     UPLOAD_DIR,
     IMAGE_OUT_DIR,
     SESSION_DIR,
-    ASSETS_DIR,
+    PANORAMA_VIEW_CACHE_DIR,
+    RAG_CACHE_DIR,
+    KNOWLEDGE_DRAFT_DIR,
+    RAG_PUBLISHED_KNOWLEDGE_DIR,
     TARGET_IMG_DIR,
-    EDGE_MAPS_DIR,
-    SEG_MAPS_DIR,
-    SKYLINE_MAPS_DIR,
 ):
     _p.mkdir(parents=True, exist_ok=True)
+
+# ---------- Task 2/3 全景视图与场景理解 ----------
+PANORAMA_OVERVIEW_WIDTH = int(os.getenv("PANORAMA_OVERVIEW_WIDTH", "2048"))
+PANORAMA_OVERVIEW_HEIGHT = int(os.getenv("PANORAMA_OVERVIEW_HEIGHT", "1024"))
+PANORAMA_PERSPECTIVE_WIDTH = int(os.getenv("PANORAMA_PERSPECTIVE_WIDTH", "1024"))
+PANORAMA_PERSPECTIVE_HEIGHT = int(os.getenv("PANORAMA_PERSPECTIVE_HEIGHT", "1024"))
+PANORAMA_PERSPECTIVE_FOV = float(os.getenv("PANORAMA_PERSPECTIVE_FOV", "90"))
+PANORAMA_HORIZONTAL_YAWS = tuple(
+    float(item.strip())
+    for item in os.getenv("PANORAMA_HORIZONTAL_YAWS", "0,90,180,270").split(",")
+    if item.strip()
+)
+# 迭代中：向下观察透视图的投影实现保留，但当前 Task 2/3 链路暂未调用。
+PANORAMA_INCLUDE_DOWNWARD = False
+PANORAMA_DOWNWARD_PITCH = float(os.getenv("PANORAMA_DOWNWARD_PITCH", "-20"))
+PANORAMA_ASPECT_TOLERANCE = float(os.getenv("PANORAMA_ASPECT_TOLERANCE", "0.01"))
+PANORAMA_STRICT_ASPECT = os.getenv(
+    "PANORAMA_STRICT_ASPECT", "true"
+).strip().lower() in {"1", "true", "yes"}
+
+SCENE_UNDERSTANDING_ENABLED = os.getenv(
+    "SCENE_UNDERSTANDING_ENABLED", "false"
+).strip().lower() in {"1", "true", "yes"}
+
+# RAG 默认关闭。开启后仅在本地以 TF-IDF 检索，不调用远程 Embedding API。
+RAG_ENABLED = os.getenv("RAG_ENABLED", "false").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+}
+RAG_TOP_K = max(1, int(os.getenv("RAG_TOP_K", "4")))
+RAG_MIN_SCORE = max(0.0, float(os.getenv("RAG_MIN_SCORE", "0.05")))
+RAG_INCLUDE_REPOSITORY_SOURCES = os.getenv(
+    "RAG_INCLUDE_REPOSITORY_SOURCES", "true"
+).strip().lower() in {"1", "true", "yes"}
+
+# DeepSeek 仅用于离线知识整理；不会受 RUN_MODE 自动触发，CLI 必须显式 --execute。
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "").strip()
+DEEPSEEK_BASE_URL = os.getenv(
+    "DEEPSEEK_BASE_URL", "https://api.deepseek.com"
+).rstrip("/")
+DEEPSEEK_FLASH_MODEL = os.getenv(
+    "DEEPSEEK_FLASH_MODEL", "deepseek-v4-flash"
+).strip()
+DEEPSEEK_PRO_MODEL = os.getenv(
+    "DEEPSEEK_PRO_MODEL", "deepseek-v4-pro"
+).strip()
+DEEPSEEK_KNOWLEDGE_MAX_TOKENS = max(
+    4000, int(os.getenv("DEEPSEEK_KNOWLEDGE_MAX_TOKENS", "16000"))
+)
+DEEPSEEK_KNOWLEDGE_THINKING = os.getenv(
+    "DEEPSEEK_KNOWLEDGE_THINKING", "false"
+).strip().lower() in {"1", "true", "yes"}
 
 # ---------- API / 运行模式 ----------
 _generic_llm_key = os.getenv("LLM_API_KEY", "").strip()

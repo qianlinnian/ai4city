@@ -1,0 +1,2670 @@
+{
+  "schema_version": "ai4city-rag-knowledge-v1",
+  "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+  "record_count": 41,
+  "records": [
+    {
+      "section": "",
+      "clause_id": "P45-3",
+      "title": "Visual Access to Natural Systems in Some Cases",
+      "summary": "In some cases, providing visual access to existing natural systems is the easiest and most cost-effective approach.",
+      "normative_level": "informative",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "visual access",
+        "natural systems"
+      ],
+      "actions": [
+        "provide"
+      ],
+      "constraints": [
+        "in some cases",
+        "easiest and most cost-effective"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "visual access",
+        "natural systems",
+        "cost-effective"
+      ],
+      "evidence": [
+        {
+          "page": 45,
+          "line_ids": [
+            "P0045-L0004",
+            "P0045-L0005"
+          ],
+          "quote": "à In some cases, providing visual access to existing natural systems will be the easiest and most cost–effective approach.",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.969388
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "09428a9ddf7abcb6ed98",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0021",
+      "page_start": 45,
+      "page_end": 45,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.812152+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Material Connection with Nature",
+      "clause_id": "MAT-2",
+      "title": "Specify quantities based on intended function",
+      "summary": "Quantities of natural material should be specified based on intended function (restore vs stimulate), and variability of materials and applications is recommended over high ratios of any one material.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "interior",
+        "building"
+      ],
+      "objects": [
+        "natural materials",
+        "space function"
+      ],
+      "actions": [
+        "specify quantities based on function",
+        "recommend variability over high ratios"
+      ],
+      "constraints": [
+        "avoid high ratios of any one material"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "natural materials",
+        "quantities",
+        "function",
+        "variability"
+      ],
+      "evidence": [
+        {
+          "page": 49,
+          "line_ids": [
+            "P0049-L0019",
+            "P0049-L0020",
+            "P0049-L0021",
+            "P0049-L0022",
+            "P0049-L0023"
+          ],
+          "quote": "• Making natural materials readily visible. Quantities of a (natural) material should be specified based on intended function of the space (e.g., to restore versus stimulate), though a degree of variability of materials and applications is recommended over high ratios of any one material.",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.982759
+        }
+      ],
+      "confidence": 1.0,
+      "needs_review": false,
+      "knowledge_id": "2a67ccd52282f7b729f0",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0023",
+      "page_start": 49,
+      "page_end": 49,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.817163+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Visual Connection with Nature",
+      "clause_id": "VC-3",
+      "title": "Prioritize biodiversity over acreage",
+      "summary": "Prioritize biodiversity over acreage, area or quantity.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "vegetation",
+        "landscape"
+      ],
+      "actions": [
+        "prioritize biodiversity"
+      ],
+      "constraints": [
+        "biodiversity more important than area"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [
+        "green_view"
+      ],
+      "keywords": [
+        "biodiversity",
+        "acreage"
+      ],
+      "evidence": [
+        {
+          "page": 33,
+          "line_ids": [
+            "P0033-L0030"
+          ],
+          "quote": "Prioritize biodiversity over acreage, area or quantity.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "37803b00ba941bbb9105",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0015",
+      "page_start": 33,
+      "page_end": 33,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.802154+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "14 Patterns",
+      "clause_id": "pattern-13",
+      "title": "Mystery",
+      "summary": "The characteristics of mystery conditions are based on visual preference and perceived danger, and supported by research on pleasure responses to anticipatory situations. Mystery engenders a strong pleasure response within the brain that may be a similar mechanism to that of anticipation.",
+      "normative_level": "informative",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "mystery conditions",
+        "visual preference",
+        "pleasure response"
+      ],
+      "actions": [],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "Mystery",
+        "visual preference",
+        "anticipation",
+        "pleasure response"
+      ],
+      "evidence": [
+        {
+          "page": 65,
+          "line_ids": [
+            "P0065-L0034",
+            "P0065-L0035",
+            "P0065-L0036",
+            "P0065-L0037",
+            "P0065-L0038",
+            "P0065-L0039",
+            "P0065-L0040",
+            "P0065-L0041",
+            "P0065-L0042",
+            "P0065-L0043",
+            "P0065-L0044",
+            "P0065-L0045",
+            "P0065-L0046"
+          ],
+          "quote": "[13] Mystery. The characteristics of mystery conditions are based on visual preference and perceived danger (Herzog & Bryce, 2007; Herzog & Kropscott, 2004; Nasar, & Fisher, 1993), and supported by research on pleasure responses to anticipatory situations (Salimpoor, Benovoy, Larcher et al., 2011; Ikemi, 2005; Blood & Zatorre, 2001). Mystery engenders a strong pleasure response within the brain that may be a similar mechanism to that of anticipation (Biederman, 2011), which is hypothesized to be an explanation for why listening to music is so pleasurable – in that we are guessing what may be around the corner (Blood & Zatorre, 2001; Salimpoor et al., 2011).",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.944015
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "467f20eb82463a62877f",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0030",
+      "page_start": 65,
+      "page_end": 65,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.828162+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Visual Connection with Nature",
+      "clause_id": "VC-4",
+      "title": "Enable exercise opportunities near green space",
+      "summary": "Prioritize or enable exercise opportunities that are in proximity to green space.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "outdoor spaces",
+        "parks"
+      ],
+      "objects": [
+        "exercise facilities",
+        "green space"
+      ],
+      "actions": [
+        "prioritize",
+        "enable"
+      ],
+      "constraints": [
+        "exercise opportunities should be near green space"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "exercise",
+        "green space"
+      ],
+      "evidence": [
+        {
+          "page": 33,
+          "line_ids": [
+            "P0033-L0031",
+            "P0033-L0032"
+          ],
+          "quote": "Prioritize or enable exercise opportunities that are in proximity to green space.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "4bd05533e5cacf06c7e3",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0015",
+      "page_start": 33,
+      "page_end": 33,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.802154+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Pattern 15 Awe",
+      "clause_id": "15.1",
+      "title": "Spatial transitions as contrasts",
+      "summary": "Treat spatial transitions as opportunities for contrasts, including dark lows leading to soaring heights and thresholds between secular and sacred.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "transitional spaces"
+      ],
+      "objects": [
+        "spatial transitions"
+      ],
+      "actions": [
+        "treat as opportunities for contrasts"
+      ],
+      "constraints": [
+        "dark lows to soaring heights",
+        "thresholds between secular and sacred"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "compression and release",
+        "thin spaces",
+        "contrast"
+      ],
+      "evidence": [
+        {
+          "page": 61,
+          "line_ids": [
+            "P0061-L0029",
+            "P0061-L0030",
+            "P0061-L0031",
+            "P0061-L0032"
+          ],
+          "quote": "Treat spatial transitions as opportunities for contrasts: Dark lows leading to soaring heights—what Frank Lloyd Wright called “compression and release”; and thresholds between boundaries of the secular and the sacred or numinous, also known as 'thin spaces'.",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.95,
+      "needs_review": false,
+      "knowledge_id": "4d6f18680c3ea76b5f4e",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0028",
+      "page_start": 61,
+      "page_end": 61,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.825162+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Pattern 2 Non-Visual Connection with Nature",
+      "clause_id": "Pattern-2",
+      "title": "Non-Visual Connection with Nature",
+      "summary": "The Non-Visual Connection with Nature pattern aims to provide an environment that uses sound, scent, touch, temperature, and sometimes taste to reduce stress and improve physical and mental health.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [],
+      "actions": [
+        "Design for non-visual connections that can be easily accessed and in ways that allow frequent engagement.",
+        "Design for multisensory connections to maximize potential positive health impact; non-visual connections enhance visual connections.",
+        "Prioritize nature sounds over mechanical masking and urban sounds.",
+        "Consider opportunities to integrate sensory experiences with architectural and mechanical solutions."
+      ],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "Non-Visual Connection with Nature",
+        "multisensory",
+        "sound",
+        "scent",
+        "touch",
+        "temperature",
+        "taste",
+        "stress reduction",
+        "health"
+      ],
+      "evidence": [
+        {
+          "page": 35,
+          "line_ids": [
+            "P0035-L0031",
+            "P0035-L0032",
+            "P0035-L0033",
+            "P0035-L0034",
+            "P0035-L0035",
+            "P0035-L0036",
+            "P0035-L0037"
+          ],
+          "quote": "• Design for non-visual connections that can be easily accessed and in ways that allow frequent engagement. • Design for multisensory connections to maximize potential positive health impact. Non-visual connections enhance visual connections. • Prioritize nature sounds over mechanical masking and urban sounds. • Consider opportunities to integrate sensory experiences with architectural and mechanical solutions.",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.971098
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "4f7d7816bb128c849bdc",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0016",
+      "page_start": 35,
+      "page_end": 35,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.804152+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Prospect",
+      "clause_id": "P2",
+      "title": "Good Prospect is extensive and information rich",
+      "summary": "Good Prospect is extensive and information rich, with a savanna–like view.",
+      "normative_level": "informative",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "savanna-like"
+      ],
+      "objects": [
+        "view"
+      ],
+      "actions": [],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "prospect",
+        "extensive",
+        "information rich"
+      ],
+      "evidence": [
+        {
+          "page": 52,
+          "line_ids": [
+            "P0052-L0037"
+          ],
+          "quote": "Good Prospect is extensive and information rich, with a savanna–like view.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "503c844b82bb77875444",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0024",
+      "page_start": 52,
+      "page_end": 52,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.819164+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Complexity & Order",
+      "clause_id": "C3",
+      "title": "Use mid-range fractal dimension for digital designs",
+      "summary": "When using digital algorithms, assign geometries with a mid-range dimensional ratio D=1.3–1.75.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "fractal designs",
+        "geometries"
+      ],
+      "actions": [
+        "assign"
+      ],
+      "constraints": [
+        "D=1.3–1.75"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "fractal dimension",
+        "digital",
+        "algorithm"
+      ],
+      "evidence": [
+        {
+          "page": 51,
+          "line_ids": [
+            "P0051-L0025",
+            "P0051-L0026",
+            "P0051-L0027",
+            "P0051-L0028",
+            "P0051-L0029"
+          ],
+          "quote": "• Computer technology using the algorithms of mathematical and geometric functions can produce fractal designs with ease. If a digital approach is being taken, consider assigning geometries with a mid-range dimensional ratio (broadly speaking, D=1.3–1.75).",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.975845
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "542ca9bc2fab2f76244a",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0024",
+      "page_start": 51,
+      "page_end": 51,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.819164+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Material Connection with Nature",
+      "clause_id": "MAT-3",
+      "title": "Prioritize real materials over synthetic",
+      "summary": "Prioritize real natural materials over synthetic variations, because human brain receptors can distinguish between real and synthetic.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "interior",
+        "building"
+      ],
+      "objects": [
+        "natural materials",
+        "synthetic materials"
+      ],
+      "actions": [
+        "prioritize real materials over synthetic"
+      ],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "natural materials",
+        "synthetic",
+        "brain receptors"
+      ],
+      "evidence": [
+        {
+          "page": 49,
+          "line_ids": [
+            "P0049-L0025",
+            "P0049-L0026",
+            "P0049-L0027",
+            "P0049-L0028"
+          ],
+          "quote": "• Prioritize real materials over synthetic variations. Human brain receptors can tell the difference between real and synthetic—which could make the difference between engendering intrigue or disappointment.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 1.0,
+      "needs_review": false,
+      "knowledge_id": "6539f88de7aad1af27d1",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0023",
+      "page_start": 49,
+      "page_end": 49,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.817163+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Visual Connection with Nature",
+      "clause_id": "VC-2",
+      "title": "Orient seating to face nature",
+      "summary": "Orient seating to face nature, rather than presenting nature as a backdrop.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "interior spaces with windows"
+      ],
+      "objects": [
+        "seating"
+      ],
+      "actions": [
+        "orient seating"
+      ],
+      "constraints": [
+        "seating should face nature",
+        "nature should not be a backdrop"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "seating orientation",
+        "view"
+      ],
+      "evidence": [
+        {
+          "page": 33,
+          "line_ids": [
+            "P0033-L0028",
+            "P0033-L0029"
+          ],
+          "quote": "Orient seating to face nature, rather than presenting nature as a backdrop.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "65ef6f5ad0eea739756c",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0015",
+      "page_start": 33,
+      "page_end": 33,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.802154+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Material Connection with Nature",
+      "clause_id": "MAT-1",
+      "title": "Don't hide the grain",
+      "summary": "Choose a finish that enhances the grain pattern of natural materials; avoid thick coats of paint, lacquer, or heavy polishing that hide natural characteristics.",
+      "normative_level": "prohibited",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "interior",
+        "building"
+      ],
+      "objects": [
+        "natural materials",
+        "grain pattern"
+      ],
+      "actions": [
+        "choose finish that enhances grain pattern"
+      ],
+      "constraints": [],
+      "prohibited_actions": [
+        "hiding the grain"
+      ],
+      "metric_links": [],
+      "keywords": [
+        "natural materials",
+        "grain",
+        "finish",
+        "paint",
+        "lacquer"
+      ],
+      "evidence": [
+        {
+          "page": 49,
+          "line_ids": [
+            "P0049-L0014",
+            "P0049-L0015",
+            "P0049-L0016",
+            "P0049-L0017",
+            "P0049-L0018"
+          ],
+          "quote": "• Don’t hide the grain. As the brain is more receptive to surface characteristics than form and shape, choose a finish that enhances the grain pattern—thick coats of paint or lacquer, or heavy polishing can hide the characteristics that distinguish it as being natural.",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.958333
+        }
+      ],
+      "confidence": 1.0,
+      "needs_review": false,
+      "knowledge_id": "695eacb4a6d804900522",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0023",
+      "page_start": 49,
+      "page_end": 49,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.817163+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Biophilic Design Patterns - Mystery",
+      "clause_id": "MYS-1",
+      "title": "Preferred depth of field for mystery condition",
+      "summary": "Greater visual access with a medium (≥20 ft) to high (≥100 ft) depth of field is preferred over shallow depth of field for a quality mystery condition.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "view",
+        "depth of field"
+      ],
+      "actions": [
+        "provide visual access"
+      ],
+      "constraints": [
+        "medium depth of field ≥20 ft",
+        "high depth of field ≥100 ft",
+        "avoid shallow depth of field"
+      ],
+      "prohibited_actions": [
+        "shallow depth of field that leads to unpleasant surprises"
+      ],
+      "metric_links": [],
+      "keywords": [
+        "mystery",
+        "depth of field",
+        "visual access",
+        "anticipation"
+      ],
+      "evidence": [
+        {
+          "page": 56,
+          "line_ids": [
+            "P0056-L0025",
+            "P0056-L0026",
+            "P0056-L0027",
+            "P0056-L0028"
+          ],
+          "quote": "An obscured view with a shallow depth of field has shown to lead to unpleasant surprises, whereas greater visual access, with a medium (≥20 ft) to high (≥100 ft) depth of field is preferred (Herzog and Bryce, 2007).",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "6c3f7204ddf483b5f23f",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0026",
+      "page_start": 56,
+      "page_end": 56,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.822162+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Thermal & Airflow Variability",
+      "clause_id": "4.1",
+      "title": "Variable conductance materials and seating options",
+      "summary": "Providing variable conductance materials and seating options with varying solar heat gain or proximity to operable windows can improve overall satisfaction.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "variable conductance materials",
+        "seating options",
+        "operable windows"
+      ],
+      "actions": [
+        "provide"
+      ],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "variable conductance",
+        "seating",
+        "solar heat gain",
+        "operable windows"
+      ],
+      "evidence": [
+        {
+          "page": 39,
+          "line_ids": [
+            "P0039-L0027",
+            "P0039-L0028",
+            "P0039-L0029"
+          ],
+          "quote": "• Providing variable conductance materials, seating options with differing levels of solar heat gain or proximity to operable windows could improve the overall satisfaction of a space.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.95,
+      "needs_review": false,
+      "knowledge_id": "6fca37f9d764cd32e2b9",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0018",
+      "page_start": 39,
+      "page_end": 39,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.808152+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Biomorphic Forms & Patterns",
+      "clause_id": "P47-DC2",
+      "title": "Avoid overuse",
+      "summary": "Avoid the overuse of forms and patterns that may lead to visual toxicity.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "built environment",
+        "interior space"
+      ],
+      "objects": [
+        "forms",
+        "patterns"
+      ],
+      "actions": [
+        "avoid"
+      ],
+      "constraints": [
+        "overuse",
+        "may lead to visual toxicity"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "overuse",
+        "visual toxicity",
+        "biomorphic",
+        "forms",
+        "patterns"
+      ],
+      "evidence": [
+        {
+          "page": 47,
+          "line_ids": [
+            "P0047-L0034",
+            "P0047-L0035"
+          ],
+          "quote": "• Avoid the overuse of forms and patterns that may lead to visual toxicity.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "796eb911903f7ecceea6",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0022",
+      "page_start": 47,
+      "page_end": 47,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.814154+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Material Connection with Nature",
+      "clause_id": "MAT-4",
+      "title": "Consider haptic and olfactory experiences",
+      "summary": "Consider the haptic and olfactory experiences of a material or product to enhance the overall material connection.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "interior",
+        "building"
+      ],
+      "objects": [
+        "materials",
+        "haptic experience",
+        "olfactory experience"
+      ],
+      "actions": [
+        "consider haptic and olfactory experiences"
+      ],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "haptic",
+        "olfactory",
+        "material connection"
+      ],
+      "evidence": [
+        {
+          "page": 49,
+          "line_ids": [
+            "P0049-L0029",
+            "P0049-L0030"
+          ],
+          "quote": "• Consider the haptic and olfactory experiences of a material or product to enhance the overall material connection.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 1.0,
+      "needs_review": false,
+      "knowledge_id": "7a24538d80e9214eba52",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0023",
+      "page_start": 49,
+      "page_end": 49,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.817163+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Complexity & Order",
+      "clause_id": "C5",
+      "title": "Consider impact on existing fractal quality",
+      "summary": "Consider the impact of new building or landscape design on the fractal quality of existing landscape or urban skyline.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "new building",
+        "landscape design",
+        "existing landscape",
+        "urban skyline"
+      ],
+      "actions": [
+        "consider"
+      ],
+      "constraints": [],
+      "prohibited_actions": [
+        "diminish existing benefits"
+      ],
+      "metric_links": [],
+      "keywords": [
+        "fractal quality",
+        "impact",
+        "skyline"
+      ],
+      "evidence": [
+        {
+          "page": 51,
+          "line_ids": [
+            "P0051-L0035",
+            "P0051-L0036",
+            "P0051-L0037"
+          ],
+          "quote": "• Consider the impact of a new building or landscape design on the fractal quality of the existing landscape or urban skyline so as not to diminish existing benefits.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "830a229ab7cb5103d39b",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0024",
+      "page_start": 51,
+      "page_end": 51,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.819164+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "14 Patterns",
+      "clause_id": "pattern-11",
+      "title": "Prospect",
+      "summary": "Visual preference research and spatial habitat responses have informed the evolution of this pattern, as well as cultural anthropology, evolutionary psychology and architectural analysis. Health benefits are suggested to include reduced stress, reduced boredom, irritation, fatigue, and perceived vulnerability, as well as improved comfort.",
+      "normative_level": "informative",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "visual preference",
+        "spatial habitat",
+        "views",
+        "comfort"
+      ],
+      "actions": [],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "Prospect",
+        "visual preference",
+        "stress reduction",
+        "comfort"
+      ],
+      "evidence": [
+        {
+          "page": 65,
+          "line_ids": [
+            "P0065-L0014",
+            "P0065-L0015",
+            "P0065-L0016",
+            "P0065-L0017",
+            "P0065-L0019",
+            "P0065-L0021",
+            "P0065-L0023",
+            "P0065-L0025",
+            "P0065-L0027",
+            "P0065-L0029",
+            "P0065-L0031"
+          ],
+          "quote": "[11] Prospect. Visual preference research and spatial habitat responses have informed the evolution of this pattern, as well as cultural anthropology, evolutionary psychology (e.g., Heerwagen & Orians, 1993) and architectural analysis (e.g., Dosen & Ostwald, 2013; Hildebrand, 1991; Appleton, 1996). Health benefits are suggested to include reduced stress (Grahn & Stigsdotter, 2010); reduced boredom, irritation, fatigue (Clearwater & Coss, 1991), and perceived vulnerability (Petherick, 2000; Wang & Taylor, 2006); as well as improved comfort (Herzog & Bryce, 2007).",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.975
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "850180eedb6651dc0ea6",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0030",
+      "page_start": 65,
+      "page_end": 65,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.828162+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Biophilic Design Patterns - Mystery",
+      "clause_id": "MYS-2",
+      "title": "Obscure boundaries and portion of focal subject",
+      "summary": "A good mystery condition can be expressed through obscuring the boundaries and a portion of the focal subject, enticing the user to anticipate and explore.",
+      "normative_level": "informative",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "boundaries",
+        "focal subject"
+      ],
+      "actions": [
+        "obscure"
+      ],
+      "constraints": [
+        "obscure boundaries",
+        "obscure portion of focal subject"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "mystery",
+        "obscure",
+        "boundaries",
+        "focal subject",
+        "anticipation"
+      ],
+      "evidence": [
+        {
+          "page": 56,
+          "line_ids": [
+            "P0056-L0029",
+            "P0056-L0030",
+            "P0056-L0031",
+            "P0056-L0032"
+          ],
+          "quote": "A good mystery condition could also be expressed through the obscuring of the boundaries and a portion of the focal subject (i.e., room, building, outdoor space, or other information source), thereby enticing the user to anticipate the full extent of the subject and explore the space further (Ikemi, 2005).",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "96a48e82e9cd051ee10f",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0026",
+      "page_start": 56,
+      "page_end": 56,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.822162+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Complexity & Order",
+      "clause_id": "C4",
+      "title": "Balance fractal usage to avoid discomfort",
+      "summary": "Avoid over-use or under-utilization of fractals; high-fractal dimensions can cause discomfort, while avoidance leads to predictability.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "fractal dimensions"
+      ],
+      "actions": [
+        "find balance"
+      ],
+      "constraints": [],
+      "prohibited_actions": [
+        "over-use",
+        "avoidance or under-utilization"
+      ],
+      "metric_links": [],
+      "keywords": [
+        "balance",
+        "fractal",
+        "discomfort",
+        "stress"
+      ],
+      "evidence": [
+        {
+          "page": 51,
+          "line_ids": [
+            "P0051-L0030",
+            "P0051-L0031",
+            "P0051-L0032",
+            "P0051-L0033",
+            "P0051-L0034"
+          ],
+          "quote": "• Find balance. Over-use of and/or extended exposure to high-fractal dimensions could instill discomfort or even fear, countering the intended response: to nourish and reduce stress, while avoidance or under-utilization of fractals could result in complete predictability and disinterest.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "9a418a19daddaa26d27f",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0024",
+      "page_start": 51,
+      "page_end": 51,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.819164+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Complexity & Order",
+      "clause_id": "C2",
+      "title": "Prefer three iterations of fractals",
+      "summary": "Fractal structures with iterations of three will be more impactful than designs with only two iterations.",
+      "normative_level": "informative",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "fractal structures"
+      ],
+      "actions": [
+        "use"
+      ],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "fractal",
+        "iteration",
+        "impact"
+      ],
+      "evidence": [
+        {
+          "page": 51,
+          "line_ids": [
+            "P0051-L0022",
+            "P0051-L0023"
+          ],
+          "quote": "• Fractal structures with iterations of three will be more impactful than a design limited to two iterations.",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.977011
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "9ab9c03228d4d7d8557a",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0024",
+      "page_start": 51,
+      "page_end": 51,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.819164+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Pattern 11: Prospect",
+      "clause_id": "",
+      "title": "Design Considerations for Prospect Condition",
+      "summary": "Recommended design actions to create quality Prospect condition, including orienting building elements, providing focal lengths, limiting partition heights, locating stairwells at perimeter with glass, and elevating spaces with high ceilings.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "indoor",
+        "outdoor",
+        "urban space"
+      ],
+      "objects": [
+        "building",
+        "fenestration",
+        "corridors",
+        "workstations",
+        "stairwells",
+        "glass façade",
+        "interior glass stairwell walls",
+        "partitions",
+        "hedges",
+        "understory vegetation",
+        "balconies",
+        "mezzanines",
+        "catwalks"
+      ],
+      "actions": [
+        "orient",
+        "provide focal lengths of ≥20 feet",
+        "remove visual barriers",
+        "limit partition heights to 42 inches",
+        "locate stairwells at building perimeter with glass façade and interior glass stairwell walls",
+        "elevate perimeter or interior spaces by 12–18 inches when high ceilings are present"
+      ],
+      "constraints": [
+        "focal length ≥ 20 feet (6 meters), preferably 100 feet (30 meters)",
+        "partition height ≤ 42 inches"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "prospect",
+        "visual access",
+        "focal length",
+        "partition height",
+        "glass",
+        "elevated space"
+      ],
+      "evidence": [
+        {
+          "page": 53,
+          "line_ids": [
+            "P0053-L0015",
+            "P0053-L0016",
+            "P0053-L0017",
+            "P0053-L0018"
+          ],
+          "quote": "Design considerations that may help create a quality Prospect condition: • Orienting building, fenestration, corridors and workstations will help optimize visual access to indoor or outdoor vistas, activity hubs or destinations.",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.957672
+        },
+        {
+          "page": 53,
+          "line_ids": [
+            "P0053-L0022",
+            "P0053-L0023",
+            "P0053-L0024",
+            "P0053-L0025",
+            "P0053-L0026",
+            "P0053-L0027",
+            "P0053-L0028",
+            "P0053-L0029",
+            "P0053-L0030"
+          ],
+          "quote": "Providing focal lengths of ≥20 feet (6 meters), preferably 100 feet (30 meters); when a space has sufficient depth, spatial properties can be leveraged to enhance the experience by removing visual barriers. Limiting partition heights to 42” will provide spatial barriers while allowing seated occupants to view across a space. Understory vegetation or hedges should use a similar guide; preferred height limitations will depend on terrain and how the space is most experienced (e.g., while sitting, standing, on a bicycle).",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        },
+        {
+          "page": 53,
+          "line_ids": [
+            "P0053-L0031",
+            "P0053-L0032"
+          ],
+          "quote": "Locating stairwells at building perimeter with glass façade and interior glass stairwell walls can form a dual Prospect condition.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        },
+        {
+          "page": 53,
+          "line_ids": [
+            "P0053-L0033",
+            "P0053-L0034"
+          ],
+          "quote": "When high ceilings are present, perimeter or interior spaces elevated 12”–18” will enhance the Prospect condition.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "a0ecc559c97f16605051",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0025",
+      "page_start": 53,
+      "page_end": 53,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.820162+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Biophilic Design Patterns - Refuge",
+      "clause_id": "REF-1",
+      "title": "Spatial condition for refuge: protection overhead and to the back",
+      "summary": "The principal spatial condition is protection overhead and to one’s back, preferably on three sides.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [],
+      "actions": [
+        "provide protection"
+      ],
+      "constraints": [
+        "protection overhead",
+        "protection to back",
+        "preferably three sides"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "refuge",
+        "protection",
+        "spatial condition"
+      ],
+      "evidence": [
+        {
+          "page": 55,
+          "line_ids": [
+            "P0055-L0005",
+            "P0055-L0006"
+          ],
+          "quote": "The principal spatial condition is protection overhead and to one’s back, preferably on three sides.",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.9625
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "adde0e37e2982b8fdbeb",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0026",
+      "page_start": 55,
+      "page_end": 55,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.822162+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Thermal & Airflow Variability",
+      "clause_id": "4.3",
+      "title": "Broaden occupants' perception of thermal comfort",
+      "summary": "Consider solutions that broaden occupants' perception of thermal comfort to increase acceptable temperature range and reduce energy demands.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "occupants",
+        "thermal comfort"
+      ],
+      "actions": [
+        "consider"
+      ],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "thermal comfort",
+        "perception",
+        "energy demand"
+      ],
+      "evidence": [
+        {
+          "page": 39,
+          "line_ids": [
+            "P0039-L0033",
+            "P0039-L0034",
+            "P0039-L0035",
+            "P0039-L0036"
+          ],
+          "quote": "• Consider solutions that subsequently broaden the occupants' perception of thermal comfort, as it may also increase the range of acceptable temperatures and help reduce energy demands for air conditioning and heating.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.95,
+      "needs_review": false,
+      "knowledge_id": "ae3a1acd8d5dd480633f",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0018",
+      "page_start": 39,
+      "page_end": 39,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.808152+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "14 Patterns",
+      "clause_id": "pattern-10",
+      "title": "Complexity & Order",
+      "summary": "This pattern has evolved from research on fractal geometries and preferred views, perceptual and physiological stress responses to the complexity of fractals in nature, art and architecture, and the predictability of the occurrence of design in nature.",
+      "normative_level": "informative",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "fractal geometries",
+        "preferred views",
+        "design in nature"
+      ],
+      "actions": [],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "Complexity & Order",
+        "fractal",
+        "stress response",
+        "design in nature"
+      ],
+      "evidence": [
+        {
+          "page": 65,
+          "line_ids": [
+            "P0065-L0005",
+            "P0065-L0006",
+            "P0065-L0007",
+            "P0065-L0008",
+            "P0065-L0009",
+            "P0065-L0010",
+            "P0065-L0011",
+            "P0065-L0012",
+            "P0065-L0013"
+          ],
+          "quote": "[10] Complexity & Order. This pattern has evolved from research on fractal geometries and preferred views (Salingaros, 2012; Hägerhäll, Laike, Taylor et al., 2008; Hägerhäll, Purcella, & Taylor, 2004; Taylor, 2006); the perceptual and physiological stress responses to the complexity of fractals in nature, art and architecture (Salingaros, 2012; Joye, 2007; Taylor, 2006; S. Kaplan, 1988); and the predictability of the occurrence of design in nature (Bejan & Zane, 2012).",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.947802
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "bb083022431d5d9bee27",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0030",
+      "page_start": 65,
+      "page_end": 65,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.828162+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Thermal & Airflow Variability",
+      "clause_id": "4.2",
+      "title": "Incorporating airflow and thermal into ventilation/fenestration strategy",
+      "summary": "Incorporate airflow and thermal conditions into strategy discussions for mechanical ventilation and/or fenestration to achieve distributed variability.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "airflow",
+        "thermal conditions",
+        "mechanical ventilation",
+        "fenestration"
+      ],
+      "actions": [
+        "incorporate"
+      ],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "airflow variability",
+        "thermal variability",
+        "ventilation",
+        "fenestration"
+      ],
+      "evidence": [
+        {
+          "page": 39,
+          "line_ids": [
+            "P0039-L0030",
+            "P0039-L0031",
+            "P0039-L0032"
+          ],
+          "quote": "• Incorporating airflow and thermal conditions into strategy discussions for mechanical ventilation and/or fenestration will help achieve distributed variability over space and time.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.95,
+      "needs_review": false,
+      "knowledge_id": "bbc8f78a58d9f4759b02",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0018",
+      "page_start": 39,
+      "page_end": 39,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.808152+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Visual Connection with Nature",
+      "clause_id": "VC-6",
+      "title": "Maintain view lines when seated",
+      "summary": "Design spatial layouts, partitions, and furnishings to uphold desired view lines and avoid impeding visual access when in a seated position.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "interior spaces"
+      ],
+      "objects": [
+        "spatial layouts",
+        "partitions",
+        "furnishings"
+      ],
+      "actions": [
+        "design"
+      ],
+      "constraints": [
+        "uphold desired view lines",
+        "avoid impeding visual access when seated"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "view lines",
+        "seated position",
+        "furnishings"
+      ],
+      "evidence": [
+        {
+          "page": 33,
+          "line_ids": [
+            "P0033-L0035",
+            "P0033-L0036",
+            "P0033-L0037"
+          ],
+          "quote": "Design spatial layouts, partitions, and furnishings to uphold desired view lines and avoid impeding the visual access when in a seated position.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "ca77b6bd264cd25f14c5",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0015",
+      "page_start": 33,
+      "page_end": 33,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.802154+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Visual Connection with Nature",
+      "clause_id": "VC-5",
+      "title": "Design for at least 5-20 minutes daily visual connection",
+      "summary": "Design to support a visual connection that can be experienced for at least 5–20 minutes per day.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "any space with a view"
+      ],
+      "objects": [],
+      "actions": [
+        "design to support visual connection"
+      ],
+      "constraints": [
+        "duration of visual connection should be at least 5-20 minutes per day"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "duration",
+        "visual connection",
+        "daily"
+      ],
+      "evidence": [
+        {
+          "page": 33,
+          "line_ids": [
+            "P0033-L0033",
+            "P0033-L0034"
+          ],
+          "quote": "Design to support a visual connection that can be experienced for at least 5-–20 minutes per day.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "caa87927540d04358213",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0015",
+      "page_start": 33,
+      "page_end": 33,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.802154+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Complexity & Order",
+      "clause_id": "C1",
+      "title": "Prioritize fractal-based design elements",
+      "summary": "Prioritize artwork, material selection, architectural expressions, landscape and master planning based on fractal geometries and hierarchies.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "artwork",
+        "material",
+        "architecture",
+        "landscape",
+        "master planning"
+      ],
+      "actions": [
+        "prioritize"
+      ],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "fractal",
+        "geometry",
+        "hierarchy"
+      ],
+      "evidence": [
+        {
+          "page": 51,
+          "line_ids": [
+            "P0051-L0019",
+            "P0051-L0020",
+            "P0051-L0021"
+          ],
+          "quote": "• Prioritize artwork and material selection, architectural expressions, and landscape and master planning schemes based on fractal geometries and hierarchies.",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.954545
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "cab0720fa770bfc26583",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0024",
+      "page_start": 51,
+      "page_end": 51,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.819164+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Pattern 15 Awe",
+      "clause_id": "15.2",
+      "title": "Use awe-inspiring images when natural vistas unavailable",
+      "summary": "When natural vistas are not possible, consider using awe-inspiring images of nature.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "indoor",
+        "urban"
+      ],
+      "objects": [
+        "images of nature"
+      ],
+      "actions": [
+        "consider using awe-inspiring images of nature"
+      ],
+      "constraints": [
+        "when vistas of sky, ocean, mountains or sunsets are not possible"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "awe-inspiring images",
+        "nature"
+      ],
+      "evidence": [
+        {
+          "page": 61,
+          "line_ids": [
+            "P0061-L0033",
+            "P0061-L0034"
+          ],
+          "quote": "When vistas of sky, ocean, mountains or sunsets are not possible, consider awe-inspiring images of nature (Piff et al., 2015).",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.95,
+      "needs_review": false,
+      "knowledge_id": "ce0f208e15a5283648aa",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0028",
+      "page_start": 61,
+      "page_end": 61,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.825162+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Pattern 15 Awe",
+      "clause_id": "15.3",
+      "title": "Incorporate places celebrating knowledge and mastery",
+      "summary": "Incorporate places and programs that celebrate culture of knowledge, collaboration, skill mastery, and exploration of the unknown.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "cultural spaces",
+        "educational spaces"
+      ],
+      "objects": [
+        "places",
+        "programs"
+      ],
+      "actions": [
+        "incorporate places and programs that celebrate a culture of knowledge, collaboration, skill/craft mastery, and exploration or contemplation of the unknown"
+      ],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "knowledge",
+        "collaboration",
+        "mastery",
+        "exploration",
+        "contemplation"
+      ],
+      "evidence": [
+        {
+          "page": 61,
+          "line_ids": [
+            "P0061-L0035",
+            "P0061-L0036",
+            "P0061-L0037"
+          ],
+          "quote": "Incorporate places and programs that celebrate a culture of knowledge, collaboration, skill/craft mastery, and the exploration or contemplation of the unknown.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.95,
+      "needs_review": false,
+      "knowledge_id": "d403a587519a57672233",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0028",
+      "page_start": 61,
+      "page_end": 61,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.825162+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Prospect",
+      "clause_id": "P1",
+      "title": "Prefer distant prospect over short focal lengths",
+      "summary": "Distant prospect (>100 ft, >30 m) is preferred for greater sense of awareness and comfort, especially when alone or in unfamiliar environments.",
+      "normative_level": "informative",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "view"
+      ],
+      "actions": [
+        "prefer"
+      ],
+      "constraints": [
+        "distance >100 ft or >30 m"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "prospect",
+        "distance",
+        "view"
+      ],
+      "evidence": [
+        {
+          "page": 52,
+          "line_ids": [
+            "P0052-L0033",
+            "P0052-L0034",
+            "P0052-L0035",
+            "P0052-L0036"
+          ],
+          "quote": "Distant prospect (>100 feet, >30 meters) is preferred over shorter focal lengths (<20 feet, 6 meter) because it provides a greater sense of awareness and comfort, reducing one’s stress responses, particularly when alone or in unfamiliar environments (Petherick, 2000).",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.985782
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "d5ecec0f00563abb81fe",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0024",
+      "page_start": 52,
+      "page_end": 52,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.819164+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Visual Connection with Nature",
+      "clause_id": "VC-1",
+      "title": "Prioritize real nature over simulated nature",
+      "summary": "Prioritize real nature over simulated nature; and simulated nature over no nature.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [],
+      "actions": [
+        "prioritize real nature",
+        "use simulated nature as alternative"
+      ],
+      "constraints": [
+        "simulated nature may be used when real nature is not feasible"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "real nature",
+        "simulated nature",
+        "visual connection"
+      ],
+      "evidence": [
+        {
+          "page": 33,
+          "line_ids": [
+            "P0033-L0022",
+            "P0033-L0023",
+            "P0033-L0024",
+            "P0033-L0025",
+            "P0033-L0026",
+            "P0033-L0027"
+          ],
+          "quote": "Prioritize real nature over simulated nature; and simulated nature over no nature. The benefits of viewing real nature may be attenuated by a digital medium, which may be of greatest value to spaces that, due to the nature of its function (e.g., hospital radiation units) cannot easily incorporate real nature or views to the outdoors.",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "dee42a594ac78eec8740",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0015",
+      "page_start": 33,
+      "page_end": 33,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.802154+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Visual Connection with Nature",
+      "clause_id": "VC-7",
+      "title": "Even small instances of nature can be restorative",
+      "summary": "Even small instances of nature can be restorative, and particularly relevant for temporary interventions or spaces with limited real estate.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "temporary spaces",
+        "small spaces"
+      ],
+      "objects": [
+        "nature elements"
+      ],
+      "actions": [
+        "incorporate small nature"
+      ],
+      "constraints": [
+        "small nature can be restorative"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "small nature",
+        "restorative",
+        "temporary"
+      ],
+      "evidence": [
+        {
+          "page": 33,
+          "line_ids": [
+            "P0033-L0038",
+            "P0033-L0039",
+            "P0033-L0040",
+            "P0033-L0041",
+            "P0033-L0042"
+          ],
+          "quote": "Even small instances of nature can be restorative, and particularly relevant for temporary interventions, or spaces where real estate (floor/ground area, wall space) is limited.",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.958042
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "e10d79a67f288e8950a1",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0015",
+      "page_start": 33,
+      "page_end": 33,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.802154+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Pattern 3",
+      "clause_id": "P3-01",
+      "title": "Non-Rhythmic Sensory Stimuli Design Guideline",
+      "summary": "As a general guideline, sensory experiences should occur non-rhythmically but preferably not more than 20 minutes apart, for a duration of 20 seconds or more and, to induce eye fatigue restoration, from a distance of more than 100 feet.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "sensory experiences",
+        "non-rhythmic stimuli"
+      ],
+      "actions": [
+        "occur",
+        "induce eye fatigue restoration"
+      ],
+      "constraints": [
+        "occur non-rhythmically",
+        "not more than 20 minutes apart",
+        "duration of at least 20 seconds",
+        "distance of more than 100 feet"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "non-rhythmic sensory stimuli",
+        "eye fatigue restoration",
+        "biophilic design",
+        "design guideline"
+      ],
+      "evidence": [
+        {
+          "page": 37,
+          "line_ids": [
+            "P0037-L0009",
+            "P0037-L0010",
+            "P0037-L0011",
+            "P0037-L0012"
+          ],
+          "quote": "As a general guideline, sensory experiences should occur non-rhythmically but preferably not more than 20 minutes apart, for a duration of 20 seconds or more and, to induce eye fatigue restoration, from a distance of more than 100 feet.",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.957672
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "ea9e1593ee959a8b0a88",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0017",
+      "page_start": 37,
+      "page_end": 37,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.806153+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Thermal & Airflow Variability",
+      "clause_id": "4.0",
+      "title": "Objective of Thermal & Airflow Variability",
+      "summary": "Provide an environment that allows users to experience airflow variability and thermal variability, and enable user control over thermal conditions.",
+      "normative_level": "informative",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "environment",
+        "user",
+        "occupant"
+      ],
+      "actions": [
+        "provide",
+        "experience",
+        "control"
+      ],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "thermal variability",
+        "airflow variability",
+        "control"
+      ],
+      "evidence": [
+        {
+          "page": 39,
+          "line_ids": [
+            "P0039-L0002",
+            "P0039-L0003",
+            "P0039-L0004",
+            "P0039-L0005",
+            "P0039-L0006",
+            "P0039-L0007"
+          ],
+          "quote": "The objective of the Thermal & Airflow Variability pattern is to provide an environment that allows users to experience the sensory elements of airflow variability and thermal variability. The intent is also for the user/occupant to be able to control thermal conditions, either by using individual controls, or by having access to variable conditions within a space or series of spaces.",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.971698
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "f01d188323604ac3a1b3",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0018",
+      "page_start": 39,
+      "page_end": 39,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.807155+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Biophilic Design Patterns - Refuge",
+      "clause_id": "REF-3",
+      "title": "Light levels in refuge spaces should differ from adjacent spaces",
+      "summary": "Light levels in refuge spaces should differ from adjacent spaces and user lighting controls will broaden functionality as a refuge space.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "refuge space"
+      ],
+      "actions": [
+        "differ lighting"
+      ],
+      "constraints": [
+        "light levels should differ from adjacent spaces",
+        "user lighting controls"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "refuge",
+        "lighting",
+        "difference",
+        "controls"
+      ],
+      "evidence": [
+        {
+          "page": 55,
+          "line_ids": [
+            "P0055-L0033",
+            "P0055-L0034"
+          ],
+          "quote": "Light levels in refuge spaces should differ from adjacent spaces and user lighting controls will broaden functionality as a refuge space.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "f499fb5a69f80b788736",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0026",
+      "page_start": 55,
+      "page_end": 55,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.822162+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Biomorphic Forms & Patterns",
+      "clause_id": "P47-DC3",
+      "title": "Early intervention cost effectiveness",
+      "summary": "More comprehensive interventions will be more cost effective when introduced early in the design process.",
+      "normative_level": "informative",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "design process"
+      ],
+      "objects": [
+        "interventions"
+      ],
+      "actions": [
+        "introduce early"
+      ],
+      "constraints": [
+        "more comprehensive",
+        "cost effective"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "interventions",
+        "cost effective",
+        "early design process"
+      ],
+      "evidence": [
+        {
+          "page": 47,
+          "line_ids": [
+            "P0047-L0036",
+            "P0047-L0037"
+          ],
+          "quote": "• More comprehensive interventions will be more cost effective when they are introduced early in the design process.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "f4a3a94094870deb2922",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0022",
+      "page_start": 47,
+      "page_end": 47,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.814154+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Biomorphic Forms & Patterns",
+      "clause_id": "P47-DC1",
+      "title": "Apply on multiple planes",
+      "summary": "Apply biomorphic forms and patterns on 2 or 3 planes or dimensions for greater diversity and frequency of exposure.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "built environment",
+        "interior space"
+      ],
+      "objects": [
+        "biomorphic forms",
+        "patterns"
+      ],
+      "actions": [
+        "apply"
+      ],
+      "constraints": [
+        "on 2 or 3 planes or dimensions",
+        "for greater diversity and frequency of exposure"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "biomorphic",
+        "forms",
+        "patterns",
+        "planes",
+        "dimensions",
+        "exposure"
+      ],
+      "evidence": [
+        {
+          "page": 47,
+          "line_ids": [
+            "P0047-L0030",
+            "P0047-L0031",
+            "P0047-L0032",
+            "P0047-L0033"
+          ],
+          "quote": "Design considerations that may help create a quality biomorphic condition:\n• Apply on 2 or 3 planes or dimensions (e.g., floor plane and wall; furniture windows and soffits) for greater diversity and frequency of exposure.",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.982955
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "fbe18d9726304c76ea8b",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0022",
+      "page_start": 47,
+      "page_end": 47,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.814154+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Thermal & Airflow Variability",
+      "clause_id": "4.4",
+      "title": "Early coordination among project team disciplines",
+      "summary": "Coordinate design strategies among project team disciplines as early as the schematic design process to achieve the experiential outcome.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "design strategies",
+        "project team disciplines",
+        "architect",
+        "lighting designer",
+        "MEP engineers"
+      ],
+      "actions": [
+        "coordinate"
+      ],
+      "constraints": [
+        "as early as the schematic design process"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "coordination",
+        "schematic design",
+        "experiential outcome"
+      ],
+      "evidence": [
+        {
+          "page": 39,
+          "line_ids": [
+            "P0039-L0037",
+            "P0039-L0038",
+            "P0039-L0039",
+            "P0039-L0040"
+          ],
+          "quote": "• Coordination of design strategies among project team disciplines (e.g., architect, lighting designer, MEP engineers) as early as the schematic design process is critical for achieving this experiential outcome.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.95,
+      "needs_review": false,
+      "knowledge_id": "fc5ed2fec034466baafd",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0018",
+      "page_start": 39,
+      "page_end": 39,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.808152+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "Biophilic Design Patterns - Refuge",
+      "clause_id": "REF-2",
+      "title": "Provide multiple types of refuge spaces",
+      "summary": "To address varying needs, provide more than one kind of refuge space through differing spatial dimensions, lighting conditions, and degree of concealment.",
+      "normative_level": "recommended",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [],
+      "objects": [
+        "refuge space"
+      ],
+      "actions": [
+        "provide"
+      ],
+      "constraints": [
+        "more than one kind",
+        "differing spatial dimensions",
+        "differing lighting conditions",
+        "differing degree of concealment"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "refuge",
+        "variety",
+        "spatial dimensions",
+        "lighting",
+        "concealment"
+      ],
+      "evidence": [
+        {
+          "page": 55,
+          "line_ids": [
+            "P0055-L0030",
+            "P0055-L0031",
+            "P0055-L0032"
+          ],
+          "quote": "To address varying needs, preferences and acitivies, provide more than one kind of refuge space through differing spatial dimensions, lighting conditions, and degree of concealment.",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "fc95788133a32f566748",
+      "source": "14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "source_fingerprint": "070037b04de328f2b78a25c3b37541398a8d385cda679dd92b628d4874ab4e88",
+      "batch_id": "batch-0026",
+      "page_start": 55,
+      "page_end": 55,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.822162+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    }
+  ]
+}

@@ -25,3 +25,12 @@ dist/
 # Task 2/3 知识库：参数与种子案例入库，运行时反馈不入 Git
 knowledge_base/data/memories.json
 knowledge_base/data/learning_feedback.json
+model_comparison/
+output_results/
+outputs/panorama_views/
+outputs/rag_cache/
+outputs/knowledge_drafts/
+
+# 本地发布诊断与测试临时目录不进入版本库
+rag_knowledge/last_publish_report.json
+tests/tmp*/

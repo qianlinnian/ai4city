@@ -1,0 +1,1211 @@
+{
+  "schema_version": "ai4city-rag-knowledge-v1",
+  "source": "城市居住区规划设计标准(OCR).pdf",
+  "record_count": 16,
+  "records": [
+    {
+      "section": "3 基本规定",
+      "clause_id": "3.0.9",
+      "title": "工程管线与竖向规划设计",
+      "summary": "居住区的工程管线规划设计应符合现行国家标准《城市工程管线综合规划规范》GB 50289的有关规定；居住区的竖向规划设计应符合现行行业标准《城乡建设用地竖向规划规范》CJJ 83的有关规定。",
+      "normative_level": "mandatory",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "居住区"
+      ],
+      "objects": [
+        "工程管线",
+        "竖向规划"
+      ],
+      "actions": [
+        "规划设计"
+      ],
+      "constraints": [
+        "工程管线规划设计应符合GB 50289",
+        "竖向规划设计应符合CJJ 83"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "工程管线",
+        "竖向规划",
+        "GB 50289",
+        "CJJ 83"
+      ],
+      "evidence": [
+        {
+          "page": 9,
+          "line_ids": [
+            "P0009-L0043",
+            "P0009-L0044",
+            "P0009-L0045"
+          ],
+          "quote": "３．０．９居住区的工程管线规划设计应符合理行国家标准《城市 工程管残绿合现划观袍》（Ｂ３０８９的有关理年：居作区的竖同 规划设计应符合现行行业标准《城乡建设用地琴向规划规范",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        },
+        {
+          "page": 10,
+          "line_ids": [
+            "P0010-L0001"
+          ],
+          "quote": "Ｃ门」８３的有关现定",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "049e3420b5caa8c4d3c7",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0003",
+      "page_start": 9,
+      "page_end": 10,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.988838+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "3 基本规定",
+      "clause_id": "3.0.10",
+      "title": "建筑气候区划与用地面积计算",
+      "summary": "居住区所属的建筑气候区划应符合现行国家标准《建筑气候区划标准》GB 50178的规定；其综合技术指标及用地面积的计算方法应符合本标准附录A的规定。",
+      "normative_level": "mandatory",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "居住区"
+      ],
+      "objects": [
+        "建筑气候区划",
+        "综合技术指标",
+        "用地面积"
+      ],
+      "actions": [
+        "符合标准",
+        "计算方法"
+      ],
+      "constraints": [
+        "建筑气候区划应符合GB 50178",
+        "综合技术指标及用地面积计算应符合附录A"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "建筑气候区划",
+        "GB 50178",
+        "用地面积",
+        "附录A"
+      ],
+      "evidence": [
+        {
+          "page": 10,
+          "line_ids": [
+            "P0010-L0002",
+            "P0010-L0003",
+            "P0010-L0005"
+          ],
+          "quote": "３．０．１０居任区所属的建筑气候区划应符合现行国家标准《建 气候区划称准》（Ｂ５０１７８的规定；其综合技术指标及用地面村 的计算方法应符合本标准附录Ａ的规定",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "3536101db1bf2105ea7f",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0003",
+      "page_start": 10,
+      "page_end": 10,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.988838+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "4.0.7",
+      "clause_id": "4.0.7",
+      "title": "居住街坊集中绿地规划建设规定",
+      "summary": "居住街坊内集中绿地应满足人均面积、最小宽度和日照阴影外面积比例要求，并设置老年人和儿童活动场地。",
+      "normative_level": "mandatory",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "居住街坊"
+      ],
+      "objects": [
+        "集中绿地",
+        "老年人活动场地",
+        "儿童活动场地"
+      ],
+      "actions": [
+        "设置集中绿地",
+        "设置老年人、儿童活动场地"
+      ],
+      "constraints": [
+        "人均集中绿地面积不应小于0.35m²/人",
+        "集中绿地宽度不应小于8m",
+        "在标准建筑日照阴影线范围之外的绿地面积不应少于1/3"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "集中绿地",
+        "居住街坊",
+        "人均面积",
+        "宽度",
+        "日照阴影",
+        "老年人活动场地",
+        "儿童活动场地"
+      ],
+      "evidence": [
+        {
+          "page": 15,
+          "line_ids": [
+            "P0015-L0035",
+            "P0015-L0036",
+            "P0015-L0037",
+            "P0015-L0038",
+            "P0015-L0039",
+            "P0015-L0040",
+            "P0015-L0041",
+            "P0015-L0042",
+            "P0015-L0043"
+          ],
+          "quote": "４．０６居件街坊内的绿地应结合住字弹筑布局设置集中绿地和字劳绿地：绿地的计算方法应符合本标准附录Ａ第Ａ．０．２条的规定。４．０．７居住街坊内集中绿地的规划建设，应符合下列规定：１ｈＸｄ小Ｗｔ＋１Ｓｍｒ／Ａ－ＩＨＸ０证个Ｍｔ０３５ｍ／人；２宽度不应小于８ｍ；５在称准的建筑日照阴彩线范围之外的绿地面积不应少于１／３．其中应设置表年人、儿童活动场地。",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.94702
+        }
+      ],
+      "confidence": 0.85,
+      "needs_review": false,
+      "knowledge_id": "5215c36fc32919e75f7d",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0004",
+      "page_start": 15,
+      "page_end": 15,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.992639+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "7.0.1",
+      "clause_id": "7.0.1",
+      "title": "尊重自然条件，塑造舒适居住环境",
+      "summary": "居住区规划设计应尊重气候及地形地貌等自然条件，并应塑造舒适宜人的居住环境。",
+      "normative_level": "mandatory",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "居住区"
+      ],
+      "objects": [
+        "气候",
+        "地形地貌",
+        "居住环境"
+      ],
+      "actions": [
+        "尊重自然条件",
+        "塑造舒适宜人的居住环境"
+      ],
+      "constraints": [
+        "应尊重气候及地形地貌等自然条件",
+        "应塑造舒适宜人的居住环境"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "自然条件",
+        "气候",
+        "地形地貌",
+        "舒适",
+        "居住环境"
+      ],
+      "evidence": [
+        {
+          "page": 22,
+          "line_ids": [
+            "P0022-L0004",
+            "P0022-L0006"
+          ],
+          "quote": "７．０．１居作区规划设计应尊重气佐及地形地短等自然条件。并\n应塑造舒适官人的居住环境",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "5e0ca2c83f2a15551942",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0006",
+      "page_start": 22,
+      "page_end": 22,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:29.000158+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "4.0.9",
+      "clause_id": "4.0.9",
+      "title": "住宅建筑日照标准",
+      "summary": "住宅建筑日照标准应符合表4.0.9规定，老年人居住建筑日照不低于冬至日2h，旧区改建项目新建住宅不低于大寒日1h，增加设施不得降低相邻住宅日照。",
+      "normative_level": "mandatory",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "居住区"
+      ],
+      "objects": [
+        "住宅建筑",
+        "老年人居住建筑",
+        "相邻住宅"
+      ],
+      "actions": [
+        "满足日照标准"
+      ],
+      "constraints": [
+        "老年人居住建筑日照不应低于冬至日2h",
+        "旧区改建项目新建住宅日照不应低于大寒日1h",
+        "增加设施不应使相邻住宅原有日照降低"
+      ],
+      "prohibited_actions": [
+        "降低相邻住宅日照"
+      ],
+      "metric_links": [],
+      "keywords": [
+        "日照标准",
+        "住宅建筑",
+        "老年人居住建筑",
+        "冬至日",
+        "大寒日",
+        "旧区改建"
+      ],
+      "evidence": [
+        {
+          "page": 16,
+          "line_ids": [
+            "P0016-L0002",
+            "P0016-L0003",
+            "P0016-L0004",
+            "P0016-L0005",
+            "P0016-L0006",
+            "P0016-L0007",
+            "P0016-L0008",
+            "P0016-L0009",
+            "P0016-L0010",
+            "P0016-L0011",
+            "P0016-L0012"
+          ],
+          "quote": "３．０．９ 任军建筑的间单应符合表４．０．９的规宇：对特宇情况还应符合下列规症；１老年人居住建筑日照标注不应低于各至日日照时数２ｈ；２在原设计建筑外增加任钉设施不应使相邻住宅原有日形林养际什、时为件字建强拼行六道慢可清加基田保学外；３旧区改建项目内新建住字球筑日照标准不应低于大寒日照时数１ｈ。",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.917293
+        }
+      ],
+      "confidence": 0.85,
+      "needs_review": false,
+      "knowledge_id": "6780a5315439724aae2e",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0004",
+      "page_start": 16,
+      "page_end": 16,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.992639+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "总则",
+      "clause_id": "1.0.3",
+      "title": "发展理念",
+      "summary": "城市居住区规划设计应遵循创新、协调、绿色、开放、共享的发展理念，营造安全、卫生、方便、舒适、美丽、和谐以及多样化的居住生活环境。",
+      "normative_level": "mandatory",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "城市居住区"
+      ],
+      "objects": [
+        "城市居住区规划设计",
+        "居住生活环境"
+      ],
+      "actions": [
+        "遵循发展理念",
+        "营造居住生活环境"
+      ],
+      "constraints": [
+        "创新",
+        "协调",
+        "绿色",
+        "开放",
+        "共享",
+        "安全",
+        "卫生",
+        "方便",
+        "舒适",
+        "美丽",
+        "和谐",
+        "多样化"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "发展理念",
+        "创新",
+        "协调",
+        "绿色",
+        "开放",
+        "共享",
+        "居住环境"
+      ],
+      "evidence": [
+        {
+          "page": 5,
+          "line_ids": [
+            "P0005-L0012",
+            "P0005-L0014",
+            "P0005-L0015"
+          ],
+          "quote": "１．０．３城币居住区规划设计粒遵酯划新、协调、绿色、升放共享的发居理念，营浩安全卩生／方便、舒话、美丽、和语以及多样化的居住生活环境",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.85,
+      "needs_review": false,
+      "knowledge_id": "7a67701dae41141549c3",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0002",
+      "page_start": 5,
+      "page_end": 5,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.985840+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "7.0.6",
+      "clause_id": "7.0.6",
+      "title": "夜间照明设置",
+      "summary": "居住街坊内附属道路、老年人及儿童活动场地、住宅建筑出入口等公共区域应设置夜间照明；照明设计不应对居民产生光污染。",
+      "normative_level": "mandatory",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "居住街坊公共区域"
+      ],
+      "objects": [
+        "附属道路",
+        "老年人活动场地",
+        "儿童活动场地",
+        "住宅建筑出入口",
+        "夜间照明"
+      ],
+      "actions": [
+        "设置夜间照明"
+      ],
+      "constraints": [
+        "应设置夜间照明",
+        "照明设计不应对居民产生光污染"
+      ],
+      "prohibited_actions": [
+        "照明设计不应对居民产生光污染"
+      ],
+      "metric_links": [],
+      "keywords": [
+        "夜间照明",
+        "光污染",
+        "公共区域",
+        "安全"
+      ],
+      "evidence": [
+        {
+          "page": 23,
+          "line_ids": [
+            "P0023-L0005",
+            "P0023-L0007",
+            "P0023-L0008"
+          ],
+          "quote": "７．０．６ 居住街坊内附属道路、老年人及儿章活动场地、住到强\n筑出人口等公共区域应设置夜间照明；照明设计不应对居民产生\n光",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "7b2dd9c6da91c0ab4740",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0006",
+      "page_start": 23,
+      "page_end": 23,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:29.001160+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "术语",
+      "clause_id": "2.0.1",
+      "title": "城市居住区",
+      "summary": "城市中住宅建筑相对集中布局的地区，简称居住区。",
+      "normative_level": "informative",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "城市居住区"
+      ],
+      "objects": [
+        "城市居住区",
+        "住宅建筑"
+      ],
+      "actions": [
+        "相对集中布局"
+      ],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "城市居住区",
+        "住宅建筑",
+        "集中布局"
+      ],
+      "evidence": [
+        {
+          "page": 6,
+          "line_ids": [
+            "P0006-L0004",
+            "P0006-L0006"
+          ],
+          "quote": "２．０．１ 城市居住区 ｕｒｂａｎ ｒｃｓｉｌｅｎｔｉａｌ ａｒｅ   城市中住宅建筑相对集中布局的地区，简称用任下",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "9acaeb9c5cc61742d88f",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0002",
+      "page_start": 6,
+      "page_end": 6,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.986837+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "术语",
+      "clause_id": "2.0.3",
+      "title": "十分钟生活圈居住区",
+      "summary": "以居民步行十分钟可满足其基本物质与生活文化需求为原则划分的居住区范围；一般由城市干路、支路或用地边界线所围合，居住人口规模为15000人～25000人（约5000套～8000套住宅），配套设施齐全的地区。",
+      "normative_level": "informative",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "十分钟生活圈居住区"
+      ],
+      "objects": [
+        "十分钟生活圈居住区",
+        "城市干路",
+        "支路",
+        "用地边界线",
+        "住宅"
+      ],
+      "actions": [
+        "划分",
+        "围合",
+        "满足需求"
+      ],
+      "constraints": [
+        "步行十分钟",
+        "人口规模15000～25000人",
+        "约5000～8000套住宅",
+        "配套设施齐全"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "十分钟生活圈",
+        "居住区",
+        "人口规模",
+        "配套设施"
+      ],
+      "evidence": [
+        {
+          "page": 6,
+          "line_ids": [
+            "P0006-L0018",
+            "P0006-L0022",
+            "P0006-L0025",
+            "P0006-L0027",
+            "P0006-L0028",
+            "P0006-L0030"
+          ],
+          "quote": "２．０．３干分钟生活图居住区 ｌ０ ｍｉｎ ｐｅｄｅｓｔｒｉａｎｓｃａｌｅ ｎｅｇｈｂｏｒ   以居民步行术分钟可满足其基本物项与生活文化需求为原则划分的局作区薇围：一般由城市干路支路或用地动界缓所田合，居住人口规模为１５０００人￣２５０００人（约５０００套￣８０００套任宅），配获设施齐全的地区",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.937984
+        }
+      ],
+      "confidence": 0.85,
+      "needs_review": false,
+      "knowledge_id": "a2da436cda05d0b09037",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0002",
+      "page_start": 6,
+      "page_end": 6,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.986837+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "基本规定",
+      "clause_id": "3.0.1",
+      "title": "居住区规划设计基本原则",
+      "summary": "居住区规划设计应坚持以人为本的基本原则，遵循适用、经济、绿色、美观的建筑方针，并应符合下列规定：1 应符合城市总体规划及控制性详细规划；2 应符合所在地气候特点与环境、经济社会发展水平和文化习俗；3 应遵循统一规划、合理布局、节约土地、因地制宜的原则；4 应为老年人、儿童、残疾人的生活和社会活动提供便利的条件和场所；5 应延续城市的历史文脉、保护历史文化遗产并与环境相协调；6 应采用海绵城市建设理念，实现雨水的自然积存、自然渗透与自然净化；7 应符合城市设计对公共空间、建筑群体、园林景观、市政等环境设施的有关控制要求。",
+      "normative_level": "mandatory",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "城市居住区"
+      ],
+      "objects": [
+        "居住区规划设计",
+        "城市总体规划",
+        "控制性详细规划",
+        "气候特点",
+        "环境",
+        "经济社会发展水平",
+        "文化习俗",
+        "土地",
+        "老年人",
+        "儿童",
+        "残疾人",
+        "历史文脉",
+        "历史文化遗产",
+        "海绵城市",
+        "雨水",
+        "城市设计",
+        "公共空间",
+        "建筑群体",
+        "园林景观",
+        "市政设施"
+      ],
+      "actions": [
+        "坚持以人为本",
+        "遵循建筑方针",
+        "符合规划",
+        "符合气候环境",
+        "遵循统一规划",
+        "合理布局",
+        "节约土地",
+        "因地制宜",
+        "提供便利条件",
+        "延续历史文脉",
+        "保护遗产",
+        "采用海绵城市理念",
+        "实现雨水管理",
+        "符合城市设计要求"
+      ],
+      "constraints": [
+        "适用",
+        "经济",
+        "绿色",
+        "美观",
+        "统一规划",
+        "合理布局",
+        "节约土地",
+        "因地制宜",
+        "与历史环境协调",
+        "自然积存",
+        "自然渗透",
+        "自然净化"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "以人为本",
+        "适用",
+        "经济",
+        "绿色",
+        "美观",
+        "海绵城市",
+        "历史文脉",
+        "无障碍"
+      ],
+      "evidence": [
+        {
+          "page": 8,
+          "line_ids": [
+            "P0008-L0004",
+            "P0008-L0006",
+            "P0008-L0008",
+            "P0008-L0009",
+            "P0008-L0010",
+            "P0008-L0012",
+            "P0008-L0014",
+            "P0008-L0016",
+            "P0008-L0017",
+            "P0008-L0021",
+            "P0008-L0022",
+            "P0008-L0025",
+            "P0008-L0028",
+            "P0008-L0029",
+            "P0008-L0031"
+          ],
+          "quote": "３．０．１居住区规划设计应坚持以人为本的基本原细，遵循适用经济、绿色、美理的建策方针，并应符合下列规宝  １应符合城市总体规划及控制性详细规划：  ２应符合所在地气候特点与环域        经济杜食发质水平和文化俗  ３应遵循统一规别、合理布局、节约十地、因地制官，面１理．全个Ｈ万内四４  应为老年人、儿重《观我人的牛沽和社会估动强俱便的件和场所；  ５ 度延续域的历史文脉、保护历史ｘ开与流８相协；  ６    Ｍ－ＨＨｍＨ万ＲＥＮ   ｈ   拜Ｂ扫管他雨水的自然积存、自然渗诱与自然单化  ７应符合城市设计对公共空同建筑群体、园林景观、市政等环境设施的有关控要求",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.85,
+      "needs_review": false,
+      "knowledge_id": "bad7bc2ab641722d8ce7",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0002",
+      "page_start": 8,
+      "page_end": 8,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.986837+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "4.0.10",
+      "clause_id": "4.0.10",
+      "title": "居住区规划设计技术指标汇总",
+      "summary": "居住区规划设计应汇总重要的技术指标，并应符合本标准附录A第A.0.3条的规定。",
+      "normative_level": "mandatory",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "居住区"
+      ],
+      "objects": [
+        "技术指标"
+      ],
+      "actions": [
+        "汇总技术指标"
+      ],
+      "constraints": [
+        "应符合附录A第A.0.3条的规定"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "技术指标",
+        "汇总",
+        "附录A"
+      ],
+      "evidence": [
+        {
+          "page": 16,
+          "line_ids": [
+            "P0016-L0033",
+            "P0016-L0034",
+            "P0016-L0035"
+          ],
+          "quote": "３．０．０属件区规划设计应汇总重要的技术指标，并应符合本标准附录Ａ第Ａ．０．３条的规定",
+          "line_id_source": "model",
+          "match_type": "fuzzy_ocr",
+          "match_score": 0.885714
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "deb3af8ad39810ab1e1a",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0004",
+      "page_start": 16,
+      "page_end": 16,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.993147+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "术语",
+      "clause_id": "2.0.4",
+      "title": "五分钟生活圈居住区",
+      "summary": "以居民步行五分钟可满足其基本生活需求为原则划分的居住区范围；一般由支路及以上级城市道路或用地边界线所围合，居住人口规模为5000人～12000人（约1500套～4000套住宅），配建社区服务设施的地区。",
+      "normative_level": "informative",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "五分钟生活圈居住区"
+      ],
+      "objects": [
+        "五分钟生活圈居住区",
+        "支路",
+        "城市道路",
+        "用地边界线",
+        "住宅",
+        "社区服务设施"
+      ],
+      "actions": [
+        "划分",
+        "围合",
+        "满足需求",
+        "配建"
+      ],
+      "constraints": [
+        "步行五分钟",
+        "人口规模5000～12000人",
+        "约1500～4000套住宅",
+        "配建社区服务设施"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "五分钟生活圈",
+        "居住区",
+        "人口规模",
+        "社区服务设施"
+      ],
+      "evidence": [
+        {
+          "page": 6,
+          "line_ids": [
+            "P0006-L0032",
+            "P0006-L0034",
+            "P0006-L0035",
+            "P0006-L0036",
+            "P0006-L0037"
+          ],
+          "quote": "２．０．４／五分钟牛活圈居住区５－ｍｉｎ ｐｅｄｅｓｔｒｉａｎｓｃａｌｅ ｎｅｉｇｈｂｏ   展用地行书分部日通平且基本车活求为限Ｗ的居区范围：一般由支路及以上级城市道路或用地动界线所围合，后件人口规源为５０００人～１２０００人（约１５００套～４０００套住字）配建社区服务设施的驰区，",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.85,
+      "needs_review": false,
+      "knowledge_id": "e0849d300b68e93ce8f4",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0002",
+      "page_start": 6,
+      "page_end": 6,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.986837+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "7.0.3",
+      "clause_id": "7.0.3",
+      "title": "建筑风貌与城市整体协调",
+      "summary": "居住区建筑的肌理、界面、高度、体量、风格、材质、色彩应与城市整体风貌、周边环境及住宅建筑使用功能相协调。",
+      "normative_level": "mandatory",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "居住区建筑"
+      ],
+      "objects": [
+        "建筑肌理",
+        "建筑界面",
+        "建筑高度",
+        "建筑体量",
+        "建筑风格",
+        "建筑材质",
+        "建筑色彩"
+      ],
+      "actions": [
+        "协调城市整体风貌",
+        "协调周边环境",
+        "协调使用功能"
+      ],
+      "constraints": [
+        "建筑的肌理、界面、高度、体量、风格、材质、色彩应与城市整体风貌、居住区周边环境及住宅建筑的使用功能相协调"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "建筑风貌",
+        "肌理",
+        "界面",
+        "高度",
+        "体量",
+        "风格",
+        "材质",
+        "色彩",
+        "协调"
+      ],
+      "evidence": [
+        {
+          "page": 22,
+          "line_ids": [
+            "P0022-L0021",
+            "P0022-L0022"
+          ],
+          "quote": "７．０．３居住区建筑的肌理、界面、高度、体量工风格、材质\n色彩应与城市整俸风貌、居住区周边环境及住宝建筑的使用功能",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "e18442646ae0796ccb01",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0006",
+      "page_start": 22,
+      "page_end": 22,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:29.001160+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "术语",
+      "clause_id": "2.0.2",
+      "title": "十五分钟生活圈居住区",
+      "summary": "以居民步行十五分钟可满足其基本物质与生活文化需求为原则划分的居住区范围；一般由城市干路或用地边界线所围合，居住人口规模为50000人～100000人（约17000套～32000套住宅），配套设施完善的地区。",
+      "normative_level": "informative",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "十五分钟生活圈居住区"
+      ],
+      "objects": [
+        "十五分钟生活圈居住区",
+        "城市干路",
+        "用地边界线",
+        "住宅"
+      ],
+      "actions": [
+        "划分",
+        "围合",
+        "满足需求"
+      ],
+      "constraints": [
+        "步行十五分钟",
+        "人口规模50000～100000人",
+        "约17000～32000套住宅",
+        "配套设施完善"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "十五分钟生活圈",
+        "居住区",
+        "人口规模",
+        "配套设施"
+      ],
+      "evidence": [
+        {
+          "page": 6,
+          "line_ids": [
+            "P0006-L0007",
+            "P0006-L0011",
+            "P0006-L0012",
+            "P0006-L0014",
+            "P0006-L0016"
+          ],
+          "quote": "２．０．２十五分钟牛活四层住区１５ｍｉｎｂｅｄｅｓｈｉａｎｓｃａｌｅ ｎｅｉｃｌ   以居民步行十五分钟可满足基物随与生洁文化需求为原期分的居件区范围：一般由城市于路或用地动界线所围合，居作人口规模为５００００人～１０００００人约１７０００套～３２０００套住宅）配在设施完善的地区。",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.85,
+      "needs_review": false,
+      "knowledge_id": "edbe91d6027a5ca6bc1b",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0002",
+      "page_start": 6,
+      "page_end": 6,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.986837+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "总则",
+      "clause_id": "1.0.1",
+      "title": "标准目的",
+      "summary": "为确保居住生活环境宜居适度，科学合理、经济有效地利用土地和空间，保障城市居住区规划设计质量，规范城市居住区的规划、建设与管理，制定本标准。",
+      "normative_level": "informative",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "城市居住区"
+      ],
+      "objects": [
+        "居住生活环境",
+        "土地",
+        "空间",
+        "城市居住区规划设计"
+      ],
+      "actions": [
+        "确保宜居适度",
+        "科学合理利用",
+        "经济有效利用",
+        "保障质量",
+        "规范规划建设管理"
+      ],
+      "constraints": [],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "居住区",
+        "规划设计",
+        "标准",
+        "宜居",
+        "土地",
+        "空间"
+      ],
+      "evidence": [
+        {
+          "page": 5,
+          "line_ids": [
+            "P0005-L0004",
+            "P0005-L0006",
+            "P0005-L0007"
+          ],
+          "quote": "１．０．１为确保居住生活环境宜居适度，科学合理。经济有效坩利用土地和室间，保障城市居任区理划设计随量都范城市属区的规划、律设与管理，制定木标准。",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.9,
+      "needs_review": false,
+      "knowledge_id": "f7cdf99c0f633da526e5",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0002",
+      "page_start": 5,
+      "page_end": 5,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.985840+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    },
+    {
+      "section": "4.0.8",
+      "clause_id": "4.0.8",
+      "title": "住宅建筑与相邻建筑间距规定",
+      "summary": "住宅建筑与相邻建、构筑物的间距应综合考虑日照、采光、通风、管线埋设、视觉卫生等要求确定，并符合现行国家标准《建筑设计防火规范》GB50016的规定。",
+      "normative_level": "mandatory",
+      "task_scope": [
+        "task3"
+      ],
+      "scene_types": [
+        "居住区"
+      ],
+      "objects": [
+        "住宅建筑",
+        "相邻建、构筑物"
+      ],
+      "actions": [
+        "确定间距"
+      ],
+      "constraints": [
+        "间距应综合考虑日照、采光、通风、管线埋设、视觉卫生等要求",
+        "应符合《建筑设计防火规范》GB50016的规定"
+      ],
+      "prohibited_actions": [],
+      "metric_links": [],
+      "keywords": [
+        "住宅建筑",
+        "间距",
+        "日照",
+        "采光",
+        "通风",
+        "防火规范"
+      ],
+      "evidence": [
+        {
+          "page": 15,
+          "line_ids": [
+            "P0015-L0044",
+            "P0015-L0045",
+            "P0015-L0046"
+          ],
+          "quote": "４．０．８ 住字律筑与相邻律、构筑物的间距应在综合考做日照来算。细现，管郑理可，样管年，而出垫界束的是下给盖样定。并应符合理行国家标准《殊销设计防火却苗》（Ｒ５００１６的",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        },
+        {
+          "page": 16,
+          "line_ids": [
+            "P0016-L0001"
+          ],
+          "quote": "有关规定",
+          "line_id_source": "model",
+          "match_type": "exact",
+          "match_score": 1.0
+        }
+      ],
+      "confidence": 0.8,
+      "needs_review": false,
+      "knowledge_id": "feeda6fe400f025bafe6",
+      "source": "城市居住区规划设计标准(OCR).pdf",
+      "source_fingerprint": "f5c9bf3ee902b06008cef49cb6a7f372d235a29d43c92e3cc05454bf04e99cdb",
+      "batch_id": "batch-0004",
+      "page_start": 15,
+      "page_end": 16,
+      "validation_errors": [],
+      "high_risk_normative_text": false,
+      "review_status": "program_validated",
+      "publication": {
+        "approval_type": "program_gate",
+        "published_at": "2026-07-18T05:30:28.993147+00:00",
+        "policy": {
+          "min_confidence": 0.75,
+          "min_fuzzy_score": 0.85
+        }
+      }
+    }
+  ]
+}

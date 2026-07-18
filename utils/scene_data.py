@@ -10,8 +10,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from openpyxl import load_workbook
-
+from app.metrics_table_loader import read_workbook_rows
 from config import (
     ASSETS_DIR,
     EDGE_MAPS_DIR,
@@ -126,12 +125,7 @@ def _parse_person_name(header: str, index: int) -> tuple[str, str]:
 
 @lru_cache(maxsize=1)
 def _load_workbook_rows(xlsx_path: str) -> tuple[tuple[Any, ...], ...]:
-    wb = load_workbook(xlsx_path, read_only=True, data_only=True)
-    try:
-        ws = wb.active
-        return tuple(tuple(row) for row in ws.iter_rows(values_only=True))
-    finally:
-        wb.close()
+    return read_workbook_rows(xlsx_path)
 
 
 def clear_metrics_cache() -> None:
