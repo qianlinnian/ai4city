@@ -32,9 +32,10 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from config import UPLOAD_DIR
+from config import ASSETS_DIR, UPLOAD_DIR
 from morph_metrics_extractor import MorphMetricsExtractor
 from pipeline.orchestrator import PipelineOrchestrator
+from utils.scene_data import list_scene_choices, load_scene_bundle
 
 app = FastAPI(title="Micro-Space Multi-Agent API", version="0.3.0")
 pipe = PipelineOrchestrator(force_metrics_fallback=True)
@@ -108,6 +109,68 @@ class MemoryIn(BaseModel):
 @app.get("/health")
 def health():
     return {"ok": True, "version": "0.3.0"}
+
+
+@app.get("/scenes")
+def list_scenes():
+    """列出可选场景（assets 文件名，或边缘图 stem）。"""
+    return {"assets_dir": str(ASSETS_DIR), "scenes": list_scene_choices()}
+
+
+@app.get("/scenes/{image_name}")
+def get_scene(image_name: str):
+    """按图片名加载 Excel 指标 + 分析图路径。"""
+    try:
+        return load_scene_bundle(image_name)
+    except FileNotFoundError as e:
+        raise HTTPException(404, str(e)) from e
+    except KeyError as e:
+        raise HTTPException(404, str(e)) from e
+    except Exception as e:
+        raise HTTPException(400, str(e)) from e
+
+
+class StartFromDatasetIn(BaseModel):
+    image_name: str
+    scene_context: Optional[SceneContextIn] = None
+    pre_edit_experience: Optional[list[dict[str, Any]]] = None
+
+
+@app.post("/pipeline/start_from_dataset")
+def pipeline_start_from_dataset(body: StartFromDatasetIn):
+    """从 assets + filled_metrics.xlsx 启动 session（不重跑形态解析）。"""
+    try:
+        bundle = load_scene_bundle(body.image_name)
+    except Exception as e:
+        raise HTTPException(400, str(e)) from e
+
+    images = bundle.get("images") or {}
+    original = images.get("original") or images.get("edge_map") or images.get("seg_map")
+    if not original:
+        raise HTTPException(400, f"找不到原图或分析图: {body.image_name}")
+
+    scene = (
+        body.scene_context.model_dump()
+        if body.scene_context is not None
+        else bundle["scene_context"]
+    )
+    pre_edit = (
+        body.pre_edit_experience
+        if body.pre_edit_experience is not None
+        else bundle["persons"]
+    )
+    image_name = Path(images["original"]).name if images.get("original") else body.image_name
+    state = pipe.start_session(
+        original,
+        scene_context=scene,
+        pre_edit_experience=pre_edit,
+        baseline_metrics=bundle["morph_metrics"],
+        image_name=image_name,
+        skip_extract=True,
+    )
+    state["dataset_images"] = images
+    SESSIONS[state["session_id"]] = state
+    return state
 
 
 @app.post("/extract_metrics")

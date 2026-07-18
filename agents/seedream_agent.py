@@ -248,12 +248,12 @@ class SeedreamAgent:
     @staticmethod
     def _default_output_name(image_name: str, source_path: Path) -> str:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        ext = source_path.suffix.lower() if source_path.suffix else ".jpg"
-        if ext not in {".jpg", ".jpeg", ".png", ".webp"}:
-            ext = ".jpg"
+        # 统一用 .jpg，避免中文文件名导致 Windows/OpenCV/Gradio 打不开
         stem = Path(image_name).stem if image_name else source_path.stem
-        safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in stem)[:60]
-        return f"{safe}_edited_{ts}{ext}"
+        # 仅保留 ASCII，中文（如「截图」）在 Python 里 isalnum=True，必须额外过滤
+        safe = "".join(c if c.isascii() and (c.isalnum() or c in "-_") else "_" for c in stem)
+        safe = "_".join(p for p in safe.split("_") if p)[:60] or "pano"
+        return f"{safe}_edited_{ts}.jpg"
 
     # ------------------------------------------------------------------ #
     # LIVE API（火山方舟 Seedream）
@@ -265,14 +265,75 @@ class SeedreamAgent:
         }
 
     @staticmethod
-    def _image_to_data_uri(image_path: Path) -> str:
+    def _prepare_image_bytes(
+        image_path: Path,
+        max_bytes: int = 9 * 1024 * 1024,
+    ) -> tuple[bytes, str]:
+        """
+        准备上传字节。超过 max_bytes 时自动 JPEG 压缩/缩小，
+        避免 Seedream 10MB 限制导致误回退 MOCK。
+        返回 (bytes, mime_subtype) 如 (..., \"jpeg\")。
+        """
+        from io import BytesIO
+
+        from PIL import Image
+
+        raw = image_path.read_bytes()
         ext = image_path.suffix.lstrip(".").lower() or "jpg"
         mime_ext = "jpeg" if ext in {"jpg", "jpeg"} else ext
         if mime_ext not in {"jpeg", "png", "webp"}:
             mime_ext = "jpeg"
-        raw = image_path.read_bytes()
-        if len(raw) > 10 * 1024 * 1024:
-            raise ValueError(f"图片过大（>{10}MB），Seedream 单图建议 ≤10MB: {image_path.name}")
+
+        if len(raw) <= max_bytes and mime_ext in {"jpeg", "png", "webp"}:
+            return raw, mime_ext
+
+        print(
+            f"[Seedream] 原图 {len(raw)/1024/1024:.1f}MB 超限，自动压缩后上传 "
+            f"(源文件: {image_path.name})"
+        )
+        with Image.open(image_path) as im:
+            im = im.convert("RGB")
+            # 全景常见很大，先限制长边
+            max_side = 4096
+            w, h = im.size
+            scale = min(1.0, max_side / max(w, h))
+            if scale < 1.0:
+                im = im.resize((max(1, int(w * scale)), max(1, int(h * scale))), Image.Resampling.LANCZOS)
+
+            for quality in (90, 85, 80, 75, 70, 65, 60, 50, 40):
+                buf = BytesIO()
+                im.save(buf, format="JPEG", quality=quality, optimize=True)
+                data = buf.getvalue()
+                if len(data) <= max_bytes:
+                    print(
+                        f"[Seedream] 压缩完成: {len(data)/1024/1024:.1f}MB "
+                        f"(quality={quality}, size={im.size[0]}x{im.size[1]})"
+                    )
+                    return data, "jpeg"
+
+            # 仍过大则继续缩小边长
+            while True:
+                w, h = im.size
+                if max(w, h) <= 1024:
+                    break
+                im = im.resize((max(1, w // 2), max(1, h // 2)), Image.Resampling.LANCZOS)
+                buf = BytesIO()
+                im.save(buf, format="JPEG", quality=70, optimize=True)
+                data = buf.getvalue()
+                if len(data) <= max_bytes:
+                    print(
+                        f"[Seedream] 二次缩小完成: {len(data)/1024/1024:.1f}MB "
+                        f"(size={im.size[0]}x{im.size[1]})"
+                    )
+                    return data, "jpeg"
+
+        raise ValueError(
+            f"无法将图片压缩到 ≤{max_bytes/1024/1024:.0f}MB: {image_path.name}"
+        )
+
+    @classmethod
+    def _image_to_data_uri(cls, image_path: Path) -> str:
+        raw, mime_ext = cls._prepare_image_bytes(image_path)
         b64 = base64.b64encode(raw).decode("ascii")
         return f"data:image/{mime_ext};base64,{b64}"
 
