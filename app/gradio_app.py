@@ -5,11 +5,11 @@ Gradio 前端（人机协同主界面）v2
 --------------------------------------------------------------------------------
 【流程】
   Step0 下拉选择 assets 图片 → 读 filled_metrics.xlsx + 三张分析图
-  Step1 展示情景/形态/九人体感基线
+  Step1 表格展示九人体感基线 + 情景/形态
   Step2 调节七个体验目标滑块 → 翻译官
   Step3 人工干预形态要素 → 制图员
-  Step4 人工润色自然语言方案 → Seedream 文生图 + 质检
-  Step5 修改后多人体验 → 知识库
+  Step4 人工润色自然语言方案 → Seedream 文生图 + 原图对比
+  Step5 表格填写修改后多人体验 → 知识库
 
 【启动】
   python app/gradio_app.py
@@ -23,6 +23,7 @@ import sys
 from pathlib import Path
 
 import gradio as gr
+import pandas as pd
 
 _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
@@ -43,20 +44,124 @@ from utils.scene_data import list_scene_choices, load_scene_bundle
 pipe = PipelineOrchestrator(force_metrics_fallback=True)
 SESSION: dict = {"state": None, "bundle": None}
 
-DEFAULT_POST_EDIT_JSON = json.dumps(
-    [
-        {
-            "person_id": "p1",
-            "person_name": "参与者A",
-            "experience": {
-                key: (2 if key == "environmental_disturbance" else 4)
-                for key in EXPERIENCE_KEYS
-            },
-        },
-    ],
-    ensure_ascii=False,
-    indent=2,
-)
+# 体验表格列：姓名 + 七项指标
+_EXP_NAME_COL = "姓名"
+_EXP_HEADERS = [_EXP_NAME_COL] + [EXPERIENCE_LABELS_ZH[k] for k in EXPERIENCE_KEYS]
+_EXP_DATATYPES = ["str"] + ["number"] * len(EXPERIENCE_KEYS)
+_LABEL_TO_KEY = {EXPERIENCE_LABELS_ZH[k]: k for k in EXPERIENCE_KEYS}
+
+
+def _empty_experience_df(n_rows: int = 0) -> pd.DataFrame:
+    rows = []
+    for i in range(n_rows):
+        row = {_EXP_NAME_COL: f"参与者{i + 1}"}
+        for k in EXPERIENCE_KEYS:
+            row[EXPERIENCE_LABELS_ZH[k]] = 3
+        rows.append(row)
+    return pd.DataFrame(rows, columns=_EXP_HEADERS)
+
+
+def _persons_to_df(persons: list[dict] | None) -> pd.DataFrame:
+    if not persons:
+        return _empty_experience_df(0)
+    rows = []
+    for p in persons:
+        exp = p.get("experience") or {}
+        row = {_EXP_NAME_COL: p.get("person_name") or p.get("person_id") or ""}
+        for k in EXPERIENCE_KEYS:
+            try:
+                row[EXPERIENCE_LABELS_ZH[k]] = int(round(float(exp.get(k, 3))))
+            except (TypeError, ValueError):
+                row[EXPERIENCE_LABELS_ZH[k]] = 3
+        rows.append(row)
+    return pd.DataFrame(rows, columns=_EXP_HEADERS)
+
+
+def _df_to_persons(df) -> list[dict]:
+    """把 Gradio Dataframe / pandas 转回 persons 列表。"""
+    if df is None:
+        return []
+    if isinstance(df, pd.DataFrame):
+        frame = df.copy()
+    else:
+        frame = pd.DataFrame(df)
+    if frame.empty:
+        return []
+
+    # 兼容列名可能是英文 key 或中文标签
+    col_map = {}
+    for c in frame.columns:
+        c_str = str(c).strip()
+        if c_str in (_EXP_NAME_COL, "person_name", "name"):
+            col_map[c] = _EXP_NAME_COL
+        elif c_str in _LABEL_TO_KEY:
+            col_map[c] = EXPERIENCE_LABELS_ZH[_LABEL_TO_KEY[c_str]]
+        elif c_str in EXPERIENCE_KEYS:
+            col_map[c] = EXPERIENCE_LABELS_ZH[c_str]
+        else:
+            col_map[c] = c_str
+    frame = frame.rename(columns=col_map)
+
+    persons: list[dict] = []
+    for i, row in frame.iterrows():
+        name = str(row.get(_EXP_NAME_COL, "") or "").strip()
+        if not name or name.lower() in {"nan", "none"}:
+            # 若整行指标也空则跳过
+            vals = []
+            for k in EXPERIENCE_KEYS:
+                label = EXPERIENCE_LABELS_ZH[k]
+                if label not in row.index:
+                    continue
+                v = row.get(label)
+                if pd.isna(v) or v == "":
+                    continue
+                vals.append(v)
+            if not vals:
+                continue
+            name = f"参与者{len(persons) + 1}"
+
+        experience = {}
+        for k in EXPERIENCE_KEYS:
+            label = EXPERIENCE_LABELS_ZH[k]
+            raw = row.get(label, 3) if label in row.index else 3
+            try:
+                val = float(raw)
+            except (TypeError, ValueError):
+                val = 3.0
+            experience[k] = min(5.0, max(1.0, round(val)))
+
+        persons.append(
+            {
+                "person_id": f"p{len(persons) + 1}",
+                "person_name": name,
+                "experience": experience,
+            }
+        )
+    return persons
+
+
+def _suggest_post_edit_df(persons: list[dict] | None) -> pd.DataFrame:
+    """改造后体感表初值：沿用同一批人，正向指标略抬高、干扰感略降低。"""
+    if not persons:
+        return _empty_experience_df(1)
+    suggested = []
+    for p in persons:
+        exp = dict(p.get("experience") or {})
+        new_exp = {}
+        for k in EXPERIENCE_KEYS:
+            v = float(exp.get(k, 3))
+            if k == "environmental_disturbance":
+                new_exp[k] = max(1.0, min(5.0, round(v - 1)))
+            else:
+                new_exp[k] = max(1.0, min(5.0, round(min(5.0, v + 1))))
+        suggested.append(
+            {
+                "person_id": p.get("person_id", ""),
+                "person_name": p.get("person_name", ""),
+                "experience": new_exp,
+            }
+        )
+    return _persons_to_df(suggested)
 
 
 def _fmt_metrics(d: dict | None) -> str:
@@ -96,30 +201,6 @@ def _sliders_to_metrics(values: list[float]) -> dict:
     return out
 
 
-def _parse_person_experience(raw: str) -> list[dict]:
-    if not raw or not raw.strip():
-        return []
-    data = json.loads(raw)
-    if not isinstance(data, list):
-        raise ValueError("多人体验须为 JSON 数组")
-    return data
-
-
-def _fmt_persons(persons: list[dict]) -> str:
-    if not persons:
-        return "(无)"
-    lines = []
-    for p in persons:
-        name = p.get("person_name") or p.get("person_id")
-        exp = p.get("experience") or {}
-        parts = [
-            f"{EXPERIENCE_LABELS_ZH[k]}={float(exp.get(k, 3)):.0f}"
-            for k in EXPERIENCE_KEYS
-        ]
-        lines.append(f"- **{name}**：{', '.join(parts)}")
-    return "\n".join(lines)
-
-
 def refresh_image_choices():
     choices = list_scene_choices()
     return gr.update(choices=choices, value=(choices[0] if choices else None))
@@ -129,6 +210,7 @@ def on_select_image(image_name: str):
     """下拉选图 → 读 Excel + 分析图，填充前端。"""
     empty_exp = [3.0] * len(EXPERIENCE_KEYS)
     empty_morph = _metrics_to_sliders({k: 0 for k in MORPH_KEYS})
+    empty_df = _empty_experience_df(0)
     blank = (
         None,  # original
         None,  # edge
@@ -143,7 +225,8 @@ def on_select_image(image_name: str):
         "",
         "",
         "请选择图片",
-        "[]",
+        empty_df,
+        empty_df,
         *empty_exp,
         *empty_morph,
     )
@@ -162,7 +245,6 @@ def on_select_image(image_name: str):
     morph = bundle["morph_metrics"]
     avg = bundle["experience_average"]
 
-    # 目标滑块初值：在均值基础上略抬高正向指标、略降低干扰感
     target_defaults = []
     for k in EXPERIENCE_KEYS:
         v = float(avg.get(k, 3))
@@ -177,8 +259,11 @@ def on_select_image(image_name: str):
         f"指标表: `{FILLED_METRICS_XLSX}`\n"
         f"原图: `{images.get('original') or '（assets 中未找到，请放入原图后再文生图）'}`\n\n"
         f"### 形态要素基线（来自 Excel J–P）\n{_fmt_metrics(morph)}\n\n"
-        f"### 九人体感基线\n{_fmt_persons(persons)}"
+        f"下方表格为九人体感基线（1–5 分，可微调后再点①确认）。"
     )
+
+    pre_df = _persons_to_df(persons)
+    post_df = _suggest_post_edit_df(persons)
 
     return (
         images.get("original"),
@@ -194,7 +279,8 @@ def on_select_image(image_name: str):
         scene.get("traffic_flow", ""),
         "",
         info,
-        json.dumps(persons, ensure_ascii=False, indent=2),
+        pre_df,
+        post_df,
         *target_defaults,
         *_metrics_to_sliders(morph),
     )
@@ -210,7 +296,7 @@ def step_parse(
     maintenance_status,
     traffic_flow,
     scene_desc,
-    pre_edit_json,
+    pre_edit_df,
 ):
     if not image_name:
         raise gr.Error("请先在下拉列表中选择一张图片")
@@ -221,7 +307,6 @@ def step_parse(
     except Exception as e:
         raise gr.Error(f"加载场景失败: {e}") from e
 
-    # 若用户改过情景字段，以表单为准
     scene = {
         "observation_time": observation_time or "",
         "observation_weather": observation_weather or "",
@@ -234,9 +319,9 @@ def step_parse(
     }
 
     try:
-        pre_edit = _parse_person_experience(pre_edit_json)
-    except (json.JSONDecodeError, ValueError) as e:
-        raise gr.Error(f"修改前多人体验 JSON 无效: {e}") from e
+        pre_edit = _df_to_persons(pre_edit_df)
+    except Exception as e:
+        raise gr.Error(f"修改前体验表格无效: {e}") from e
 
     if not pre_edit:
         pre_edit = bundle.get("persons") or []
@@ -244,8 +329,6 @@ def step_parse(
     images = bundle.get("images") or {}
     original = images.get("original")
     if not original:
-        # 无原图时仍可用 Excel 指标推进翻译/制图；文生图阶段再校验
-        # 用边缘图占位路径写入 session，避免 Path 报错
         placeholder = images.get("edge_map") or images.get("seg_map")
         if not placeholder:
             raise gr.Error(
@@ -267,7 +350,7 @@ def step_parse(
     exp_info = (
         f"已加载 {record_count} 名参与者的逐人评分；翻译时完整输入，不求平均。"
         if record_count
-        else "尚未提供逐人评分；翻译前请补充至少一名参与者的完整七项评分。"
+        else "尚未提供逐人评分；翻译前请在表格中至少填写一名参与者。"
     )
     info = (
         f"### 情景要素\n{state['scene_context_text'] or '(未填写)'}\n\n"
@@ -364,7 +447,6 @@ def step_generate(final_plan):
         raise gr.Error(
             f"Seedream 需要 assets 原图。请将与所选场景对应的全景图放入:\n{ASSETS_DIR}"
         )
-    # 确保 session 使用真实原图
     state = dict(state)
     state["image_path"] = original
     state["image_name"] = Path(original).name
@@ -399,17 +481,22 @@ def step_generate(final_plan):
         f"### 偏差\n```json\n{json.dumps(qr.get('deviations'), ensure_ascii=False, indent=2)}\n```"
     )
     measured_sliders = _metrics_to_sliders(qr.get("measured_metrics") or {})
-    return out_path, report, *measured_sliders
+    # 改造后体感表：按修改前人员预填建议分，便于对照填写
+    post_df = _suggest_post_edit_df(state.get("pre_edit_experience") or bundle.get("persons"))
+    return out_path, original, report, post_df, *measured_sliders
 
 
-def step_save_memory(score, notes, post_edit_json, *corrected_sliders):
+def step_save_memory(score, notes, post_edit_df, *corrected_sliders):
     state = SESSION.get("state")
     if not state:
         raise gr.Error("无会话")
     try:
-        post_edit = _parse_person_experience(post_edit_json)
-    except (json.JSONDecodeError, ValueError) as e:
-        raise gr.Error(f"修改后多人体验 JSON 无效: {e}") from e
+        post_edit = _df_to_persons(post_edit_df)
+    except Exception as e:
+        raise gr.Error(f"修改后体验表格无效: {e}") from e
+
+    if not post_edit:
+        raise gr.Error("请在「改造后多人体验」表格中至少填写一名参与者的评分")
 
     state = pipe.record_post_experience(state, post_edit)
     corrected = _sliders_to_metrics(list(corrected_sliders))
@@ -424,6 +511,19 @@ def step_save_memory(score, notes, post_edit_json, *corrected_sliders):
     return (
         f"已写入知识库，memory_id = {state['memory_id']}，session = {state['session_id']}\n"
         f"学习Agent统计: {json.dumps(learning_stats, ensure_ascii=False)}"
+    )
+
+
+def _make_experience_dataframe(label: str, interactive: bool) -> gr.Dataframe:
+    return gr.Dataframe(
+        value=_empty_experience_df(0),
+        headers=_EXP_HEADERS,
+        datatype=_EXP_DATATYPES,
+        label=label,
+        interactive=interactive,
+        wrap=True,
+        row_count=(9, "dynamic"),
+        column_count=(len(_EXP_HEADERS), "fixed"),
     )
 
 
@@ -461,10 +561,9 @@ def build_ui():
                 maintenance_status = gr.Textbox(label="管理维护状态")
                 traffic_flow = gr.Textbox(label="交通流量")
                 scene_desc = gr.Textbox(label="补充描述", lines=2)
-                pre_edit_json = gr.Textbox(
-                    label="修改前多人体验（JSON，自动从 Excel 九人填入）",
-                    value="[]",
-                    lines=10,
+                pre_edit_df = _make_experience_dataframe(
+                    "修改前多人体验（表格，自动从 Excel 九人填入；可微调）",
+                    interactive=True,
                 )
                 btn_parse = gr.Button("① 确认加载场景 → 写入 Session", variant="primary")
 
@@ -502,15 +601,18 @@ def build_ui():
         plan_rationale = gr.Markdown("")
         btn_gen = gr.Button("④ 确认方案 → Seedream 文生图 + 质检", variant="primary")
 
+        gr.Markdown("### 改造前后对比")
         with gr.Row():
-            out_img = gr.Image(label="修改后全景（TargetIMG）", type="filepath", height=320)
-            quality_md = gr.Markdown("质检报告将显示在这里")
+            out_img = gr.Image(label="修改后全景（TargetIMG）", type="filepath", height=360)
+            compare_original_img = gr.Image(
+                label="原图对照（改造前）", type="filepath", height=360
+            )
+        quality_md = gr.Markdown("质检报告将显示在这里")
 
-        gr.Markdown("### 修改后多人体验 + 指标纠偏（写入知识库前）")
-        post_edit_json = gr.Textbox(
-            label="修改后多人体验（JSON）",
-            value=DEFAULT_POST_EDIT_JSON,
-            lines=8,
+        gr.Markdown("### 改造后多人体验（表格填写，1–5 分）+ 指标纠偏")
+        post_edit_df = _make_experience_dataframe(
+            "改造后多人体验（可直接改单元格；生成后会按原班人马预填建议分）",
+            interactive=True,
         )
         corrected_sliders = []
         for k in MORPH_KEYS:
@@ -545,7 +647,8 @@ def build_ui():
             traffic_flow,
             scene_desc,
             parse_md,
-            pre_edit_json,
+            pre_edit_df,
+            post_edit_df,
             *experience_sliders,
             *morph_sliders,
         ]
@@ -566,7 +669,7 @@ def build_ui():
                 maintenance_status,
                 traffic_flow,
                 scene_desc,
-                pre_edit_json,
+                pre_edit_df,
             ],
             outputs=[parse_md],
         )
@@ -583,11 +686,11 @@ def build_ui():
         btn_gen.click(
             step_generate,
             inputs=[plan_box],
-            outputs=[out_img, quality_md, *corrected_sliders],
+            outputs=[out_img, compare_original_img, quality_md, post_edit_df, *corrected_sliders],
         )
         btn_mem.click(
             step_save_memory,
-            inputs=[score, notes, post_edit_json, *corrected_sliders],
+            inputs=[score, notes, post_edit_df, *corrected_sliders],
             outputs=[mem_out],
         )
 
