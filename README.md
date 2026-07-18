@@ -2,143 +2,124 @@
 高密度情境下微空间优化 · 多智能体全流程工程 v2
 ================================================
 
-## v2 流程变更
+## 本机快速启动（Windows）
 
-- **翻译官**：同一图像全部参与者逐人七项评分 + 体验目标 + 形态初始值 + 原始全景 → 七项形态目标（LangChain 多模态 Prompt；规则仅离线兜底）
-- **制图员**：原始全景 + 确认后的形态目标 + 专家建议 → 结构化空间布局方案 + World Labs 修改文本
-- **提示词专家**：已废弃，合并至制图员
-- **学习 Agent**：占位接口，记录体验→形态翻译准确度（默认不启用修正）
-- **多人体验**：支持修改前/修改后多人体验指标 JSON 输入
-- **情景要素**：与全景图配套输入
+### 1. 准备环境
+
+```powershell
+cd D:\GitHubZY\ai4city
+python -m pip install -r requirements.txt
+```
+
+`.env` 已按本机路径配置（`DATA_DIR=D:\GitHubZY\ai4city`），API Key 直接写在 `.env` 中即可。
+
+### 2. 放入原图（文生图必需）
+
+把全景原图放到：
+
+```text
+D:\GitHubZY\ai4city\assets\
+```
+
+文件名需能与 `filled_metrics.xlsx` 的 **B 列** 用**前 26 位**对齐，例如：
+
+- Excel B 列：`VID_20260709_164915_00_114`
+- 原图可为：`VID_20260709_164915_00_114_2026-07-16_14-22-01.jpg`
+
+分析图已在仓库内，按同名前缀自动匹配：
+
+| 类型 | 目录 | 文件名前缀 |
+|------|------|------------|
+| 边缘密度 | `edge_density_maps/` | `edge_` |
+| 语义分割 | `segmentation_results/` | `seg_` |
+| 天际线 | `skyline_boundary_maps/` | `skyline_` |
+
+指标表：`filled_metrics.xlsx`（根目录）
+
+> 若 `assets/` 暂时为空，前端下拉会回退为边缘图 stem，仍可加载 Excel 指标与三张分析图；**Seedream 文生图**前必须补上对应原图。
+
+### 3. 启动前端
+
+```powershell
+cd D:\GitHubZY\ai4city
+python app/gradio_app.py
+```
+
+浏览器打开：http://127.0.0.1:7860
+
+### 4.（可选）启动 FastAPI
+
+```powershell
+cd D:\GitHubZY\ai4city
+uvicorn app.api_server:app --reload --port 8000
+```
+
+常用接口：
+
+- `GET  /scenes` — 可选场景列表
+- `GET  /scenes/{image_name}` — Excel 指标 + 分析图路径
+- `POST /pipeline/start_from_dataset` — 从数据集启动 session
+- `POST /pipeline/run_translator` → `confirm_morph` → `confirm_plan` → `generate`
+
+---
+
+## 前端操作流程
+
+1. **下拉选图** → 自动展示原图 / edge / seg / skyline，并填入情景要素、形态基线、九人体感  
+2. **① 确认加载场景** → 写入 session（形态基线来自 Excel，不重跑分割）  
+3. **调节体验目标滑块** → **② 翻译官** → 得到目标形态要素  
+4. **可改形态滑块** → **③ 制图员** → 自然语言修改方案  
+5. **润色方案** → **④ Seedream 文生图** → 结果从 `TargetIMG/` 读回前端并质检  
+6. **⑤ 填写修改后体验** → 写入本地知识库  
+
+---
+
+## Excel 列映射
+
+| 列 | 含义 |
+|----|------|
+| B | 图片名称（前 26 位唯一匹配） |
+| C–I | 情景要素（观测时间/天气/人流/空间类型/声音/维护/交通） |
+| J–P | 形态要素（绿视率、蓝视率、人造物占比、天空可视率、色彩丰富度、边缘密度、天际线变化率） |
+| Q 起每 7 列 | 一人体感（共 9 人）：舒适度、自然感、安全感、放松感、环境干扰感、可停留意愿、总体感 |
+
+---
 
 ## 目录结构
 
 ```
-code/
-  morph_metrics_extractor.py   # 工具：SegFormer 形态要素解析
-  agents/
-    translator_agent.py        # 翻译官：体验变化 → 形态目标
-    cartographer_agent.py      # 制图员：形态目标 → 结构化空间布局方案与修改文本
-    learning_agent.py          # 学习 Agent（占位）
-    worldlabs_agent.py         # 工具：World Labs Pano Edit 文生图
-    quality_checker_agent.py   # 质检员
-    memory_agent.py            # 记忆入库
-    prompt_expert_agent.py     # @deprecated
+ai4city/
+  assets/                      # 全景原图（需自行放入）
+  TargetIMG/                   # Seedream 生成结果
+  edge_density_maps/           # edge_* 分析图
+  segmentation_results/        # seg_* 分析图
+  skyline_boundary_maps/       # skyline_* 分析图
+  filled_metrics.xlsx          # 情景 + 形态 + 九人体感
+  config.py                    # 路径与模型配置
+  agents/                      # 翻译官 / 制图员 / Seedream / 质检 / 记忆 …
   pipeline/orchestrator.py     # 全流程编排
   app/gradio_app.py            # Gradio 前端
-  app/api_server.py            # FastAPI 接口
-```
-
-## 快速开始
-
-```bash
-cd code
-python -m pip install -r requirements.txt
-copy .env.example .env
-
-# 单独测试形态解析
-python morph_metrics_extractor.py ..\JPG素材\某全景.jpg --fallback
-
-# 启动前端
-python app/gradio_app.py
-
-# 命令行一键演示
-python run_demo.py path/to/pano.jpg
+  app/api_server.py            # FastAPI
+  utils/scene_data.py          # Excel + 分析图加载
 ```
 
 ## 数据流
 
-1. 上传全景 + 情景要素 +（可选）修改前多人体验
-2. `morph_metrics_extractor` 解析 7 维形态基线
-3. 前端调节七个体验滑块 → **翻译官** → 形态原值/目标值 → 人工干预①
-4. **制图员** 生成结构化空间布局方案与自然语言修改文本 → 人工干预②
-5. **World Labs** 文生图 → 质检
-6. 填写修改后多人体验 → **记忆 Agent** + **学习 Agent** 入库
+1. 选图 → `utils/scene_data.py` 读 Excel + 三张分析图  
+2. 体验滑块 → **翻译官** → 形态目标 → 人工干预①  
+3. **制图员** → 自然语言方案 → 人工干预②  
+4. **Seedream** 图生图 → `TargetIMG/` → 质检  
+5. 修改后体验 → **记忆 Agent** + **学习 Agent**
 
-每个 Agent 文件头部注释写清了：输入 / 输出 / 输出到哪里 / 调用方式。
+各 Agent 文件头部注释写清了输入 / 输出；编排层尽量不改 Agent 接口，仅切换文生图为 Seedream。
 
-## 各代码文件职责说明
+## 环境变量要点（见 `.env.example`）
 
-### 根目录
-
-| 文件 | 职责 |
+| 变量 | 说明 |
 |------|------|
-| `config.py` | 全局配置：路径、体验/形态维度定义、API Key、SegFormer 模型名、MOCK 模式判断 |
-| `morph_metrics_extractor.py` | **独立工具**：用 SegFormer（或 OpenCV fallback）解析全景图，输出 7 个形态要素指标 |
-| `run_demo.py` | 命令行一键演示入口，跳过人工干预跑完全流程 |
-| `requirements.txt` | Python 依赖清单 |
-| `.env.example` | 环境变量模板（`LLM_API_KEY`、`WORLDLABS_API_KEY` 等） |
-
-### agents/ — 智能体
-
-| 文件 | 职责 |
-|------|------|
-| `translator_agent.py` | **翻译官**：逐人保留全部七项评分，以 LangChain 多模态 Prompt 直接生成七项形态目标；RAG 暂留接口，规则仅作无模型兜底 |
-| `cartographer_agent.py` | **制图员**：接收原图、确认后的形态目标和专家建议，输出对象级空间布局方案及可执行修改文本 |
-| `learning_agent.py` | **学习 Agent（占位）**：记录体验→形态翻译是否准确，预留多轮学习修正接口（默认不启用） |
-| `worldlabs_agent.py` | **文生图工具**：按图片完整文件名从 `assets/` 取图，调 Marble API，结果写入 `TargetIMG/` |
-| `quality_checker_agent.py` | **质检员**：对修改后全景重新解析形态要素，与目标对比输出偏差报告 |
-| `memory_agent.py` | **记忆 Agent**：将全流程关键数据（体验、形态、方案、多人体验）写入本地知识库 |
-| `prompt_expert_agent.py` | `@deprecated` 已废弃，逻辑合并至 `cartographer_agent.py`，仅保留向后兼容 |
-| `__init__.py` | Agent 包统一导出 |
-
-### pipeline/ — 流程编排
-
-| 文件 | 职责 |
-|------|------|
-| `orchestrator.py` | **全流程编排器**：串联解析→翻译官→制图员→文生图→质检→记忆/学习，管理 session 状态与持久化 |
-| `__init__.py` | pipeline 包标识 |
-
-### app/ — 前端与接口
-
-| 文件 | 职责 |
-|------|------|
-| `gradio_app.py` | **Gradio 人机协同界面**：上传全景、情景要素、体验滑块、形态干预、方案润色、结果展示、知识库入库 |
-| `api_server.py` | **FastAPI REST 接口**：与 Gradio 等价的 HTTP 端点，供组员不经前端直接联调 |
-
-### schemas/ — 数据模型
-
-| 文件 | 职责 |
-|------|------|
-| `models.py` | 全流程共用的 Pydantic 模型：体验指标、形态指标、翻译结果、修改方案、质检报告、记忆条目等 |
-| `__init__.py` | schemas 包统一导出 |
-
-### utils/ — 工具函数
-
-| 文件 | 职责 |
-|------|------|
-| `llm_client.py` | LangChain 模型适配层：`ChatPromptTemplate | ChatOpenAI | StrOutputParser`；支持全景图输入，无 API Key 时返回 None，各 Agent 走本地规则兜底 |
-| `__init__.py` | utils 包标识 |
-
-### knowledge_base/ — 本地知识库
-
-| 文件 | 职责 |
-|------|------|
-| `kb_store.py` | 旧版知识库读写与案例检索能力；当前 Task 2/3 默认不调用 |
-| `data/mapping_rules.json` | 七项体验→七项形态的基础映射参数（启发式初值，待实验校准） |
-| `data/experience_morph_cases.json` | 旧版非实测案例样例；当前不参与 Task 2/3 计算 |
-| `data/memories.json` | 历史记忆条目（各 Agent 决策时检索参考） |
-| `data/learning_feedback.json` | 学习 Agent 反馈记录（翻译准确度，默认 `enabled: false`） |
-| `__init__.py` | knowledge_base 包标识 |
-
-### outputs/ — 运行时输出（自动生成）
-
-| 目录/文件 | 职责 |
-|-----------|------|
-| `outputs/images/` | World Labs / MOCK 生成的修改后全景图 |
-| `outputs/sessions/` | 每次运行的 session 状态 JSON（断点续跑、调试） |
-| `uploads/` | 用户上传的全景图缓存 |
-
-### _extracted_text/ — 项目文档文本（参考）
-
-| 文件 | 职责 |
-|------|------|
-| `第二日技术方案v2.txt` | 核心技术方案：旋钮→Agent→HITL→World Labs→知识闭环 |
-| `metrics_extract_route.txt` | 数据指标提取技术路线（SegFormer 7 可行指标） |
-| `metrics_definition.txt` | 形态/体验指标定义与计算公式 |
-| 其余 `.txt` | 工作营任务书、科学问题阐述、完整 Pipeline 等背景文档 |
+| `DATA_DIR` | 数据根目录，本机为 `D:\GitHubZY\ai4city` |
+| `LOAD_DATA_DIR` | 原图目录（相对 `DATA_DIR` 或绝对路径），默认 `assets` |
+| `QWEN_API_KEY` / `LLM_*` | 翻译官 / 制图员多模态 LLM |
+| `SEEDREAM_API_KEY` | 豆包 Seedream 图生图 |
+| `RUN_MODE` | `auto` / `mock` / `live` |
 """
-
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parent

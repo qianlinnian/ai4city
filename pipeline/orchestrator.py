@@ -4,23 +4,24 @@
 文件: pipeline/orchestrator.py
 --------------------------------------------------------------------------------
 【新流程】
-  全景图 + 情景要素
-       → 形态解析（SegFormer / fallback）
+  全景图 + 情景要素（可由 filled_metrics.xlsx 加载）
+       → 形态基线（Excel 或 SegFormer / fallback）
        → 体验滑块确认 → 翻译官（体验原值→目标值 → 形态目标）  【人工干预①】
        → 制图员（形态目标 → 自然语言方案）                  【人工干预②】
-       → World Labs Pano Edit 文生图
+       → Seedream 图生图（结果写入 TargetIMG/）
        → 质检员（重算指标）
        → 填写修改后多人体验值 → 记忆 Agent + 学习 Agent 入库
 
 【专用工具】
-  - morph_metrics_extractor.py   图像解析形态要素
-  - worldlabs_agent.py           自然语言文生图
+  - utils/scene_data.py          Excel + 分析图加载
+  - morph_metrics_extractor.py   图像解析形态要素（可选）
+  - seedream_agent.py            自然语言图生图
 
 【怎么调用】
   from pipeline.orchestrator import PipelineOrchestrator
   pipe = PipelineOrchestrator()
 
-  state = pipe.start_session(image_path, scene_context={...})
+  state = pipe.start_session(image_path, scene_context={...}, baseline_metrics={...}, skip_extract=True)
   state = pipe.run_translator(state, experience_targets={...})
   state = pipe.confirm_morph(state, human_metrics={...})
   state = pipe.confirm_plan(state, human_plan="...")
@@ -48,8 +49,8 @@ from agents.cartographer_agent import CartographerAgent
 from agents.learning_agent import LearningAgent
 from agents.memory_agent import MemoryAgent
 from agents.quality_checker_agent import QualityCheckerAgent
+from agents.seedream_agent import SeedreamAgent
 from agents.translator_agent import TranslatorAgent
-from agents.worldlabs_agent import WorldLabsAgent
 from config import SESSION_DIR
 from morph_metrics_extractor import MorphMetricsExtractor
 from schemas.models import (
@@ -67,7 +68,9 @@ class PipelineOrchestrator:
         self.learning = LearningAgent()
         self.translator = TranslatorAgent()
         self.cartographer = CartographerAgent()
-        self.worldlabs = WorldLabsAgent()
+        # 文生图：优先 Seedream（与 WorldLabs 同接口，便于替换）
+        self.seedream = SeedreamAgent()
+        self.worldlabs = self.seedream  # 兼容旧字段名
         self.quality = QualityCheckerAgent(extractor=self.extractor)
         self.memory = MemoryAgent()
 
@@ -76,8 +79,15 @@ class PipelineOrchestrator:
         image_path: str | Path,
         scene_context: dict | SceneContext | str | None = None,
         pre_edit_experience: list[dict] | None = None,
+        baseline_metrics: dict | None = None,
+        image_name: str | None = None,
+        skip_extract: bool = False,
     ) -> dict[str, Any]:
-        """Step0: 上传全景 + 情景要素，解析形态基线（不调用 Agent）。"""
+        """Step0: 上传全景 + 情景要素，解析形态基线（不调用 Agent）。
+
+        baseline_metrics / skip_extract:
+          若已从 filled_metrics.xlsx 读到形态指标，可直接传入并跳过图像重算。
+        """
         image_path = Path(image_path)
         if isinstance(scene_context, SceneContext):
             scene = scene_context
@@ -86,11 +96,19 @@ class PipelineOrchestrator:
         else:
             scene = SceneContext(description=str(scene_context or ""))
 
-        baseline = self.extractor.calculate(image_path).as_dict()
+        if baseline_metrics is not None:
+            baseline = dict(baseline_metrics)
+        elif skip_extract:
+            raise ValueError("skip_extract=True 时必须提供 baseline_metrics")
+        else:
+            baseline = self.extractor.calculate(image_path).as_dict()
+
+        resolved_name = image_name or image_path.name
         state = {
             "session_id": uuid.uuid4().hex,
             "created_at": datetime.now().isoformat(),
             "image_path": str(image_path),
+            "image_name": resolved_name,
             "scene_context": scene.model_dump(),
             "scene_context_text": scene.as_text(),
             "pre_edit_experience": pre_edit_experience or [],
@@ -211,7 +229,7 @@ class PipelineOrchestrator:
         return state
 
     def generate_and_check(self, state: dict[str, Any]) -> dict[str, Any]:
-        """Step3-4: World Labs 文生图 + 质检。"""
+        """Step3-4: Seedream 文生图 + 质检。"""
         state = deepcopy(state)
         prompt = state.get("final_prompt")
         if not prompt:
@@ -219,17 +237,42 @@ class PipelineOrchestrator:
 
         # 优先用 session 的图片文件名（从 assets/ 取图）；否则用上传路径
         image_name = state.get("image_name") or state.get("image_id")
-        if image_name:
-            gen = self.worldlabs.run(image_name=image_name, prompt=prompt)
+        image_path = state.get("image_path")
+        if image_path and Path(image_path).is_file():
+            gen = self.seedream.run(image_path=image_path, prompt=prompt)
+        elif image_name:
+            gen = self.seedream.run(image_name=image_name, prompt=prompt)
         else:
-            gen = self.worldlabs.run(image_path=state["image_path"], prompt=prompt)
-        state["generation"] = gen.model_dump()
+            raise ValueError("缺少原图路径，无法调用 Seedream")
 
-        report = self.quality.run(
-            gen.output_image_path,
-            state["confirmed_target_metrics"],
-        )
-        state["quality_report"] = report.model_dump()
+        # 统一为绝对路径，便于 Gradio 展示
+        out = Path(gen.output_image_path).resolve()
+        gen.output_image_path = str(out)
+        state["generation"] = gen.model_dump()
+        if gen.mock:
+            print(
+                f"[Orchestrator] 警告: Seedream 走了 MOCK "
+                f"(原因: {(gen.raw or {}).get('fallback_error') or (gen.raw or {}).get('note')})"
+            )
+        else:
+            print(f"[Orchestrator] Seedream 实网生成完成: {out}")
+
+        try:
+            report = self.quality.run(
+                gen.output_image_path,
+                state["confirmed_target_metrics"],
+            )
+            state["quality_report"] = report.model_dump()
+        except Exception as exc:
+            # 质检失败不应挡住前端展示生成图
+            print(f"[Orchestrator] 质检失败（已跳过）: {exc}")
+            state["quality_report"] = {
+                "measured_metrics": {},
+                "target_metrics": state.get("confirmed_target_metrics") or {},
+                "deviations": {},
+                "passed": False,
+                "details": f"质检未能完成: {exc}",
+            }
         state["stage"] = "await_post_experience"
         self._persist(state)
         return state
