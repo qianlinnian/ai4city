@@ -15,17 +15,77 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parent
 load_dotenv(ROOT / ".env")
 
-# ---------- 路径 ----------
+
+def _env_path(key: str, default: Path) -> Path:
+    """读取环境变量路径；不存在或无效时回退 default。"""
+    raw = os.getenv(key, "").strip().strip('"').strip("'")
+    if not raw:
+        return default
+    p = Path(raw).expanduser()
+    try:
+        p = p.resolve()
+    except OSError:
+        return default
+    return p if p.exists() else default
+
+
+# ---------- 路径（本机默认：D:\\GitHubZY\\ai4city）----------
+# DATA_DIR 可为外部数据盘；未配置或不存在时使用仓库根目录
+DATA_DIR = _env_path("DATA_DIR", ROOT)
+
 KB_DIR = ROOT / "knowledge_base" / "data"
 UPLOAD_DIR = ROOT / "uploads"
 OUTPUT_DIR = ROOT / "outputs"
 IMAGE_OUT_DIR = OUTPUT_DIR / "images"
 SESSION_DIR = OUTPUT_DIR / "sessions"
-# 文生图工具：按图片完整文件名从 assets/ 取原图，结果写入 TargetIMG/
-ASSETS_DIR = ROOT / "assets"
-TARGET_IMG_DIR = ROOT / "TargetIMG"
 
-for _p in (KB_DIR, UPLOAD_DIR, IMAGE_OUT_DIR, SESSION_DIR, ASSETS_DIR, TARGET_IMG_DIR):
+# 原图目录：优先 LOAD_DATA_DIR / DATA_DIR/assets / ROOT/assets
+_load_assets = os.getenv("LOAD_DATA_DIR", "").strip().strip('"').strip("'")
+if _load_assets:
+    _candidate = (ROOT / _load_assets).resolve() if not Path(_load_assets).is_absolute() else Path(_load_assets)
+    ASSETS_DIR = _candidate if _candidate.exists() else (DATA_DIR / "assets")
+else:
+    ASSETS_DIR = DATA_DIR / "assets" if (DATA_DIR / "assets").exists() else ROOT / "assets"
+
+# Seedream 输出目录（Windows 大小写不敏感；统一用 TargetIMG）
+TARGET_IMG_DIR = DATA_DIR / "TargetIMG" if DATA_DIR != ROOT and (DATA_DIR / "TargetIMG").exists() else ROOT / "TargetIMG"
+
+# 指标表与三张分析图目录
+FILLED_METRICS_XLSX = (
+    DATA_DIR / "filled_metrics.xlsx"
+    if (DATA_DIR / "filled_metrics.xlsx").exists()
+    else ROOT / "filled_metrics.xlsx"
+)
+EDGE_MAPS_DIR = (
+    DATA_DIR / "edge_density_maps"
+    if (DATA_DIR / "edge_density_maps").exists()
+    else ROOT / "edge_density_maps"
+)
+SEG_MAPS_DIR = (
+    DATA_DIR / "segmentation_results"
+    if (DATA_DIR / "segmentation_results").exists()
+    else ROOT / "segmentation_results"
+)
+SKYLINE_MAPS_DIR = (
+    DATA_DIR / "skyline_boundary_maps"
+    if (DATA_DIR / "skyline_boundary_maps").exists()
+    else ROOT / "skyline_boundary_maps"
+)
+
+# Excel B 列 / 文件名匹配用的固定前缀长度
+IMAGE_KEY_LEN = 26
+
+for _p in (
+    KB_DIR,
+    UPLOAD_DIR,
+    IMAGE_OUT_DIR,
+    SESSION_DIR,
+    ASSETS_DIR,
+    TARGET_IMG_DIR,
+    EDGE_MAPS_DIR,
+    SEG_MAPS_DIR,
+    SKYLINE_MAPS_DIR,
+):
     _p.mkdir(parents=True, exist_ok=True)
 
 # ---------- API / 运行模式 ----------

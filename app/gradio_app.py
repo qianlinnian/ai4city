@@ -3,16 +3,15 @@
 Gradio 前端（人机协同主界面）v2
 文件: app/gradio_app.py
 --------------------------------------------------------------------------------
-【新流程】
-  Step0 上传全景 JPG + 情景要素 +（可选）修改前多人体验
-  Step1 形态解析 → 展示 7 维形态基线
-  Step2 调节七个体验滑块 → 确认 → 翻译官（体验→形态目标）
-  Step3 人工干预形态要素目标 → 确认 → 制图员（结构化空间布局方案）
-  Step4 人工干预修改方案文本 → 确认 → World Labs 文生图 + 质检
-  Step5 填写修改后多人体验 → 沉淀知识库
+【流程】
+  Step0 下拉选择 assets 图片 → 读 filled_metrics.xlsx + 三张分析图
+  Step1 展示情景/形态/九人体感基线
+  Step2 调节七个体验目标滑块 → 翻译官
+  Step3 人工干预形态要素 → 制图员
+  Step4 人工润色自然语言方案 → Seedream 文生图 + 质检
+  Step5 修改后多人体验 → 知识库
 
 【启动】
-  cd code
   python app/gradio_app.py
 ================================================================================
 """
@@ -20,7 +19,6 @@ Gradio 前端（人机协同主界面）v2
 from __future__ import annotations
 
 import json
-import shutil
 import sys
 from pathlib import Path
 
@@ -30,25 +28,31 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from config import EXPERIENCE_KEYS, EXPERIENCE_LABELS_ZH, MORPH_KEYS, MORPH_LABELS_ZH, UPLOAD_DIR
+from config import (
+    ASSETS_DIR,
+    EXPERIENCE_KEYS,
+    EXPERIENCE_LABELS_ZH,
+    FILLED_METRICS_XLSX,
+    MORPH_KEYS,
+    MORPH_LABELS_ZH,
+    TARGET_IMG_DIR,
+)
 from pipeline.orchestrator import PipelineOrchestrator
+from utils.scene_data import list_scene_choices, load_scene_bundle
 
 pipe = PipelineOrchestrator(force_metrics_fallback=True)
-SESSION: dict = {"state": None}
-
-DEFAULT_PRE_EDIT_JSON = json.dumps(
-    [
-        {"person_id": "p1", "person_name": "参与者A", "experience": {key: 3 for key in EXPERIENCE_KEYS}},
-        {"person_id": "p2", "person_name": "参与者B", "experience": {key: 3 for key in EXPERIENCE_KEYS}},
-    ],
-    ensure_ascii=False,
-    indent=2,
-)
+SESSION: dict = {"state": None, "bundle": None}
 
 DEFAULT_POST_EDIT_JSON = json.dumps(
     [
-        {"person_id": "p1", "person_name": "参与者A", "experience": {key: (2 if key == "environmental_disturbance" else 4) for key in EXPERIENCE_KEYS}},
-        {"person_id": "p2", "person_name": "参与者B", "experience": {key: (2 if key == "environmental_disturbance" else 4) for key in EXPERIENCE_KEYS}},
+        {
+            "person_id": "p1",
+            "person_name": "参与者A",
+            "experience": {
+                key: (2 if key == "environmental_disturbance" else 4)
+                for key in EXPERIENCE_KEYS
+            },
+        },
     ],
     ensure_ascii=False,
     indent=2,
@@ -67,7 +71,7 @@ def _fmt_metrics(d: dict | None) -> str:
         if k == "color_richness":
             lines.append(f"- {label}: {float(v):.2f}")
         else:
-            lines.append(f"- {label}: {float(v)*100:.2f}%")
+            lines.append(f"- {label}: {float(v) * 100:.2f}%")
     return "\n".join(lines)
 
 
@@ -101,8 +105,103 @@ def _parse_person_experience(raw: str) -> list[dict]:
     return data
 
 
+def _fmt_persons(persons: list[dict]) -> str:
+    if not persons:
+        return "(无)"
+    lines = []
+    for p in persons:
+        name = p.get("person_name") or p.get("person_id")
+        exp = p.get("experience") or {}
+        parts = [
+            f"{EXPERIENCE_LABELS_ZH[k]}={float(exp.get(k, 3)):.0f}"
+            for k in EXPERIENCE_KEYS
+        ]
+        lines.append(f"- **{name}**：{', '.join(parts)}")
+    return "\n".join(lines)
+
+
+def refresh_image_choices():
+    choices = list_scene_choices()
+    return gr.update(choices=choices, value=(choices[0] if choices else None))
+
+
+def on_select_image(image_name: str):
+    """下拉选图 → 读 Excel + 分析图，填充前端。"""
+    empty_exp = [3.0] * len(EXPERIENCE_KEYS)
+    empty_morph = _metrics_to_sliders({k: 0 for k in MORPH_KEYS})
+    blank = (
+        None,  # original
+        None,  # edge
+        None,  # seg
+        None,  # skyline
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "请选择图片",
+        "[]",
+        *empty_exp,
+        *empty_morph,
+    )
+    if not image_name:
+        return blank
+
+    try:
+        bundle = load_scene_bundle(image_name)
+    except Exception as e:
+        raise gr.Error(f"加载场景失败: {e}") from e
+
+    SESSION["bundle"] = bundle
+    scene = bundle["scene_context"]
+    images = bundle["images"]
+    persons = bundle["persons"]
+    morph = bundle["morph_metrics"]
+    avg = bundle["experience_average"]
+
+    # 目标滑块初值：在均值基础上略抬高正向指标、略降低干扰感
+    target_defaults = []
+    for k in EXPERIENCE_KEYS:
+        v = float(avg.get(k, 3))
+        if k == "environmental_disturbance":
+            target_defaults.append(max(1.0, min(5.0, round(v - 0.5))))
+        else:
+            target_defaults.append(max(1.0, min(5.0, round(min(5.0, v + 0.5)))))
+
+    info = (
+        f"### 场景 `{bundle.get('scene_id') or ''}` · Excel 行 {bundle.get('excel_row')}\n"
+        f"匹配键（前26位）: `{bundle['image_key']}`\n"
+        f"指标表: `{FILLED_METRICS_XLSX}`\n"
+        f"原图: `{images.get('original') or '（assets 中未找到，请放入原图后再文生图）'}`\n\n"
+        f"### 形态要素基线（来自 Excel J–P）\n{_fmt_metrics(morph)}\n\n"
+        f"### 九人体感基线\n{_fmt_persons(persons)}"
+    )
+
+    return (
+        images.get("original"),
+        images.get("edge_map"),
+        images.get("seg_map"),
+        images.get("skyline_map"),
+        scene.get("observation_time", ""),
+        scene.get("observation_weather", ""),
+        scene.get("people_flow", ""),
+        scene.get("space_type", ""),
+        scene.get("sound_type", ""),
+        scene.get("maintenance_status", ""),
+        scene.get("traffic_flow", ""),
+        "",
+        info,
+        json.dumps(persons, ensure_ascii=False, indent=2),
+        *target_defaults,
+        *_metrics_to_sliders(morph),
+    )
+
+
 def step_parse(
-    image,
+    image_name,
     observation_time,
     observation_weather,
     people_flow,
@@ -113,17 +212,16 @@ def step_parse(
     scene_desc,
     pre_edit_json,
 ):
-    if image is None:
-        raise gr.Error("请先上传全景图")
-    src = Path(image)
-    dest = UPLOAD_DIR / src.name
-    shutil.copy(src, dest)
+    if not image_name:
+        raise gr.Error("请先在下拉列表中选择一张图片")
 
     try:
-        pre_edit = _parse_person_experience(pre_edit_json)
-    except (json.JSONDecodeError, ValueError) as e:
-        raise gr.Error(f"修改前多人体验 JSON 无效: {e}") from e
+        bundle = load_scene_bundle(image_name)
+        SESSION["bundle"] = bundle
+    except Exception as e:
+        raise gr.Error(f"加载场景失败: {e}") from e
 
+    # 若用户改过情景字段，以表单为准
     scene = {
         "observation_time": observation_time or "",
         "observation_weather": observation_weather or "",
@@ -134,20 +232,49 @@ def step_parse(
         "traffic_flow": traffic_flow or "",
         "description": scene_desc or "",
     }
-    state = pipe.start_session(dest, scene_context=scene, pre_edit_experience=pre_edit)
+
+    try:
+        pre_edit = _parse_person_experience(pre_edit_json)
+    except (json.JSONDecodeError, ValueError) as e:
+        raise gr.Error(f"修改前多人体验 JSON 无效: {e}") from e
+
+    if not pre_edit:
+        pre_edit = bundle.get("persons") or []
+
+    images = bundle.get("images") or {}
+    original = images.get("original")
+    if not original:
+        # 无原图时仍可用 Excel 指标推进翻译/制图；文生图阶段再校验
+        # 用边缘图占位路径写入 session，避免 Path 报错
+        placeholder = images.get("edge_map") or images.get("seg_map")
+        if not placeholder:
+            raise gr.Error(
+                f"assets 中找不到原图，且无分析图可用。请将原图放入: {ASSETS_DIR}"
+            )
+        original = placeholder
+
+    state = pipe.start_session(
+        original,
+        scene_context=scene,
+        pre_edit_experience=pre_edit,
+        baseline_metrics=bundle["morph_metrics"],
+        image_name=Path(images["original"]).name if images.get("original") else image_name,
+        skip_extract=True,
+    )
     SESSION["state"] = state
 
     record_count = len(state.get("pre_edit_experience") or [])
     exp_info = (
         f"已加载 {record_count} 名参与者的逐人评分；翻译时完整输入，不求平均。"
         if record_count
-        else "尚未提供逐人评分；Task 2运行前必须补充至少一名参与者的完整七项评分。"
+        else "尚未提供逐人评分；翻译前请补充至少一名参与者的完整七项评分。"
     )
     info = (
         f"### 情景要素\n{state['scene_context_text'] or '(未填写)'}\n\n"
         f"### 修改前多人体验记录\n{exp_info}\n\n"
-        f"### 形态要素基线（图像解析）\n{_fmt_metrics(state['baseline_metrics'])}\n\n"
-        f"session_id: `{state['session_id']}`"
+        f"### 形态要素基线（Excel）\n{_fmt_metrics(state['baseline_metrics'])}\n\n"
+        f"session_id: `{state['session_id']}`\n\n"
+        f"请调节右侧体验目标滑块后点击「确认体验滑块 → 翻译官」。"
     )
     return info
 
@@ -155,9 +282,7 @@ def step_parse(
 def step_translate(*experience_values):
     state = SESSION.get("state")
     if not state:
-        raise gr.Error("请先完成「解析全景」")
-    if state.get("stage") not in ("await_experience_confirm", "await_morph_confirm"):
-        pass  # 允许重新调节
+        raise gr.Error("请先完成「确认加载场景」")
 
     targets = dict(zip(EXPERIENCE_KEYS, experience_values))
     try:
@@ -170,7 +295,7 @@ def step_translate(*experience_values):
     exp_base = tr.get("experience_baseline", {})
     exp_tgt = tr.get("experience_targets", {})
     exp_lines = "\n".join(
-        f"- {EXPERIENCE_LABELS_ZH[k]}: {exp_base.get(k,3)} → {exp_tgt.get(k,3)}"
+        f"- {EXPERIENCE_LABELS_ZH[k]}: {exp_base.get(k, 3)} → {exp_tgt.get(k, 3)}"
         for k in EXPERIENCE_KEYS
     )
     basis_lines = []
@@ -218,7 +343,9 @@ def step_confirm_morph(expert_advice, *slider_vals):
         raise gr.Error("请先完成「确认体验滑块 → 翻译官」")
     human_metrics = _sliders_to_metrics(list(slider_vals))
     note = (expert_advice or "").strip() or "前端人工确认形态要素"
-    state = pipe.confirm_morph(state, human_metrics=human_metrics, note=note)
+    state = pipe.confirm_morph(
+        state, human_metrics=human_metrics, note=note, language="zh"
+    )
     SESSION["state"] = state
     plan = state.get("modification_plan") or {}
     return plan.get("draft_text", ""), _fmt_layout_plan(plan)
@@ -231,14 +358,40 @@ def step_generate(final_plan):
     if not final_plan or not final_plan.strip():
         raise gr.Error("修改方案不能为空")
 
+    bundle = SESSION.get("bundle") or {}
+    original = (bundle.get("images") or {}).get("original")
+    if not original or not Path(original).is_file():
+        raise gr.Error(
+            f"Seedream 需要 assets 原图。请将与所选场景对应的全景图放入:\n{ASSETS_DIR}"
+        )
+    # 确保 session 使用真实原图
+    state = dict(state)
+    state["image_path"] = original
+    state["image_name"] = Path(original).name
+
     state = pipe.confirm_plan(state, final_plan)
     state = pipe.generate_and_check(state)
     SESSION["state"] = state
 
     gen = state["generation"]
-    qr = state["quality_report"]
+    qr = state.get("quality_report") or {}
+    out_path = gen.get("output_image_path")
+    if out_path:
+        out_path = str(Path(out_path).resolve())
+        if not Path(out_path).is_file():
+            raise gr.Error(f"生成文件不存在，无法展示: {out_path}")
+
+    is_mock = bool(gen.get("mock"))
+    fallback_err = (gen.get("raw") or {}).get("fallback_error")
+    mode_line = (
+        f"### 生成模式: **MOCK 演示**（非真实 Seedream）\n"
+        f"回退原因: `{fallback_err or (gen.get('raw') or {}).get('note', '')}`\n"
+        if is_mock
+        else "### 生成模式: **Seedream 实网 API**\n"
+    )
     report = (
-        f"### 生成模式: {'MOCK 演示' if gen.get('mock') else 'World Labs API'}\n"
+        f"{mode_line}"
+        f"### 输出路径: `{out_path}`（目录 `{TARGET_IMG_DIR}`）\n"
         f"### 质检: {'通过' if qr.get('passed') else '未通过'}\n"
         f"{qr.get('details', '')}\n\n"
         f"### 实测形态要素\n{_fmt_metrics(qr.get('measured_metrics'))}\n\n"
@@ -246,7 +399,7 @@ def step_generate(final_plan):
         f"### 偏差\n```json\n{json.dumps(qr.get('deviations'), ensure_ascii=False, indent=2)}\n```"
     )
     measured_sliders = _metrics_to_sliders(qr.get("measured_metrics") or {})
-    return gen.get("output_image_path"), report, *measured_sliders
+    return out_path, report, *measured_sliders
 
 
 def step_save_memory(score, notes, post_edit_json, *corrected_sliders):
@@ -275,83 +428,82 @@ def step_save_memory(score, notes, post_edit_json, *corrected_sliders):
 
 
 def build_ui():
+    choices = list_scene_choices()
     with gr.Blocks(title="高密度微空间 · 多智能体优化 v2") as demo:
         gr.Markdown(
             """
             # 高密度情境下微空间优化 · 人机多智能体流水线 v2
-            **全景+情景 → 形态解析 → 体验滑块 → 翻译官(体验→形态) → 制图员(形态→文本) → 文生图 → 多人体验反馈 → 知识库**
+            **选图(Excel指标+分析图) → 体验滑块 → 翻译官 → 制图员 → Seedream 文生图 → 反馈入库**
             """
         )
 
         with gr.Row():
             with gr.Column(scale=1):
-                image = gr.Image(type="filepath", label="上传全景 JPG/PNG", height=260)
-                gr.Markdown("### 情景要素")
-                observation_time = gr.Textbox(label="观测时间", placeholder="清晨 / 午后 / 傍晚")
-                observation_weather = gr.Textbox(label="观测天气", placeholder="晴 / 阴 / 雨")
-                people_flow = gr.Textbox(label="人流量", placeholder="人数或低 / 中 / 高")
-                space_type = gr.Textbox(
-                    label="空间类型（社区、蓝绿、商办）",
-                    placeholder="社区 / 蓝绿 / 商办",
+                image_dropdown = gr.Dropdown(
+                    choices=choices,
+                    value=(choices[0] if choices else None),
+                    label=f"选择场景图片（优先 {ASSETS_DIR.name}/，否则边缘图 stem）",
+                    interactive=True,
                 )
-                sound_type = gr.Textbox(label="声音类型", placeholder="自然声 / 人声 / 交通声 / 混合声")
-                maintenance_status = gr.Textbox(label="管理维护状态", placeholder="良好 / 一般 / 较差")
-                traffic_flow = gr.Textbox(label="交通流量", placeholder="数量或低 / 中 / 高")
+                btn_refresh = gr.Button("刷新图片列表")
+                original_img = gr.Image(label="原图（assets）", type="filepath", height=220)
+                with gr.Row():
+                    edge_img = gr.Image(label="边缘密度 edge_", type="filepath", height=160)
+                    seg_img = gr.Image(label="语义分割 seg_", type="filepath", height=160)
+                    skyline_img = gr.Image(label="天际线 skyline_", type="filepath", height=160)
+
+                gr.Markdown("### 情景要素（来自 Excel C–I，可改）")
+                observation_time = gr.Textbox(label="观测时间")
+                observation_weather = gr.Textbox(label="观测天气")
+                people_flow = gr.Textbox(label="人流量")
+                space_type = gr.Textbox(label="空间类型（社区、蓝绿、商办）")
+                sound_type = gr.Textbox(label="声音类型")
+                maintenance_status = gr.Textbox(label="管理维护状态")
+                traffic_flow = gr.Textbox(label="交通流量")
                 scene_desc = gr.Textbox(label="补充描述", lines=2)
                 pre_edit_json = gr.Textbox(
-                    label="修改前多人体验（JSON，可选）",
-                    value=DEFAULT_PRE_EDIT_JSON,
-                    lines=8,
+                    label="修改前多人体验（JSON，自动从 Excel 九人填入）",
+                    value="[]",
+                    lines=10,
                 )
-                btn_parse = gr.Button("① 解析全景 + 形态要素", variant="primary")
+                btn_parse = gr.Button("① 确认加载场景 → 写入 Session", variant="primary")
 
             with gr.Column(scale=1):
-                parse_md = gr.Markdown("等待解析…")
-                gr.Markdown("### Step2 七项体验感受目标（1–5分；环境干扰感越低越好）")
-                experience_defaults = {
-                    "comfort": 4,
-                    "naturalness": 4,
-                    "safety": 4,
-                    "relaxation": 4,
-                    "environmental_disturbance": 2,
-                    "stay_intention": 4,
-                    "overall_impression": 4,
-                }
+                parse_md = gr.Markdown("请先选择图片…")
+                gr.Markdown("### Step2 七项体验感受目标（1–5；环境干扰感越低越好）")
                 experience_sliders = [
-                    gr.Slider(
-                        1,
-                        5,
-                        value=experience_defaults[key],
-                        step=1,
-                        label=EXPERIENCE_LABELS_ZH[key],
-                    )
+                    gr.Slider(1, 5, value=3, step=1, label=EXPERIENCE_LABELS_ZH[key])
                     for key in EXPERIENCE_KEYS
                 ]
                 btn_translate = gr.Button("② 确认体验滑块 → 翻译官", variant="primary")
 
         translate_md = gr.Markdown("翻译官结果将显示在这里")
-        gr.Markdown("### 人工干预①：形态要素目标")
+        gr.Markdown("### 人工干预①：形态要素目标（初值=Excel 基线，翻译后会被更新）")
         morph_sliders = []
         for k in MORPH_KEYS:
             if k == "color_richness":
-                morph_sliders.append(gr.Slider(1, 12, value=3.5, step=0.1, label=MORPH_LABELS_ZH[k]))
+                morph_sliders.append(
+                    gr.Slider(0, 24, value=8, step=0.1, label=MORPH_LABELS_ZH[k])
+                )
             else:
                 morph_sliders.append(
-                    gr.Slider(0, 80, value=15, step=0.1, label=f"{MORPH_LABELS_ZH[k]} (%)")
+                    gr.Slider(0, 100, value=10, step=0.1, label=f"{MORPH_LABELS_ZH[k]} (%)")
                 )
         expert_advice = gr.Textbox(
             label="专家建议（可选，将传给制图员 Agent）",
             placeholder="例如：保持左侧历史建筑立面不变，优先优化右侧停留空间",
             lines=2,
         )
-        btn_morph = gr.Button("③ 确认形态要素 → 制图员生成空间布局方案", variant="primary")
+        btn_morph = gr.Button(
+            "③ 确认形态要素 → 制图员生成空间布局方案", variant="primary"
+        )
 
         plan_box = gr.Textbox(label="人工干预②：自然语言修改方案（可润色）", lines=8)
         plan_rationale = gr.Markdown("")
-        btn_gen = gr.Button("④ 确认方案 → World Labs 文生图 + 质检", variant="primary")
+        btn_gen = gr.Button("④ 确认方案 → Seedream 文生图 + 质检", variant="primary")
 
         with gr.Row():
-            out_img = gr.Image(label="修改后全景", type="filepath", height=320)
+            out_img = gr.Image(label="修改后全景（TargetIMG）", type="filepath", height=320)
             quality_md = gr.Markdown("质检报告将显示在这里")
 
         gr.Markdown("### 修改后多人体验 + 指标纠偏（写入知识库前）")
@@ -364,11 +516,13 @@ def build_ui():
         for k in MORPH_KEYS:
             if k == "color_richness":
                 corrected_sliders.append(
-                    gr.Slider(1, 12, value=3.5, step=0.1, label=f"纠偏-{MORPH_LABELS_ZH[k]}")
+                    gr.Slider(0, 24, value=8, step=0.1, label=f"纠偏-{MORPH_LABELS_ZH[k]}")
                 )
             else:
                 corrected_sliders.append(
-                    gr.Slider(0, 80, value=15, step=0.1, label=f"纠偏-{MORPH_LABELS_ZH[k]} (%)")
+                    gr.Slider(
+                        0, 100, value=10, step=0.1, label=f"纠偏-{MORPH_LABELS_ZH[k]} (%)"
+                    )
                 )
 
         with gr.Row():
@@ -377,10 +531,33 @@ def build_ui():
         btn_mem = gr.Button("⑤ 沉淀到本地知识库", variant="primary")
         mem_out = gr.Textbox(label="知识库写入结果")
 
+        select_outputs = [
+            original_img,
+            edge_img,
+            seg_img,
+            skyline_img,
+            observation_time,
+            observation_weather,
+            people_flow,
+            space_type,
+            sound_type,
+            maintenance_status,
+            traffic_flow,
+            scene_desc,
+            parse_md,
+            pre_edit_json,
+            *experience_sliders,
+            *morph_sliders,
+        ]
+
+        btn_refresh.click(refresh_image_choices, outputs=[image_dropdown])
+        image_dropdown.change(on_select_image, inputs=[image_dropdown], outputs=select_outputs)
+        demo.load(on_select_image, inputs=[image_dropdown], outputs=select_outputs)
+
         btn_parse.click(
             step_parse,
             inputs=[
-                image,
+                image_dropdown,
                 observation_time,
                 observation_weather,
                 people_flow,
