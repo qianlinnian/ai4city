@@ -25,3 +25,10 @@ dist/
 # Task 2/3 知识库：参数与种子案例入库，运行时反馈不入 Git
 knowledge_base/data/memories.json
 knowledge_base/data/learning_feedback.json
+assets/*
+edge_density_maps/*
+model_comparison/*
+outputs/*
+segmentation_results/*
+skyline_boundary_maps/*
+TargetIMG/*
