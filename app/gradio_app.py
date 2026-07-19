@@ -64,16 +64,27 @@ AGENT_LOADING_STEPS = (
 )
 
 AGENT_LOADER_CSS = """
-#agent-loader { margin: 12px 0 18px; }
+#agent-loader .agent-loader-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.24);
+    cursor: wait;
+}
 #agent-loader .agent-loader-card {
     display: flex;
     align-items: center;
     gap: 12px;
     max-width: 620px;
     padding: 12px 16px;
-    border: 1px solid #fed7aa;
-    border-radius: 10px;
-    background: #fff7ed;
+    border: 1px solid #fdba74;
+    border-radius: 12px;
+    background: #fffaf5;
+    box-shadow: 0 12px 32px rgba(154, 52, 18, 0.18);
     color: #9a3412;
     font-size: 16px;
     font-weight: 600;
@@ -94,9 +105,10 @@ AGENT_LOADER_CSS = """
 def _show_agent_loader(message: str):
     return gr.update(
         value=(
-            '<div class="agent-loader-card">'
+            '<div class="agent-loader-backdrop">'
+            '<div class="agent-loader-card" role="status" aria-live="polite">'
             '<span class="agent-loader-spinner" aria-hidden="true"></span>'
-            f"<span>{escape(message)}</span>"
+            f"<span>{escape(message)}</span></div>"
             "</div>"
         ),
         visible=True,
