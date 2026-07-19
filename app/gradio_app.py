@@ -7,7 +7,7 @@ Gradio 前端（人机协同主界面）v2
   Step0 下拉选择 assets 图片 → 读 filled_metrics.xlsx + 三张分析图
   Step1 表格展示九人体感基线 + 情景/形态
   Step2 调节七个体验目标滑块 → 翻译官
-  Step3 人工干预形态要素 → 制图员
+  Step3 人工干预形态要素 → 规划员
   Step4 人工润色自然语言方案 → Seedream 文生图 + 原图对比
   Step5 表格填写修改后多人体验 → 知识库
 
@@ -80,16 +80,16 @@ TRANSLATOR_LOADING_STEPS = (
 )
 
 CARTOGRAPHER_LOADING_STEPS = (
-    "正在调用制图员智能体",
-    "制图员智能体正在调用知识库",
-    "制图员智能体正在分析场景与空间约束",
-    "制图员智能体正在生成最终空间布局方案",
+    "正在调用规划员智能体",
+    "规划员智能体正在调用知识库",
+    "规划员智能体正在分析场景与空间约束",
+    "规划员智能体正在生成最终空间布局方案",
 )
 
 GENERATION_LOADING_STEPS = (
     "正在确认最终空间布局方案",
-    "正在调用图像生成智能体进行全景编辑",
-    "图像生成智能体正在生成改造后全景图",
+    "正在调用生图智能体进行全景编辑",
+    "生图智能体正在生成改造后全景图",
     "正在提取改造后的七项形态要素",
 )
 
@@ -165,7 +165,7 @@ def _unchanged_outputs(count: int) -> tuple:
 
 
 def _run_with_agent_loader(output_count: int, loading_steps: tuple[str, ...], work):
-    """Run work after staged narration and refresh its elapsed time every second."""
+    """Run work immediately while rotating presentation states every five seconds."""
     if len(loading_steps) < 2:
         raise ValueError("加载状态至少需要两个阶段")
     started_at = time.monotonic()
@@ -174,18 +174,15 @@ def _run_with_agent_loader(output_count: int, loading_steps: tuple[str, ...], wo
         elapsed = int(time.monotonic() - started_at)
         return (*_unchanged_outputs(output_count), _show_agent_loader(message, elapsed))
 
-    for message in loading_steps[:-1]:
-        for _ in range(5):
-            yield loading_update(message)
-            time.sleep(1)
-
     try:
         with ThreadPoolExecutor(max_workers=1, thread_name_prefix="ai4city-agent") as executor:
             future = executor.submit(work)
-            yield loading_update(loading_steps[-1])
+            # The work begins immediately.  The text changes every five seconds
+            # only as a presentation cue; it must never delay the real request.
             while not future.done():
+                stage_index = min(int((time.monotonic() - started_at) // 5), len(loading_steps) - 1)
+                yield loading_update(loading_steps[stage_index])
                 time.sleep(1)
-                yield loading_update(loading_steps[-1])
             return future.result()
     except Exception:
         yield (*_unchanged_outputs(output_count), _hide_agent_loader())
@@ -714,7 +711,7 @@ def _fmt_layout_plan(plan: dict) -> str:
         "### 审查依据（不单独发送给 Seedream）\n"
         "最终执行内容以左侧/上方可编辑的「最终执行空间布局方案」为准；"
         "点击生成后，该文本将原样发送。\n\n"
-        f"### 原始专家意见（已供制图员参考）\n{plan.get('expert_advice') or '—'}\n\n"
+        f"### 原始专家意见（已供规划员参考）\n{plan.get('expert_advice') or '—'}\n\n"
         f"### 方案摘要\n{plan.get('plan_summary', '')}\n\n"
         f"### 完整对象级修改（审查用）\n{chr(10).join(actions) or '- 轻量优化现有空间对象'}\n\n"
         f"### 完整保持不变区域（审查用）\n"
@@ -859,8 +856,8 @@ def build_ui():
     with gr.Blocks(title="高密度微空间 · 多智能体优化 v2") as demo:
         gr.Markdown(
             """
-            # 高密度情境下微空间优化 · 人机多智能体流水线 v2
-            **选图(Excel指标+分析图) → 体验滑块 → 翻译官 → 制图员 → Seedream 文生图 → 反馈入库**
+            # 高密度情境下微空间优化 · 人机多智能体流水线
+            **选图(Excel指标+分析图) → 体验滑块 → 翻译官 → 规划员 → Seedream 文生图 → 反馈入库**
             """
         )
         agent_loader = gr.HTML(value="", visible=False, elem_id="agent-loader")
@@ -917,12 +914,12 @@ def build_ui():
                     gr.Slider(0, 100, value=10, step=0.1, label=f"{MORPH_LABELS_ZH[k]} (%)")
                 )
         expert_advice = gr.Textbox(
-            label="专家意见（可选，供制图员转写为最终方案）",
+            label="专家意见（可选，供规划员转写为最终方案）",
             placeholder="例如：保持左侧历史建筑立面不变，优先优化右侧停留空间",
             lines=2,
         )
         btn_morph = gr.Button(
-            "③ 确认形态要素 → 制图员生成空间布局方案", variant="primary"
+            "③ 确认形态要素 → 规划员生成空间布局方案", variant="primary"
         )
 
         plan_box = gr.Textbox(
