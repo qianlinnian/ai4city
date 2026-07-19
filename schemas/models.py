@@ -293,8 +293,13 @@ class ModificationPlan(BaseModel):
     ] = "general"
 
     @property
+    def seedream_prompt(self) -> str:
+        """Seedream 图像编辑当前消费的最终分段式提示词。"""
+        return self.draft_text
+
+    @property
     def worldlabs_prompt(self) -> str:
-        """World Labs Pano Edit 当前消费的最终修改文本。"""
+        """@deprecated 兼容旧调用；新代码请使用 ``seedream_prompt``。"""
         return self.draft_text
 
 

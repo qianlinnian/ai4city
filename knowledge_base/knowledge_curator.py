@@ -329,8 +329,15 @@ class DeepSeekKnowledgeClient:
             )
         self.client = client
 
-    def curate(self, batch: KnowledgeBatch, *, use_pro: bool = False) -> tuple[str, str]:
-        system, user = build_curator_messages(batch)
+    def complete_json(
+        self,
+        system: str,
+        user: str,
+        *,
+        use_pro: bool = False,
+    ) -> tuple[str, str]:
+        """调用指定层级模型并要求返回单个 JSON 对象。"""
+
         model = self.pro_model if use_pro else self.flash_model
         response = self.client.chat.completions.create(
             model=model,
@@ -363,6 +370,10 @@ class DeepSeekKnowledgeClient:
                 f"DeepSeek 返回了空内容: finish_reason={finish_reason or 'unknown'}{detail}"
             )
         return model, content.strip()
+
+    def curate(self, batch: KnowledgeBatch, *, use_pro: bool = False) -> tuple[str, str]:
+        system, user = build_curator_messages(batch)
+        return self.complete_json(system, user, use_pro=use_pro)
 
 
 def _normalized_evidence(value: str) -> str:

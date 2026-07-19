@@ -172,12 +172,18 @@ class LocalTfidfRagProvider:
                 if isinstance(record, dict) and record.get("id")
                 else f"{record_type}-{index + 1}"
             )
+            record_metadata = {"type": record_type, "record_id": record_id}
+            if isinstance(record, dict):
+                for key in ("case_type", "scene_type", "scene_label", "review_status"):
+                    value = record.get(key)
+                    if isinstance(value, (str, int, float, bool)):
+                        record_metadata[key] = value
             chunks.append(
                 self._chunk(
                     path,
                     f"{path.stem}:{record_id}",
                     text,
-                    {"type": record_type, "record_id": record_id},
+                    record_metadata,
                 )
             )
         return chunks
@@ -398,6 +404,26 @@ class LocalTfidfRagProvider:
             else:
                 if source_name == "spatial_rules.json":
                     adjusted_scores[index] += 0.15
+                elif source_name == "scene_prompt_examples.json":
+                    # 场景案例是 Task 3 的少样本参考；加权后仍在最终结果中限额，
+                    # 避免 30 个案例挤掉通用空间规则。
+                    adjusted_scores[index] += 0.18
+                    scene_type = str(chunk.get("metadata", {}).get("scene_type") or "")
+                    scene_context = str(kwargs.get("scene_context") or "").casefold()
+                    scene_terms = {
+                        "community": ("community", "社区", "居住", "住宅"),
+                        "blue_green": ("blue_green", "蓝绿", "滨水", "水体", "公园"),
+                        "commercial_office": (
+                            "commercial_office",
+                            "商办",
+                            "办公",
+                            "商业",
+                        ),
+                    }
+                    if any(
+                        term in scene_context for term in scene_terms.get(scene_type, ())
+                    ):
+                        adjusted_scores[index] += 0.08
                 elif source_name in {"memories.json", "learning_feedback.json"}:
                     adjusted_scores[index] += 0.05
                 elif source_name == "task2_3_framework.md":
@@ -407,6 +433,11 @@ class LocalTfidfRagProvider:
             int(index)
             for index in ranked
             if float(adjusted_scores[index]) >= self.min_score
+            and not (
+                is_task2
+                and self._chunks[int(index)].get("metadata", {}).get("case_type")
+                == "task3_scene_prompt_example"
+            )
         ]
         external = [
             index
@@ -422,9 +453,18 @@ class LocalTfidfRagProvider:
             *external[external_quota:],
         ]
         results: list[dict[str, Any]] = []
+        source_counts: dict[str, int] = {}
         for index in ordered:
             score = min(1.0, float(adjusted_scores[index]))
             chunk = self._chunks[int(index)]
+            source_name = Path(chunk["source"]).name.lower()
+            source_limit = (
+                3
+                if not is_task2 and source_name == "scene_prompt_examples.json"
+                else None
+            )
+            if source_limit is not None and source_counts.get(source_name, 0) >= source_limit:
+                continue
             metadata = dict(chunk["metadata"])
             metadata.update(
                 {
@@ -442,6 +482,7 @@ class LocalTfidfRagProvider:
             # 兼容现有 Agent 的引用字段，同时保留正式 chunk_id。
             result["id"] = result["chunk_id"]
             results.append(result)
+            source_counts[source_name] = source_counts.get(source_name, 0) + 1
             if len(results) >= self.top_k:
                 break
         return results

@@ -99,6 +99,10 @@ Task 3 当前提供三类可替换场景模板，统一放在 `agents/prompt_tem
 
 制图员的通用强度口径已从“保守微调”调整为“适度且视觉可感知”：场景允许时生成 2～5 项相互协调的对象级动作，但不得突破确认后的七项形态目标、虚构对象或改动建筑道路等硬约束。
 
+制图员的 `draft_text` 面向 Seedream 图像编辑，采用固定的可审核分段：编辑目标、必须保持不变、专家要求、本次仅修改、空间关系、禁止修改与执行约束、输出要求。每个对象动作都明确位置、操作、数量或范围以及具体做法；LLM 返回的自由文本不再与结构化字段重复拼接。场景案例 RAG 可提供社区、蓝绿和商办案例中的数量、尺度与空间关系，但只能作为参考，不得覆盖原图场景证据、用户输入和专家确认。
+
+该格式遵循[火山引擎 Seedream 4.0–5.0 提示词指南](https://www.volcengine.com/docs/82379/1829186)：使用简洁自然语言明确编辑对象、操作和希望保持不变的部分。复杂编辑优先保持结构清楚并删除重复描述；若一次动作过多，应由专家拆分轮次，而不是堆叠无效风格词。
+
 ## LangChain 调用层
 
 - 文本链：`ChatPromptTemplate | ChatOpenAI | StrOutputParser`。
@@ -153,7 +157,7 @@ python examples/task2_3_demo.py
 
 中断后重复执行会跳过已有草稿。`--retry-invalid` 只重做已有但含校验错误的批次，`--retry-empty` 只重做状态为 `empty` 的批次；两者可同时使用，不需要用 `--force` 覆盖整份文档。
 
-草稿写入 `outputs/knowledge_drafts`，不会修改 `ai4city-data`。每条记录必须保存 PDF 来源、页码和可在 OCR 原文中定位的连续引文；程序校验通过只表示格式和证据可定位，不等于专家确认。草稿经过人工抽检后才能进入正式 RAG 来源。
+草稿写入 `outputs/knowledge_drafts`，不会修改原始知识文档。每条记录必须保存 PDF 来源、页码和可在 OCR 原文中定位的连续引文；程序校验通过表示格式和证据可定位，可以按当前项目口径进入正式 RAG。项目不要求额外的 `approved` 或专家批准状态，人工抽检仅是可选质量检查，不是发布门禁。
 
 统一证据 Schema 使用 `page + line_ids + quote`。输入给 DeepSeek 的每一行都带稳定编号（如 `P0016-L0021`）；模型可跳过重复 OCR 行并组合多行，程序验证行号确实存在、页码一致且引文由对应行支持。证据校验优先使用去空白后的严格匹配；对 OCR 重复行，仅在证据不少于 12 个字符、字符 n-gram 覆盖率不低于 0.85 且存在足够长的连续锚点时接受 `fuzzy_ocr`，并在 JSON 中记录行号来源、匹配类型和分数。旧草稿会保守推断行号，无法可靠映射的记录继续保留 `needs_review`，不会伪造引用。已有草稿可在不产生 API 费用的情况下迁移和重新校验：
 
@@ -193,6 +197,25 @@ python scripts/publish_rag_knowledge.py --include 公园设计规范
 # 发布 program_validated 记录
 python scripts/publish_rag_knowledge.py --include 公园设计规范 --execute
 ```
+
+### Task 3 场景 Prompt 案例库
+
+根目录 `prompt.docx` 是 Task 3 的案例来源，不会直接作为超长 Prompt 整篇发送给制图员 Agent。离线整理器先按 Word 标题样式确定性拆分为 30 个独立案例：蓝绿、商办、社区各 10 个；场景类型、案例 ID、图像 ID、原文段落范围和原文哈希均由程序固定。DeepSeek 只负责抽取场景属性、问题、更新目标、对象级动作、空间关系、保持区域、约束、视觉要求和禁止事项。
+
+每条抽取结论都必须携带 `evidence_paragraph_ids` 和 `evidence_quote`。证据允许由多个原文分句组成，但每个分句都必须在所引 DOCX 段落中严格定位，不使用 OCR 模糊匹配。Flash 结果的结构、动作枚举、4096×2048 输出规格、置信度和证据引用任一未通过门禁时，脚本默认自动调用 Pro 修复；Pro 仍未通过的案例留在草稿区。30 条未全部达到 `program_validated` 时，正式案例库不会被部分覆盖。
+
+```powershell
+# 只解析文档和查看 30 条执行计划，不调用 API
+python scripts/build_scene_prompt_cases.py
+
+# 先付费验证一个社区案例；Flash 不合格时自动追加 Pro
+python scripts/build_scene_prompt_cases.py --scene-type community --limit-cases 1 --workers 1 --execute
+
+# 断点续跑全部案例；已通过且原文哈希一致的案例不重复调用 API
+python scripts/build_scene_prompt_cases.py --workers 4 --execute
+```
+
+草稿保存在 `outputs/knowledge_drafts/scene_prompt_cases`，正式文件为 `rag_knowledge/published/scene_prompt_examples.json`。正式 JSON 保存 30 条结构化记录和可审计证据，不保存 API Key。Task 3 检索会按 `scene_type` 提升同场景案例的权重，每次最多返回 3 条案例，把其余 Top-K 名额留给通用规则；这些纯布局案例会从 Task 2 检索结果中排除。
 
 ## 国内多模态模型配置
 

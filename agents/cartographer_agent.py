@@ -6,7 +6,7 @@
 【角色】
   接收原始全景与人工确认后的「形态要素目标值」，结合基线形态、体验目标、
   情景要素、专家建议和历史案例，生成结构化空间布局方案及可被
-  World Labs Pano Edit 理解的自然语言修改文本。
+  Seedream 图像编辑理解的自然语言修改文本。
 
 【输入】
   - baseline_metrics: dict       原先形态要素（图像解析）
@@ -20,7 +20,7 @@
 
 【输出】
   - ModificationPlan
-      .draft_text       可供 World Labs 执行的修改文本
+      .draft_text       可供 Seedream 执行的分段式编辑提示词
       .object_actions   增加、减少或调整的空间对象及位置、数量
       .spatial_relations / .unchanged_regions / .constraints
       .language
@@ -29,7 +29,7 @@
 
 【输出到哪里】
   → 前端展示，供人工干预修改自然语言方案
-  → 确认后传给 worldlabs_agent.run（文生图工具）
+  → 确认后传给 seedream_agent.run（图生图工具）
 
 【怎么调用】
   from agents.cartographer_agent import CartographerAgent
@@ -205,26 +205,26 @@ class CartographerAgent:
             if llm_plan
             else ""
         )
-        if llm_draft:
-            draft = f"{llm_draft} {self._structured_appendix(resolved_layout, language)}"
-        else:
-            draft = self._template_plan(
-                baseline_metrics,
-                target_metrics,
-                hints,
-                language,
-                resolved_layout,
-                expert_advice,
-            )
-        if expert_advice and expert_advice not in draft:
-            label = "Expert requirement" if language == "en" else "专家要求"
-            draft = f"{draft.rstrip()} {label}: {expert_advice}."
-
         plan_summary = str(
-            (llm_plan or {}).get("plan_summary") or fallback["plan_summary"]
+            (llm_plan or {}).get("plan_summary")
+            or llm_draft
+            or fallback["plan_summary"]
         ).strip()
         if expert_advice and expert_advice not in plan_summary:
             plan_summary += f"；专家建议：{expert_advice}"
+
+        # LLM 负责判断编辑内容；最终给 Seedream 的文本由程序稳定排版，
+        # 避免自由文本与结构化附录重复拼接成难以审核的长段落。
+        draft = self._template_plan(
+            baseline_metrics,
+            target_metrics,
+            hints,
+            language,
+            resolved_layout,
+            expert_advice,
+            plan_summary,
+            scene_profile,
+        )
 
         rationale = self._build_rationale(baseline_metrics, target_metrics, exp_targets)
 
@@ -483,34 +483,6 @@ class CartographerAgent:
             if any(key in item for key in priority_keywords) and item not in keep
         ]
         return keep, priority
-
-    @staticmethod
-    def _structured_appendix(layout: dict, language: str) -> str:
-        actions: list[SpatialObjectAction] = layout["object_actions"]
-        if language == "en":
-            action_text = "; ".join(
-                f"{item.action.upper()} {item.object_type} at {item.position}, "
-                f"quantity {item.quantity}, attributes {', '.join(item.attributes)}"
-                for item in actions
-            )
-            return (
-                f"Structured execution requirements: {action_text}. "
-                f"Spatial relationships: {'; '.join(layout['spatial_relations'])}. "
-                f"Keep unchanged: {'; '.join(layout['unchanged_regions'])}. "
-                f"Constraints: {'; '.join(layout['constraints'])}."
-            )
-        labels = {"add": "增加", "remove": "删除", "adjust": "调整"}
-        action_text = "；".join(
-            f"在{item.position}{labels[item.action]}{item.object_type}，数量为{item.quantity}，"
-            f"属性要求为{'、'.join(item.attributes)}"
-            for item in actions
-        )
-        return (
-            f"结构化执行要求：{action_text}。"
-            f"空间关系：{'；'.join(layout['spatial_relations'])}。"
-            f"保持不变区域：{'；'.join(layout['unchanged_regions'])}。"
-            f"约束：{'；'.join(layout['constraints'])}。"
-        )
 
     def _build_structured_layout(
         self,
@@ -788,13 +760,15 @@ class CartographerAgent:
         language: str,
         layout: dict,
         expert_advice: str,
+        plan_summary: str,
+        scene_profile: ScenePromptProfile,
     ) -> str:
         if language == "zh":
             return self._zh_plan(
-                baseline, target, hints, layout, expert_advice
+                baseline, target, hints, layout, expert_advice, plan_summary, scene_profile
             )
         return self._en_plan(
-            baseline, target, hints, layout, expert_advice
+            baseline, target, hints, layout, expert_advice, plan_summary, scene_profile
         )
 
     def _en_plan(
@@ -804,41 +778,35 @@ class CartographerAgent:
         hints: list[str],
         layout: dict,
         expert_advice: str,
+        plan_summary: str,
+        scene_profile: ScenePromptProfile,
     ) -> str:
-        parts = [
-            "Edit this equirectangular 360-degree urban micro-space panorama "
-            "while preserving overall geometry and camera viewpoint."
+        del baseline, target, hints
+        action_labels = {"add": "ADD", "remove": "REMOVE", "adjust": "ADJUST"}
+        sections = [
+            "Edit the input 360-degree equirectangular panorama. Use the input image as the only visual, spatial, and geometric reference.",
+            "[EDIT GOAL]\n" + plan_summary,
+            "[MUST KEEP UNCHANGED]\n"
+            + "\n".join(f"- {item}" for item in layout["unchanged_regions"]),
+            "[ONLY EDIT THE FOLLOWING]\n"
+            + "\n".join(
+                f"{index}. Location: {action.position}; action: {action_labels[action.action]} "
+                f"{action.object_type}; quantity/extent: {action.quantity}; method: "
+                f"{', '.join(action.attributes) or 'match the existing scene'}."
+                for index, action in enumerate(layout["object_actions"], start=1)
+            ),
+            "[SPATIAL RELATIONSHIPS]\n"
+            + "\n".join(f"- {item}" for item in layout["spatial_relations"]),
+            "[DO NOT / CONSTRAINTS]\n"
+            + "\n".join(f"- {item}" for item in layout["constraints"]),
+            "[OUTPUT]\n"
+            f"Create a photorealistic, restrained, buildable {scene_profile.label} update. "
+            "Match the original lighting, shadows, perspective, scale, and materials. "
+            "Keep the 2:1 equirectangular projection and the left-right panorama seam continuous.",
         ]
         if expert_advice:
-            parts.append(f"Expert requirement: {expert_advice}.")
-        parts.append("Object-level edits:")
-        for action in layout["object_actions"]:
-            parts.append(
-                f"{action.action.upper()} {action.object_type} at {action.position}; "
-                f"quantity: {action.quantity}; attributes: {', '.join(action.attributes)}."
-            )
-        parts.append(
-            "Spatial relationships: " + "; ".join(layout["spatial_relations"]) + "."
-        )
-        parts.append(
-            "Keep unchanged: " + "; ".join(layout["unchanged_regions"]) + "."
-        )
-        parts.append("Constraints: " + "; ".join(layout["constraints"]) + ".")
-        metric_targets = []
-        for key in MORPH_KEYS:
-            value = float(target[key])
-            label = MORPH_LABELS_ZH.get(key, key)
-            metric_targets.append(
-                f"{label}={value:.2f}"
-                if key == "color_richness"
-                else f"{label}={value * 100:.1f}%"
-            )
-        parts.append("Target morphology: " + ", ".join(metric_targets) + ".")
-        parts.append(
-            "Maintain photorealistic lighting, clean edges, and physically plausible materials. "
-            "Keep the panorama seam continuous and do not invent new buildings or alter road topology."
-        )
-        return " ".join(parts)
+            sections.insert(2, "[EXPERT REQUIREMENT]\n- " + expert_advice)
+        return "\n\n".join(sections)
 
     def _zh_plan(
         self,
@@ -847,36 +815,36 @@ class CartographerAgent:
         hints: list[str],
         layout: dict,
         expert_advice: str,
+        plan_summary: str,
+        scene_profile: ScenePromptProfile,
     ) -> str:
-        parts = [
-            "请在保持原有360°全景几何结构与视点不变的前提下，"
-            "对高密度城市微空间进行局部优化编辑。"
+        del baseline, target, hints
+        action_labels = {"add": "增加", "remove": "删除", "adjust": "调整"}
+        sections = [
+            "编辑输入的360°等距柱状全景图，以原图作为唯一的视觉、空间和几何参考。"
+            "保持原有360°全景几何结构与视点不变。",
+            "【编辑目标】\n" + plan_summary,
+            "【必须保持不变】\n"
+            + "\n".join(f"- {item}" for item in layout["unchanged_regions"]),
+            "【本次仅修改】\n"
+            + "\n".join(
+                f"{index}. 位置：{action.position}；操作：{action_labels[action.action]}"
+                f"{action.object_type}；数量/范围：{action.quantity}；具体做法："
+                f"{'、'.join(action.attributes) or '与原场景保持一致'}。"
+                for index, action in enumerate(layout["object_actions"], start=1)
+            ),
+            "【空间关系】\n"
+            + "\n".join(f"- {item}" for item in layout["spatial_relations"]),
+            "【禁止修改与执行约束】\n"
+            + "\n".join(f"- {item}" for item in layout["constraints"]),
+            "【输出要求】\n"
+            f"生成照片级写实、克制且可实施的{scene_profile.label}更新效果。"
+            "新增或调整对象必须匹配原图的光照、阴影、透视、尺度和材质。"
+            "保持2:1等距柱状投影，保持全景左右边缘连续无缝，不得裁切、旋转或改变视点。",
         ]
         if expert_advice:
-            parts.append(f"专家要求：{expert_advice}。")
-        action_labels = {"add": "增加", "remove": "删除", "adjust": "调整"}
-        parts.append("对象级修改：")
-        for action in layout["object_actions"]:
-            parts.append(
-                f"在{action.position}{action_labels[action.action]}{action.object_type}，"
-                f"数量为{action.quantity}，属性要求为{'、'.join(action.attributes)}。"
-            )
-        parts.append("空间关系：" + "；".join(layout["spatial_relations"]) + "。")
-        parts.append("保持不变区域：" + "；".join(layout["unchanged_regions"]) + "。")
-        parts.append("约束：" + "；".join(layout["constraints"]) + "。")
-        named = []
-        for k in MORPH_KEYS:
-            v = target[k]
-            label = MORPH_LABELS_ZH.get(k, k)
-            if k == "color_richness":
-                named.append(f"{label}约{float(v):.1f}")
-            else:
-                named.append(f"{label}约{float(v)*100:.0f}%")
-        parts.append("目标形态指标：" + "、".join(named) + "。")
-        parts.append(
-            "保持光影真实、尺度准确、材质物理合理，并确保全景左右接缝连续。"
-        )
-        return "".join(parts)
+            sections.insert(2, "【专家要求】\n- " + expert_advice)
+        return "\n\n".join(sections)
 
 
 def run_cartographer(

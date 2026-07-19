@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
 import unittest
@@ -83,6 +84,67 @@ class RagProviderTests(unittest.TestCase):
             set(results[0]) - {"id"},
         )
         self.assertIn("道路", results[0]["text"])
+
+    def test_task3_scene_cases_are_weighted_limited_and_excluded_from_task2(self) -> None:
+        case_file = self.root / "scene_prompt_examples.json"
+        records = []
+        for index in range(1, 6):
+            records.append(
+                {
+                    "id": f"community-{index}",
+                    "case_type": "task3_scene_prompt_example",
+                    "scene_type": "community",
+                    "scene_label": "社区",
+                    "retrieval_text": "老旧社区入口 停车秩序 消防通行 日常座椅",
+                    "review_status": "program_validated",
+                }
+            )
+        records.append(
+            {
+                "id": "office-1",
+                "case_type": "task3_scene_prompt_example",
+                "scene_type": "commercial_office",
+                "scene_label": "商办",
+                "retrieval_text": "商办街区 办公入口 配送 外摆",
+                "review_status": "program_validated",
+            }
+        )
+        case_file.write_text(
+            json.dumps({"records": records}, ensure_ascii=False), encoding="utf-8"
+        )
+        provider = LocalTfidfRagProvider(
+            [case_file, self.knowledge], top_k=5, min_score=0.0
+        )
+        task3_results = provider.retrieve(
+            baseline_metrics=self.baseline,
+            target_metrics=self.baseline,
+            scene_context="老旧社区入口与住宅停车",
+            expert_advice="保持消防通行",
+            scene_understanding={},
+        )
+        case_results = [
+            result
+            for result in task3_results
+            if result["metadata"].get("case_type")
+            == "task3_scene_prompt_example"
+        ]
+        self.assertTrue(case_results)
+        self.assertLessEqual(len(case_results), 3)
+        self.assertEqual(case_results[0]["metadata"]["scene_type"], "community")
+
+        task2_results = provider.retrieve(
+            experience_records=[{"person_id": "p1", "experience": self.experience}],
+            experience_targets=self.targets,
+            baseline_metrics=self.baseline,
+            scene_context="老旧社区入口",
+        )
+        self.assertFalse(
+            any(
+                result["metadata"].get("case_type")
+                == "task3_scene_prompt_example"
+                for result in task2_results
+            )
+        )
 
     def test_pdf_is_extracted_by_page_and_cached_outside_data_source(self) -> None:
         pdf = self.root / "规范资料.pdf"

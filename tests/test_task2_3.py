@@ -391,6 +391,14 @@ class Task23TestCase(unittest.TestCase):
         self.assertTrue(plan.unchanged_regions)
         self.assertTrue(plan.constraints)
         self.assertIn("保持原有360°全景几何结构", plan.draft_text)
+        self.assertIn("【编辑目标】", plan.draft_text)
+        self.assertIn("【必须保持不变】", plan.draft_text)
+        self.assertIn("【本次仅修改】", plan.draft_text)
+        self.assertIn("位置：", plan.draft_text)
+        self.assertIn("数量/范围：", plan.draft_text)
+        self.assertIn("具体做法：", plan.draft_text)
+        self.assertIn("【禁止修改与执行约束】", plan.draft_text)
+        self.assertIn("【输出要求】", plan.draft_text)
         self.assertEqual(plan.expert_advice, "保留左侧建筑立面，优先改善右侧停留区")
         self.assertFalse(plan.rag_references)
         self.assertIn(plan.expert_advice, plan.draft_text)
@@ -425,6 +433,49 @@ class Task23TestCase(unittest.TestCase):
         self.assertIn("导向性线性元素", object_types)
         self.assertIn("保持全景左右接缝连续", plan.draft_text)
         self.assertIn("优先改善入口区域", plan.draft_text)
+
+    def test_task3_reformats_llm_free_text_as_seedream_sections(self) -> None:
+        response = json.dumps(
+            {
+                "plan_summary": "改善社区入口的遮阴与短暂停留条件",
+                "object_actions": [
+                    {
+                        "action": "add",
+                        "object_type": "带靠背木质座椅",
+                        "position": "画面右侧现有绿化带内",
+                        "quantity": "2组，每组1张",
+                        "attributes": ["面向开敞空间", "不占用步行通道"],
+                        "rationale": "提升可停留意愿",
+                    }
+                ],
+                "spatial_relations": ["座椅位于树冠遮阴范围内"],
+                "unchanged_regions": ["社区入口"],
+                "constraints": ["不要新增建筑"],
+                "modification_text": "这是一段不应原样堆叠到最终提示词中的自由文本。",
+            },
+            ensure_ascii=False,
+        )
+        with patch("agents.cartographer_agent.llm_client.chat", return_value=response):
+            plan = CartographerAgent(
+                knowledge_base=self.kb,
+                rag_provider=NullRagProvider(),
+            ).run(
+                baseline_metrics=self.baseline_metrics,
+                target_metrics={**self.baseline_metrics, "green_view": 0.3},
+                scene_type="社区",
+                scene_context="社区入口",
+                scene_understanding={"status": "ok"},
+                language="zh",
+            )
+
+        self.assertNotIn("不应原样堆叠", plan.draft_text)
+        self.assertIn("位置：画面右侧现有绿化带内", plan.draft_text)
+        self.assertIn("数量/范围：2组，每组1张", plan.draft_text)
+        self.assertIn("具体做法：面向开敞空间、不占用步行通道", plan.draft_text)
+        self.assertLess(
+            plan.draft_text.index("【必须保持不变】"),
+            plan.draft_text.index("【本次仅修改】"),
+        )
 
     def test_bluegreen_mock_records_run_task2_to_task3_offline(self) -> None:
         payload = json.loads(

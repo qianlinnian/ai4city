@@ -1,0 +1,1377 @@
+{
+  "published_count": 778,
+  "held_count": 121,
+  "output_files": [
+    "D:\\course\\ai4city\\rag_knowledge\\published\\14_Patterns_10th_anniv_ed_2026_04_23_pdf-6a3a7cfee0.json",
+    "D:\\course\\ai4city\\rag_knowledge\\published\\Building_for_a_healthy_life_pdf-423873c7f3.json",
+    "D:\\course\\ai4city\\rag_knowledge\\published\\公园设计规范_OCR__pdf-f55c40c760.json",
+    "D:\\course\\ai4city\\rag_knowledge\\published\\园林绿化工程项目规范_pdf-04c3d897b2.json",
+    "D:\\course\\ai4city\\rag_knowledge\\published\\城市居住区规划设计标准_OCR__pdf-814b695f5d.json"
+  ],
+  "held_records": [
+    {
+      "knowledge_id": "dbe51214482c2a0aff4b",
+      "source": "D:\\course\\ai4city-data\\knowledge\\14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "title": "Rainwater Integration in Landscape Design",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足"
+      ]
+    },
+    {
+      "knowledge_id": "30b3f0796dc997f1dbda",
+      "source": "D:\\course\\ai4city-data\\knowledge\\14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "title": "Consider Awareness and Connection Level",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足"
+      ]
+    },
+    {
+      "knowledge_id": "b8ad22704b4d731f9a78",
+      "source": "D:\\course\\ai4city-data\\knowledge\\14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "title": "Responsive Design Tactics for Awareness",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "def96a5520b72dc4a57e",
+      "source": "D:\\course\\ai4city-data\\knowledge\\14-Patterns-10th-anniv-ed-2026-04-23.pdf",
+      "title": "Design Interactive Opportunities for Specific Groups",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足"
+      ]
+    },
+    {
+      "knowledge_id": "ae1e36748b9fe19fbd50",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "连接新旧网络",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "091b4cdb77217efa7f4b",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "在连接困难的地方更加努力",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "1a14f4cfb0daa3eeb7a5",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "确保所有路线安全",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "2dda76e9e58004da1cb1",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "不要让现有社区要求新开发引入障碍",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "081fd8dc4d457fdf001f",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "连接现有自行车网络",
+      "hard_gate_errors": [
+        "存在校验错误"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "bf98eae620a3975401ad",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "优先考虑所有人的可达性",
+      "hard_gate_errors": [
+        "存在校验错误"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "4943f081ebff131e5165",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "关注包容性设计",
+      "hard_gate_errors": [
+        "存在校验错误"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "d84758dfe72f66e6c8b7",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "确保自然监视",
+      "hard_gate_errors": [
+        "存在校验错误"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "416ea9eefb378ffc59f0",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "Use ‘play on the way’",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "103331b4a401f594192c",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "最大化支持性住宿机会",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "4df1b267186f10e64a33",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "修复并再利用现有墙体作为边界特征",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "883765f3a35229e23349",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "不要将所有高差变化放在后花园",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "c0ce74172c185777fb4e",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "不要使住宅朝向导致侧立面步行道缺乏自然监视",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "9feb1bca38631d694312",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "使用外部阳台结构和攀缘植物增加景观特色",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 7 无法定位",
+        "证据 8 无法定位",
+        "证据 9 无法定位",
+        "证据 14 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "4ada1282a4302d5a89ae",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "重新提升适合当地环境的住宅类型",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "ff04e33afbe6c6d33968",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "禁止平顶车库住宅作为街道边缘",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "55dad1efc60d26885a46",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "禁止建筑背离公共空间",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "81dba8d2d37c7deb7a3e",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "禁止将游乐区或公共空间置于建筑背后",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "cee94a2553264f5f435d",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "禁止住宅背面朝向街道",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "f5a71729aea91efd27de",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "使街道易于穿越",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "5bf7ba0ac81cb1121c01",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "避免在硬质表面间设置狭窄软质景观带",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "f700b079691694a7b39b",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "公共开放空间需要底层自然监视机会",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "b99d6b95f5e5be6ddc45",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "边界墙隐藏垃圾桶",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "c48c75bc2fc27a82562e",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "栏杆高度提供界定",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "950dc2b2772957a37eb0",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "宽住宅横向坡道",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "442f76984a43851fbd13",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "边界处理强化地方特色",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "2fb4f4847faa1c413e2a",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "高差需精心设计",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "bbc06605cc04aa2b8132",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "缺乏边界处理凸显设备箱",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "30f38eb5f82e36d973d1",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "避免无明确功能的地块",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "66794eeb9e88d2a378cc",
+      "source": "D:\\course\\ai4city-data\\knowledge\\Building_for_a_healthy_life.pdf",
+      "title": "避免街道边缘铺草皮",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "5673273534df811cff4d",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "园路及铺装场地用地增加条件",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "69212c7e6401f5ac1b36",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "古树名木保护",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "dc821bd1875a559672d7",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "古树名木保护范围划定",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "e91c88806f2416b1f553",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "水系设计",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "339c1a989ae5384ebc41",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "出入口布局",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "d2d23da5637fef8f7a29",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "停车场布置",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "b8b21a2eb757d05fd513",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "园路布局规定",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位",
+        "证据 2 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "3f4f571e777bfd21e539",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "配套设施隐蔽设置",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "fdf94f94d05de9b2086d",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "竖向控制规定内容",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "cf616abf5185ae248e11",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "人工堆土改造地形安全措施",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 2 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "a3da28e167f94d331747",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "水体进出口及闸门标高要求",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "8a0d4944ad051406f1f7",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "非淤泥底人工水体岸高及近岸水深规定",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "025098a02e712caeee0c",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "雨水补给水体水质净化及消能设施",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "91a0a68ee7040d458657",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "条文说明的法律效力",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足",
+        "模型主动要求复核",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "572fb31a266786d4514d",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "遵循绿地系统规划",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "6f1ecb41d9a2ba43178b",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "近远期建设协调",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "19dbecae75946d716f83",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "历史名园改造原则",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "a01620bf589045caa542",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "休息座椅定义",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "78ce1fc0998159a975b9",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "男女厕位比例",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "128934959e52b64fadec",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "厕所间距和服务半径",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "04efdc11432941b194d3",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "建筑布局与效果",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "1d6214b8ffbf7d740924",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "保护自然生态环境",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "45bcc642962a576196da",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "连续林地防火阻隔",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "a0cd07eb4aa700fe6718",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "竖向控制",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "6af18aee501fe6133151",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "大型土山堆造安全",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "99d0dc1d7b25f2532d0d",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "公园建筑层数控制",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "41d34d476d726e9dd47c",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "护栏分类定义",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "4f2aa9ab3d7676f87bec",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "寒冷地区驳岸防冻胀",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "4d81cfccbeee2ecdc9df",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "山石功能与安全要求",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "4eaee5d5799aca14bb54",
+      "source": "D:\\course\\ai4city-data\\knowledge\\公园设计规范(OCR).pdf",
+      "title": "照明装置施工要求",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "bdd4b10fba795936e651",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "执行要求",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "159a414ef026635d47c3",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "道路绿化、居住区绿化、单位绿化和公共建筑绿化要求",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "49b51134718f647c8ff0",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "植物病虫害防治要求",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "c49491b9f3d83ebd5b66",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "公园运行管理服务措施",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "93201060f786b049daca",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "种植土和肥料不得污染水源",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "7c4bc5bc784927f05e6e",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "植物材料病虫害禁止",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "09236bbebe43c2b8405e",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "人工堆叠假山要求",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "fae778d2d6d99565f7ce",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "娱乐性及观赏性景观用水水质要求",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "8bef038eb1396c129ade",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "安全防护设施强度要求",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "6dc892bccbae99b7aa7f",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "郊野型公园湿地区域水体规定",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "835b7daf9095856990a7",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "道路绿化与市政设施统筹及雨水排放要求",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "d4511e3b9781e61a91a9",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "绿道工程生态环境保护",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "ded6e0324c9ecad623f3",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "绿道连接线使用安全",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "fd9ef1848fc96a1781bc",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "生态保育要求",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "dc7c57f8b9dfefa5dd8b",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "人均公园绿地面积底线控制",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "9ae2856538d0f5615b22",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "人均综合公园和社区公园面积分级控制",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 2 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "e2d4dbeb01ddcb2a659a",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "构建城乡绿道网络体系",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "ccf9ba0927099b80ae85",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "公园绿化用地比例规定",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "bbe1d99cea77f21cb767",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "公园应急避险功能设置条件",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "3d73dc6113575c337fd2",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "古树名木保护",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "57dbca6ec7e972fb9533",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "公园绿线标志与保护",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "b73ec70dd39cea72920e",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "园林植物病虫害防治农药使用",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "327a92ecec6b3464a6e6",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "公园应急预案体系",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "096870770a8737abf4b5",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "公园公益性经营禁止行为",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "96eb4d2786070fd1a59d",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "竖向设计与雨水消纳",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "81c518fd1dafb5f9e9dd",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "植物种植基本原则",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "a247a1fcc89c21846d03",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "儿童活动场地植物选择要求",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "9deff1b42a2610fe0a10",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "树木与管线距离要求",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "f0e5592ed36abe0921dd",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "滨水空间建设要求",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "88d7523f97a4a71225fd",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "桥底净空高度要求",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "0aa9a77ac6f868355166",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "地形险峻区域安全防护护栏要求",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "b1f0bee5177b300b26a1",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "自然灾害易发区域防护绿地设置",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "b3aff5eadae491f0b23d",
+      "source": "D:\\course\\ai4city-data\\knowledge\\园林绿化工程项目规范.pdf",
+      "title": "生态保育与修复原则",
+      "hard_gate_errors": [
+        "存在校验错误"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "cd980b61216a8d6396f8",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "适用范围",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "922d636c2e50b9cb5f90",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "符合其他标准",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "1109c9f749947081625f",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "居住街坊",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "18e2f8abf2d02917b940",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "居住区用地",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "dfa22f9fdb22c9415059",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "公共绿地",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "8908eab388b55f1a5813",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "住宅建筑平均层数",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "622c8d084e9742d3137c",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "配套设施",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "1cbb4d1a9dc548142beb",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "社区服务设施",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "fd117e1428dd19e0e1ed",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "便民服务设施",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "e1c69e51ef02f0320c3c",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "居住区建设选址安全规定",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "2e1032c1d5f30acbd4c8",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "居住区分级控制规模",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "a8da5faa8e08a0e8aa09",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "居住区规划建设原则",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "278f644617a412c7d2b5",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "历史文化保护要求",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "含强制性或禁止性规范措辞"
+      ]
+    },
+    {
+      "knowledge_id": "280f2407afe383f0424c",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "雨水收集与排放要求",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "9a639595a81ea30ea038",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "地下空间开发与生态空间要求",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "d275d4acad1a1600ac42",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "各级生活圈居住区用地控制指标",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "4098fceca572f90afdc0",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "公共绿地控制指标",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验"
+      ]
+    },
+    {
+      "knowledge_id": "b6dd3bd336467c67e8e1",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "居住街坊用地与建筑控制指标",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "fdb4208d3b46088f8628",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "附属道路最大纵坡控制指标",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "ab71556e4dfbda5f6bd7",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "居住区道路边缘至建筑物、构筑物最小距离",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "eea01492982e69ef04ab",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "公共空间系统规划",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "b7ee1e6f9c11babe5eb3",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "绿地建设及绿化原则",
+      "hard_gate_errors": [
+        "存在校验错误",
+        "证据 1 无法定位"
+      ],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "b536e595bdcdd4f341d0",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "微气候条件优化",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足",
+        "模型主动要求复核"
+      ]
+    },
+    {
+      "knowledge_id": "39c897b2f0b045831f22",
+      "source": "D:\\course\\ai4city-data\\knowledge\\城市居住区规划设计标准(OCR).pdf",
+      "title": "既有居住区环境改善与更新",
+      "hard_gate_errors": [],
+      "soft_gate_errors": [
+        "记录未通过程序校验",
+        "模型置信度不足",
+        "模型主动要求复核"
+      ]
+    }
+  ]
+}
