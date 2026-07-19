@@ -390,18 +390,14 @@ class Task23TestCase(unittest.TestCase):
         self.assertTrue(plan.spatial_relations)
         self.assertTrue(plan.unchanged_regions)
         self.assertTrue(plan.constraints)
-        self.assertIn("保持原有360°全景几何结构", plan.draft_text)
-        self.assertIn("【编辑目标】", plan.draft_text)
-        self.assertIn("【必须保持不变】", plan.draft_text)
-        self.assertIn("【本次仅修改】", plan.draft_text)
-        self.assertIn("位置：", plan.draft_text)
-        self.assertIn("数量/范围：", plan.draft_text)
-        self.assertIn("具体做法：", plan.draft_text)
-        self.assertIn("【禁止修改与执行约束】", plan.draft_text)
-        self.assertIn("【输出要求】", plan.draft_text)
+        self.assertIn("保持原始视点", plan.draft_text)
+        self.assertIn("【仅执行以下可见修改】", plan.draft_text)
+        self.assertIn("【保持不变】", plan.draft_text)
+        self.assertIn("【渲染约束】", plan.draft_text)
+        self.assertIn("数量/范围（视觉约束，尽量满足）", plan.draft_text)
         self.assertEqual(plan.expert_advice, "保留左侧建筑立面，优先改善右侧停留区")
         self.assertFalse(plan.rag_references)
-        self.assertIn(plan.expert_advice, plan.draft_text)
+        self.assertNotIn(plan.expert_advice, plan.draft_text)
         self.assertTrue(any("保留左侧建筑立面" in item for item in plan.unchanged_regions))
         self.assertTrue(any("优先改善右侧停留区" in item.position for item in plan.object_actions))
 
@@ -431,7 +427,7 @@ class Task23TestCase(unittest.TestCase):
         self.assertIn("乔木冠层或通透轻型棚架", object_types)
         self.assertIn("低矮街道家具", object_types)
         self.assertIn("导向性线性元素", object_types)
-        self.assertIn("保持全景左右接缝连续", plan.draft_text)
+        self.assertIn("保持全景左右边缘视觉连续", plan.draft_text)
         self.assertIn("优先改善入口区域", plan.draft_text)
 
     def test_task3_reformats_llm_free_text_as_seedream_sections(self) -> None:
@@ -470,12 +466,64 @@ class Task23TestCase(unittest.TestCase):
 
         self.assertNotIn("不应原样堆叠", plan.draft_text)
         self.assertIn("位置：画面右侧现有绿化带内", plan.draft_text)
-        self.assertIn("数量/范围：2组，每组1张", plan.draft_text)
-        self.assertIn("具体做法：面向开敞空间、不占用步行通道", plan.draft_text)
+        self.assertIn("2组，每组1张", plan.draft_text)
+        self.assertIn("面向开敞空间", plan.draft_text)
         self.assertLess(
-            plan.draft_text.index("【必须保持不变】"),
-            plan.draft_text.index("【本次仅修改】"),
+            plan.draft_text.index("【仅执行以下可见修改】"),
+            plan.draft_text.index("【保持不变】"),
         )
+
+    def test_task3_keeps_workflow_advice_out_of_execution_prompt(self) -> None:
+        advice = "前端人工确认形态要素"
+        with patch("agents.cartographer_agent.llm_client.chat", return_value=None):
+            plan = CartographerAgent(
+                knowledge_base=self.kb,
+                rag_provider=NullRagProvider(),
+            ).run(
+                baseline_metrics=self.baseline_metrics,
+                target_metrics={**self.baseline_metrics, "green_view": 0.3},
+                scene_understanding={"status": "ok"},
+                expert_advice=advice,
+                language="zh",
+            )
+
+        self.assertEqual(plan.expert_advice, advice)
+        self.assertNotIn(advice, plan.draft_text)
+        self.assertIn("【仅执行以下可见修改】", plan.draft_text)
+
+    def test_task3_removes_unsafe_cable_instruction_from_mixed_action(self) -> None:
+        response = json.dumps(
+            {
+                "plan_summary": "改善树冠通透性",
+                "object_actions": [
+                    {
+                        "action": "adjust",
+                        "object_type": "乔木枝叶及空中线缆",
+                        "position": "画面中景乔木下层",
+                        "quantity": "离地2.5米以上",
+                        "attributes": ["修剪下层枝条", "清理杂乱线缆"],
+                    }
+                ],
+                "spatial_relations": [],
+                "unchanged_regions": [],
+                "constraints": [],
+            },
+            ensure_ascii=False,
+        )
+        with patch("agents.cartographer_agent.llm_client.chat", return_value=response):
+            plan = CartographerAgent(
+                knowledge_base=self.kb,
+                rag_provider=NullRagProvider(),
+            ).run(
+                baseline_metrics=self.baseline_metrics,
+                target_metrics={**self.baseline_metrics, "sky_view": 0.5},
+                scene_understanding={"status": "ok"},
+                language="zh",
+            )
+
+        self.assertIn("乔木枝叶", plan.draft_text)
+        self.assertNotIn("乔木枝叶及空中线缆", plan.draft_text)
+        self.assertNotIn("清理杂乱线缆", plan.draft_text)
 
     def test_bluegreen_mock_records_run_task2_to_task3_offline(self) -> None:
         payload = json.loads(
@@ -514,7 +562,9 @@ class Task23TestCase(unittest.TestCase):
 
                 self.assertEqual(len(translation.target_metrics.as_dict()), 7)
                 self.assertTrue(translation.conversion_basis)
-                self.assertIn(advice, plan.draft_text)
+                self.assertNotIn(advice, plan.draft_text)
+                self.assertIn("保持道路与建筑结构不变", plan.draft_text)
+                self.assertIn("优先增加绿化和小尺度可见水体", plan.draft_text)
                 self.assertTrue(plan.object_actions)
 
     def test_task3_normalizes_qwen_action_fields_and_appends_hard_constraints(self) -> None:
@@ -556,8 +606,8 @@ class Task23TestCase(unittest.TestCase):
         self.assertEqual(qwen_action.action, "add")
         self.assertEqual(qwen_action.quantity, "2")
         self.assertEqual(qwen_action.attributes, ["乡土植物", "低维护"])
-        self.assertIn("不得擅自删除或移动电线", plan.draft_text)
-        self.assertIn("保持全景左右接缝连续", plan.draft_text)
+        self.assertIn("必要基础设施不变", plan.draft_text)
+        self.assertIn("保持全景左右边缘视觉连续", plan.draft_text)
 
     def test_task3_accepts_degraded_string_scene_elements(self) -> None:
         with patch("agents.cartographer_agent.llm_client.chat", return_value=None):

@@ -210,8 +210,9 @@ class CartographerAgent:
             or llm_draft
             or fallback["plan_summary"]
         ).strip()
-        if expert_advice and expert_advice not in plan_summary:
-            plan_summary += f"；专家建议：{expert_advice}"
+        # Keep expert advice in the structured plan for human review.  It is not
+        # automatically copied into the image prompt because it can be a
+        # workflow note rather than a visible image-editing instruction.
 
         # LLM 负责判断编辑内容；最终给 Seedream 的文本由程序稳定排版，
         # 避免自由文本与结构化附录重复拼接成难以审核的长段落。
@@ -459,6 +460,26 @@ class CartographerAgent:
                 ]
             elif not isinstance(attributes, list):
                 data["attributes"] = [str(attributes)] if attributes else []
+            protected_terms = ("线缆", "电线", "管线", "电力", "通信", "排水", "消防")
+            object_type = str(data.get("object_type") or "")
+            if any(term in object_type for term in protected_terms):
+                # An LLM may combine a legitimate pruning action with an unsafe
+                # instruction such as "clear overhead cables". Keep only the
+                # independently meaningful landscape action; otherwise reject it.
+                cleaned = re.sub(
+                    r"(?:及|和|与|、)?(?:空中)?(?:线缆|电线|管线|电力|通信|排水|消防设施|消防通道)",
+                    "",
+                    object_type,
+                ).strip(" 、，,；;与和及")
+                if not cleaned:
+                    print("[Cartographer] 跳过涉及受保护基础设施的 LLM action")
+                    continue
+                data["object_type"] = cleaned
+                data["attributes"] = [
+                    item
+                    for item in data["attributes"]
+                    if not any(term in str(item) for term in protected_terms)
+                ]
             data["quantity"] = str(data.get("quantity") or "按目标增量适量配置")
             data["rationale"] = str(data.get("rationale") or "")
             try:
@@ -719,12 +740,7 @@ class CartographerAgent:
                 for item in scene.get("panorama_seam_constraints") or []
                 if str(item).strip()
             )
-        if expert_advice:
-            constraints.append(f"完整执行专家建议：{expert_advice}")
-
         summary = f"采用{scene_profile.label}模板；" + "；".join(hints[:4])
-        if expert_advice:
-            summary += f"；专家建议：{expert_advice}"
 
         return {
             "plan_summary": summary,
@@ -732,7 +748,7 @@ class CartographerAgent:
             "spatial_relations": [
                 "新增对象不得占用主要步行轴线、消防通道和出入口",
                 "乔木形成上层遮阴，灌木限定边界，座椅面向开敞且可观察区域",
-                "水景、花卉和街道家具作为中景节点，避免在全景接缝处形成突变",
+                "花卉和街道家具作为中景节点，避免在全景接缝处形成突变",
                 scene_profile.spatial_relation,
             ],
             "unchanged_regions": unchanged_regions,
@@ -763,89 +779,101 @@ class CartographerAgent:
         plan_summary: str,
         scene_profile: ScenePromptProfile,
     ) -> str:
+        # The plan the expert sees must be the plan sent to the image editor.
+        # Numeric quantities are retained as visual design constraints; a single
+        # panorama cannot turn them into surveyed, physically enforceable units.
+        del baseline, target, hints, expert_advice
         if language == "zh":
-            return self._zh_plan(
-                baseline, target, hints, layout, expert_advice, plan_summary, scene_profile
+            return self._zh_execution_prompt(layout, plan_summary, scene_profile)
+        return self._en_execution_prompt(layout, plan_summary, scene_profile)
+
+    @staticmethod
+    def _execution_actions(layout: dict) -> list[SpatialObjectAction]:
+        """Return every reviewed action; none may be silently omitted."""
+        return list(layout.get("object_actions") or [])
+
+    @staticmethod
+    def _execution_unchanged_regions(layout: dict) -> list[str]:
+        """Return every reviewed preservation requirement."""
+        return list(layout.get("unchanged_regions") or [])
+
+    @staticmethod
+    def _render_execution_action(
+        action: SpatialObjectAction, index: int, language: str
+    ) -> str:
+        labels = {
+            "en": {"add": "add", "remove": "remove", "adjust": "adjust"},
+            "zh": {"add": "增加", "remove": "移除", "adjust": "调整"},
+        }
+        verb = labels[language].get(action.action, action.action)
+        attributes = ", ".join(action.attributes[:2])
+        if language == "zh":
+            suffix = f"；参考特征：{attributes}" if attributes else ""
+            return (
+                f"{index}. 位置：{action.position}；操作：{verb}{action.object_type}；"
+                f"数量/范围（视觉约束，尽量满足）：{action.quantity}{suffix}。"
             )
-        return self._en_plan(
-            baseline, target, hints, layout, expert_advice, plan_summary, scene_profile
+        suffix = f" Use {attributes}." if attributes else ""
+        return (
+            f"{index}. Location: {action.position}; action: {verb} {action.object_type}; "
+            f"quantity/extent (visual target, aim to satisfy): {action.quantity}.{suffix}"
         )
 
-    def _en_plan(
-        self,
-        baseline: dict,
-        target: dict,
-        hints: list[str],
-        layout: dict,
-        expert_advice: str,
-        plan_summary: str,
-        scene_profile: ScenePromptProfile,
+    def _en_execution_prompt(
+        self, layout: dict, plan_summary: str, scene_profile: ScenePromptProfile
     ) -> str:
-        del baseline, target, hints
-        action_labels = {"add": "ADD", "remove": "REMOVE", "adjust": "ADJUST"}
-        sections = [
-            "Edit the input 360-degree equirectangular panorama. Use the input image as the only visual, spatial, and geometric reference.",
-            "[EDIT GOAL]\n" + plan_summary,
-            "[MUST KEEP UNCHANGED]\n"
-            + "\n".join(f"- {item}" for item in layout["unchanged_regions"]),
-            "[ONLY EDIT THE FOLLOWING]\n"
-            + "\n".join(
-                f"{index}. Location: {action.position}; action: {action_labels[action.action]} "
-                f"{action.object_type}; quantity/extent: {action.quantity}; method: "
-                f"{', '.join(action.attributes) or 'match the existing scene'}."
-                for index, action in enumerate(layout["object_actions"], start=1)
-            ),
-            "[SPATIAL RELATIONSHIPS]\n"
-            + "\n".join(f"- {item}" for item in layout["spatial_relations"]),
-            "[DO NOT / CONSTRAINTS]\n"
-            + "\n".join(f"- {item}" for item in layout["constraints"]),
-            "[OUTPUT]\n"
-            f"Create a photorealistic, restrained, buildable {scene_profile.label} update. "
-            "Match the original lighting, shadows, perspective, scale, and materials. "
-            "Keep the 2:1 equirectangular projection and the left-right panorama seam continuous.",
-        ]
-        if expert_advice:
-            sections.insert(2, "[EXPERT REQUIREMENT]\n- " + expert_advice)
-        return "\n\n".join(sections)
+        actions = self._execution_actions(layout)
+        unchanged = self._execution_unchanged_regions(layout)
+        return "\n\n".join(
+            [
+                "Edit the input panorama conservatively. Use the input image as the only visual and spatial reference; preserve its original viewpoint and equirectangular framing.",
+                "[EDIT GOAL]\n" + plan_summary,
+                "[MAKE ONLY THESE VISIBLE CHANGES]\n"
+                + "\n".join(
+                    self._render_execution_action(action, index, "en")
+                    for index, action in enumerate(actions, start=1)
+                ),
+                "[KEEP UNCHANGED]\n"
+                + "\n".join(f"- {item}" for item in unchanged),
+                "[SPATIAL RELATIONSHIPS]\n"
+                + "\n".join(f"- {item}" for item in layout.get("spatial_relations") or []),
+                "[CONSTRAINTS]\n"
+                + "\n".join(f"- {item}" for item in layout.get("constraints") or []),
+                "[RENDERING]\n"
+                f"Create a restrained, photorealistic {scene_profile.label} update. "
+                "Match the original lighting, shadows, perspective, scale, and materials. "
+                "Keep roads, buildings, entrances, and necessary infrastructure unchanged; "
+                "do not create large new structures or block pedestrian access. Keep the "
+                "left and right panorama edges visually continuous. Treat metric dimensions and object counts as visual design targets, not surveyed measurements.",
+            ]
+        )
 
-    def _zh_plan(
-        self,
-        baseline: dict,
-        target: dict,
-        hints: list[str],
-        layout: dict,
-        expert_advice: str,
-        plan_summary: str,
-        scene_profile: ScenePromptProfile,
+    def _zh_execution_prompt(
+        self, layout: dict, plan_summary: str, scene_profile: ScenePromptProfile
     ) -> str:
-        del baseline, target, hints
-        action_labels = {"add": "增加", "remove": "删除", "adjust": "调整"}
-        sections = [
-            "编辑输入的360°等距柱状全景图，以原图作为唯一的视觉、空间和几何参考。"
-            "保持原有360°全景几何结构与视点不变。",
-            "【编辑目标】\n" + plan_summary,
-            "【必须保持不变】\n"
-            + "\n".join(f"- {item}" for item in layout["unchanged_regions"]),
-            "【本次仅修改】\n"
-            + "\n".join(
-                f"{index}. 位置：{action.position}；操作：{action_labels[action.action]}"
-                f"{action.object_type}；数量/范围：{action.quantity}；具体做法："
-                f"{'、'.join(action.attributes) or '与原场景保持一致'}。"
-                for index, action in enumerate(layout["object_actions"], start=1)
-            ),
-            "【空间关系】\n"
-            + "\n".join(f"- {item}" for item in layout["spatial_relations"]),
-            "【禁止修改与执行约束】\n"
-            + "\n".join(f"- {item}" for item in layout["constraints"]),
-            "【输出要求】\n"
-            f"生成照片级写实、克制且可实施的{scene_profile.label}更新效果。"
-            "新增或调整对象必须匹配原图的光照、阴影、透视、尺度和材质。"
-            "保持2:1等距柱状投影，保持全景左右边缘连续无缝，不得裁切、旋转或改变视点。",
-        ]
-        if expert_advice:
-            sections.insert(2, "【专家要求】\n- " + expert_advice)
-        return "\n\n".join(sections)
-
+        actions = self._execution_actions(layout)
+        unchanged = self._execution_unchanged_regions(layout)
+        return "\n\n".join(
+            [
+                "克制地编辑输入全景图。仅以原图作为视觉与空间参考，保持原始视点和等距柱状全景构图。",
+                "【编辑目标】\n" + plan_summary,
+                "【仅执行以下可见修改】\n"
+                + "\n".join(
+                    self._render_execution_action(action, index, "zh")
+                    for index, action in enumerate(actions, start=1)
+                ),
+                "【保持不变】\n" + "\n".join(f"- {item}" for item in unchanged),
+                "【空间关系】\n"
+                + "\n".join(f"- {item}" for item in layout.get("spatial_relations") or []),
+                "【执行约束】\n"
+                + "\n".join(f"- {item}" for item in layout.get("constraints") or []),
+                "【渲染约束】\n"
+                f"生成克制、照片级写实且可实施的{scene_profile.label}更新效果。"
+                "匹配原图光照、阴影、透视、尺度和材质；保持道路、建筑、出入口及必要基础设施不变，"
+                "不新增大体量构筑物，不阻塞主要步行通道；保持全景左右边缘视觉连续。"
+                "数量、长度和面积是应尽量满足的视觉设计约束，不等同于经测量的工程尺寸。",
+            ]
+        )
 
 def run_cartographer(
     baseline_metrics: dict,

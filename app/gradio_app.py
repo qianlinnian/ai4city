@@ -423,9 +423,13 @@ def _fmt_layout_plan(plan: dict) -> str:
             f"{item.get('position', '')}；{item.get('quantity', '')}"
         )
     return (
-        f"### 空间布局方案\n{plan.get('plan_summary', '')}\n\n"
-        f"### 对象级修改\n{chr(10).join(actions) or '- 轻量优化现有空间对象'}\n\n"
-        f"### 保持不变区域\n"
+        "### 审查依据（不单独发送给 Seedream）\n"
+        "最终执行内容以左侧/上方可编辑的「最终执行空间布局方案」为准；"
+        "点击生成后，该文本将原样发送。\n\n"
+        f"### 原始专家意见（已供制图员参考）\n{plan.get('expert_advice') or '—'}\n\n"
+        f"### 方案摘要\n{plan.get('plan_summary', '')}\n\n"
+        f"### 完整对象级修改（审查用）\n{chr(10).join(actions) or '- 轻量优化现有空间对象'}\n\n"
+        f"### 完整保持不变区域（审查用）\n"
         + "\n".join(f"- {x}" for x in plan.get("unchanged_regions") or [])
         + f"\n\n### 生成依据\n{plan.get('rationale', '')}"
     )
@@ -616,7 +620,7 @@ def build_ui():
                     gr.Slider(0, 100, value=10, step=0.1, label=f"{MORPH_LABELS_ZH[k]} (%)")
                 )
         expert_advice = gr.Textbox(
-            label="专家建议（可选，将传给制图员 Agent）",
+            label="专家意见（可选，供制图员转写为最终方案）",
             placeholder="例如：保持左侧历史建筑立面不变，优先优化右侧停留空间",
             lines=2,
         )
@@ -624,7 +628,10 @@ def build_ui():
             "③ 确认形态要素 → 制图员生成空间布局方案", variant="primary"
         )
 
-        plan_box = gr.Textbox(label="人工干预②：自然语言修改方案（可润色）", lines=8)
+        plan_box = gr.Textbox(
+            label="人工干预②：最终执行空间布局方案（可直接修改；确认后原样发送给 Seedream）",
+            lines=8,
+        )
         plan_rationale = gr.Markdown("")
         btn_gen = gr.Button("④ 确认方案 → Seedream 文生图 + 质检", variant="primary")
 
