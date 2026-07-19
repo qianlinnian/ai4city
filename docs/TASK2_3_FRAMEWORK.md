@@ -56,7 +56,7 @@
 1. 严格校验每位参与者七项评分；缺项或出现 1～5 之外的值（例如误填 6）立即报错，不自动截断。
 2. 有 LLM Key 时，由 LangChain 把全部逐人评分、体感目标、七项形态初始值、情景与原图交给多模态模型。
 3. 模型直接输出且只输出七项形态目标 JSON，不先运行规则或案例融合。
-4. RAG 默认关闭；开启时以本地字符 TF-IDF 检索项目规则、指标定义、专家规则和案例，检索内容仅作不可信参考。
+4. RAG 默认关闭；开启时可按配置使用 Qwen `text-embedding-v4` 语义检索，或本地字符 TF-IDF 检索项目规则、指标定义、专家规则和案例；检索内容仅作不可信参考。
 5. 无 LLM、调用失败或模型输出越界时，才对每位参与者分别应用映射规则，再对形态目标取中位数兜底。
 6. 程序计算形态前后差值，并保留专家编辑确认入口。
 
@@ -73,7 +73,7 @@
 - 原始 JPG 经多视图模块生成的结构化场景理解结果
 - 修改前后的七项形态要素值
 - 七项体感目标、情景要素和专家建议
-- 可选本地 RAG（默认关闭）
+- 可选 RAG（默认关闭；支持 Qwen Embedding 或本地 TF-IDF）
 
 输出 `ModificationPlan`：
 
@@ -108,7 +108,7 @@ Task 3 当前提供三类可替换场景模板，统一放在 `agents/prompt_tem
 - 文本链：`ChatPromptTemplate | ChatOpenAI | StrOutputParser`。
 - 多模态链：使用 LangChain `SystemMessage` / `HumanMessage`，发送一张 2:1 概览和四张 yaw=0/90/180/270 的水平透视图；每张图前附 yaw、pitch、FOV 和 view_id。向下观察视图仍在迭代，当前链路暂未调用。
 - 场景清单：Qwen 先返回道路、建筑、入口、植被、水体、家具、基础设施、可编辑对象、固定区域、空间关系、接缝约束、歧义和证据视图。失败时返回空清单与 `degraded`，Task 2/3 继续兜底。
-- RAG：`RAG_ENABLED=false` 时不建立索引、不检索；开启时本地 TF-IDF 返回 `text/source/chunk_id/score/metadata`。Prompt 明确其不是系统指令，不得新增第八项指标或覆盖专家确认。
+- RAG：`RAG_ENABLED=false` 时不建立索引、不检索。`RAG_RETRIEVAL_MODE=auto` 在有 Qwen Key 时使用 `text-embedding-v4`，无 Key 或远程异常时回退本地 TF-IDF；`tfidf` 可强制完全离线。文档向量按知识块内容哈希缓存到 `outputs/rag_cache/qwen_embeddings`，缓存不保存 API Key；结果返回 `text/source/chunk_id/score/metadata`，其中 `metadata.retrieval_mode` 记录实际检索方式。Prompt 明确其不是系统指令，不得新增第八项指标或覆盖专家确认。
 - 兜底：未配置 Key、依赖不可用或调用失败时，使用本地映射参数与规则方案，便于离线联调。
 
 ## 基础参数与示例数据
@@ -147,7 +147,7 @@ python examples/task2_3_demo.py
 
 ## RAG 知识范围
 
-主要知识源为只读目录 `D:\course\ai4city-data\knowledge` 中的规范 PDF。系统使用现有 `pdftotext` 按页提取，保留 PDF 文件名、页码与分块编号，并把派生文本缓存到项目 `outputs/rag_cache/`；不会修改原 PDF。仓库内 `knowledge_base/data`、本框架文档和指标定义只作为补充来源。PDF 和长文本按约 900 字切块，中文和英文以 2～5 字符 n-gram TF-IDF 检索；默认约 75% 返回名额优先给达到相关度门槛的外部 PDF 块。
+主要知识源为只读目录 `D:\course\ai4city-data\knowledge` 中的规范 PDF。系统使用现有 `pdftotext` 按页提取，保留 PDF 文件名、页码与分块编号，并把派生文本缓存到项目 `outputs/rag_cache/`；不会修改原 PDF。仓库内 `knowledge_base/data`、本框架文档和指标定义只作为补充来源。PDF 和长文本按约 900 字切块。`auto`/`qwen_embedding` 模式以 Qwen `text-embedding-v4` 计算余弦相似度，并复用按知识块哈希缓存的文档向量；`tfidf` 模式以中文和英文 2～5 字符 n-gram 本地检索。默认约 75% 返回名额优先给达到相关度门槛的外部 PDF 块。
 
 知识整理器和本地 RAG 会发现知识源目录中的全部支持文件；不再维护按文件名排除的隐式名单。`spatial_rules.json` 中的围合度、界面通透度和边界层数仅是 Task 3 对象布局参考，不得进入七项形态目标。
 

@@ -13,10 +13,18 @@ from config import (
     DATA_DIR,
     KNOWLEDGE_SOURCE_DIR,
     RAG_CACHE_DIR,
+    RAG_EMBEDDING_API_KEY,
+    RAG_EMBEDDING_BASE_URL,
+    RAG_EMBEDDING_BATCH_SIZE,
+    RAG_EMBEDDING_DIMENSIONS,
+    RAG_EMBEDDING_FALLBACK_TO_TFIDF,
+    RAG_EMBEDDING_MODEL,
+    RAG_EMBEDDING_TIMEOUT,
     RAG_PUBLISHED_KNOWLEDGE_DIR,
     RAG_ENABLED,
     RAG_INCLUDE_REPOSITORY_SOURCES,
     RAG_MIN_SCORE,
+    RAG_RETRIEVAL_MODE,
     RAG_TOP_K,
     ROOT,
 )
@@ -118,9 +126,10 @@ class LocalTfidfRagProvider:
     def indexed_chunk_count(self) -> int:
         return len(self._chunks)
 
-    def _ensure_index(self) -> None:
-        if not self.enabled or self._matrix is not None:
-            return
+    def _load_chunks(self) -> list[dict[str, Any]]:
+        """读取并切分知识源；不在此处决定使用 TF-IDF 还是 Embedding。"""
+        if self._chunks:
+            return self._chunks
         chunks: list[dict[str, Any]] = []
         for path in self.source_paths:
             if not path.is_file():
@@ -135,6 +144,12 @@ class LocalTfidfRagProvider:
             except (OSError, ValueError, json.JSONDecodeError):
                 continue
         self._chunks = chunks
+        return self._chunks
+
+    def _ensure_index(self) -> None:
+        if not self.enabled or self._matrix is not None:
+            return
+        chunks = self._load_chunks()
         if not chunks:
             return
         from sklearn.feature_extraction.text import TfidfVectorizer
@@ -369,23 +384,20 @@ class LocalTfidfRagProvider:
             ]
         )
 
-    def retrieve(self, **kwargs: Any) -> list[dict[str, Any]]:
-        if not self.enabled:
-            return []
-        self._ensure_index()
-        if self._matrix is None or self._vectorizer is None or not self._chunks:
-            return []
-        is_task2 = "experience_records" in kwargs
-        query = (
-            self._task2_query(kwargs)
-            if is_task2
-            else self._task3_query(kwargs)
-        )
-        from sklearn.metrics.pairwise import linear_kernel
+    def _rank_results(
+        self,
+        base_scores: Any,
+        *,
+        is_task2: bool,
+        kwargs: dict[str, Any],
+        retrieval_mode: str,
+    ) -> list[dict[str, Any]]:
+        """保留 Task 2/3 的来源配额和场景案例约束，供两种检索器共用。"""
+        import numpy as np
 
-        query_vector = self._vectorizer.transform([query])
-        base_scores = linear_kernel(query_vector, self._matrix).ravel()
-        adjusted_scores = base_scores.copy()
+        if len(base_scores) != len(self._chunks):
+            raise ValueError("RAG 相似度数量与知识块数量不一致")
+        adjusted_scores = np.asarray(base_scores, dtype=float).copy()
         for index, chunk in enumerate(self._chunks):
             source_name = Path(chunk["source"]).name.lower()
             base_score = float(base_scores[index])
@@ -470,6 +482,7 @@ class LocalTfidfRagProvider:
                 {
                     "retrieval_task": "task2" if is_task2 else "task3",
                     "base_similarity": round(float(base_scores[index]), 6),
+                    "retrieval_mode": retrieval_mode,
                 }
             )
             result = RagSearchResult(
@@ -487,15 +500,262 @@ class LocalTfidfRagProvider:
                 break
         return results
 
+    def retrieve(self, **kwargs: Any) -> list[dict[str, Any]]:
+        if not self.enabled:
+            return []
+        self._ensure_index()
+        if self._matrix is None or self._vectorizer is None or not self._chunks:
+            return []
+        is_task2 = "experience_records" in kwargs
+        query = (
+            self._task2_query(kwargs)
+            if is_task2
+            else self._task3_query(kwargs)
+        )
+        from sklearn.metrics.pairwise import linear_kernel
 
-def build_default_rag_provider() -> NullRagProvider | LocalTfidfRagProvider:
-    return LocalTfidfRagProvider() if RAG_ENABLED else NullRagProvider()
+        query_vector = self._vectorizer.transform([query])
+        base_scores = linear_kernel(query_vector, self._matrix).ravel()
+        return self._rank_results(
+            base_scores,
+            is_task2=is_task2,
+            kwargs=kwargs,
+            retrieval_mode="tfidf",
+        )
+
+
+class QwenEmbeddingRagProvider(LocalTfidfRagProvider):
+    """使用 DashScope OpenAI-compatible Embedding API 的语义检索器。
+
+    文档向量按知识块内容、模型和维度计算指纹并缓存到项目输出目录；缓存不含
+    API Key。查询向量只在当前进程内缓存，避免会话内重复调用。发生配置或网络
+    异常时可回退到父类 TF-IDF 检索，使前端流程不中断。
+    """
+
+    retrieval_mode = "qwen_embedding"
+
+    def __init__(
+        self,
+        source_paths: list[str | Path] | None = None,
+        *,
+        api_key: str = RAG_EMBEDDING_API_KEY,
+        base_url: str = RAG_EMBEDDING_BASE_URL,
+        model: str = RAG_EMBEDDING_MODEL,
+        dimensions: int = RAG_EMBEDDING_DIMENSIONS,
+        batch_size: int = RAG_EMBEDDING_BATCH_SIZE,
+        timeout: float = RAG_EMBEDDING_TIMEOUT,
+        fallback_to_tfidf: bool = RAG_EMBEDDING_FALLBACK_TO_TFIDF,
+        embedding_client: Any | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(source_paths, **kwargs)
+        self.api_key = str(api_key or "").strip()
+        self.base_url = str(base_url or "").rstrip("/")
+        self.model = str(model or "text-embedding-v4").strip()
+        self.dimensions = max(64, int(dimensions))
+        self.batch_size = max(1, int(batch_size))
+        self.timeout = max(1.0, float(timeout))
+        self.fallback_to_tfidf = bool(fallback_to_tfidf)
+        self._embedding_client = embedding_client
+        self._embedding_matrix: Any = None
+        self._query_vectors: dict[str, Any] = {}
+        self.last_embedding_error = ""
+
+    @property
+    def embedding_cache_dir(self) -> Path:
+        return self.cache_dir / "qwen_embeddings"
+
+    def _embedding_cache_path(self) -> Path:
+        payload = {
+            "version": 1,
+            "model": self.model,
+            "dimensions": self.dimensions,
+            "chunks": [
+                {
+                    "chunk_id": item["chunk_id"],
+                    "text": item["text"],
+                    "source": item["source"],
+                }
+                for item in self._chunks
+            ],
+        }
+        digest = hashlib.sha256(
+            json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+        return self.embedding_cache_dir / f"{digest}.json"
+
+    @staticmethod
+    def _normalise_vector(values: Any, *, dimensions: int) -> Any:
+        import numpy as np
+
+        vector = np.asarray(values, dtype=float)
+        if vector.ndim != 1 or vector.size != dimensions:
+            raise ValueError(
+                f"Embedding 维度异常：期望 {dimensions}，实际 {vector.size}"
+            )
+        norm = float(np.linalg.norm(vector))
+        if norm <= 0:
+            raise ValueError("Embedding 向量不能为零向量")
+        return vector / norm
+
+    def _get_client(self) -> Any:
+        if self._embedding_client is not None:
+            return self._embedding_client
+        if not self.api_key:
+            raise RuntimeError("未配置 RAG_EMBEDDING_API_KEY 或 LLM_API_KEY")
+        try:
+            from openai import OpenAI
+        except ImportError as exc:
+            raise RuntimeError("缺少 openai 依赖，无法调用 Qwen Embedding") from exc
+        self._embedding_client = OpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url,
+            timeout=self.timeout,
+        )
+        return self._embedding_client
+
+    def _embed_texts(self, texts: list[str]) -> list[Any]:
+        if not texts:
+            return []
+        client = self._get_client()
+        vectors: list[Any] = []
+        for start in range(0, len(texts), self.batch_size):
+            batch = texts[start : start + self.batch_size]
+            response = client.embeddings.create(
+                model=self.model,
+                input=batch,
+                dimensions=self.dimensions,
+                encoding_format="float",
+            )
+            data = sorted(response.data, key=lambda item: int(item.index))
+            if len(data) != len(batch):
+                raise RuntimeError("Qwen Embedding 返回条目数量不匹配")
+            vectors.extend(
+                self._normalise_vector(item.embedding, dimensions=self.dimensions)
+                for item in data
+            )
+        return vectors
+
+    def _load_cached_embeddings(self, cache_path: Path) -> Any | None:
+        if not cache_path.is_file():
+            return None
+        try:
+            cached = json.loads(cache_path.read_text(encoding="utf-8"))
+            if (
+                cached.get("model") != self.model
+                or int(cached.get("dimensions", 0)) != self.dimensions
+            ):
+                return None
+            vectors = cached.get("vectors")
+            if not isinstance(vectors, list) or len(vectors) != len(self._chunks):
+                return None
+            import numpy as np
+
+            return np.vstack(
+                [
+                    self._normalise_vector(vector, dimensions=self.dimensions)
+                    for vector in vectors
+                ]
+            )
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            return None
+
+    def _ensure_embedding_index(self) -> None:
+        if not self.enabled or self._embedding_matrix is not None:
+            return
+        chunks = self._load_chunks()
+        if not chunks:
+            return
+        cache_path = self._embedding_cache_path()
+        cached = self._load_cached_embeddings(cache_path)
+        if cached is not None:
+            self._embedding_matrix = cached
+            return
+        vectors = self._embed_texts([item["text"] for item in chunks])
+        if len(vectors) != len(chunks):
+            raise RuntimeError("Qwen Embedding 文档向量数量不匹配")
+        import numpy as np
+
+        self._embedding_matrix = np.vstack(vectors)
+        self.embedding_cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(
+            json.dumps(
+                {
+                    "model": self.model,
+                    "dimensions": self.dimensions,
+                    "vectors": self._embedding_matrix.tolist(),
+                },
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+
+    def _embedding_query(self, query: str) -> Any:
+        cached = self._query_vectors.get(query)
+        if cached is not None:
+            return cached
+        vectors = self._embed_texts([query])
+        if len(vectors) != 1:
+            raise RuntimeError("Qwen Embedding 查询向量数量不匹配")
+        self._query_vectors[query] = vectors[0]
+        return vectors[0]
+
+    def _tfidf_fallback(self, **kwargs: Any) -> list[dict[str, Any]]:
+        LocalTfidfRagProvider._ensure_index(self)
+        if self._matrix is None or self._vectorizer is None or not self._chunks:
+            return []
+        is_task2 = "experience_records" in kwargs
+        query = self._task2_query(kwargs) if is_task2 else self._task3_query(kwargs)
+        from sklearn.metrics.pairwise import linear_kernel
+
+        scores = linear_kernel(self._vectorizer.transform([query]), self._matrix).ravel()
+        return self._rank_results(
+            scores,
+            is_task2=is_task2,
+            kwargs=kwargs,
+            retrieval_mode="tfidf_fallback",
+        )
+
+    def retrieve(self, **kwargs: Any) -> list[dict[str, Any]]:
+        if not self.enabled:
+            return []
+        try:
+            self._ensure_embedding_index()
+            if self._embedding_matrix is None or not self._chunks:
+                return []
+            is_task2 = "experience_records" in kwargs
+            query = self._task2_query(kwargs) if is_task2 else self._task3_query(kwargs)
+            query_vector = self._embedding_query(query)
+            scores = self._embedding_matrix @ query_vector
+            return self._rank_results(
+                scores,
+                is_task2=is_task2,
+                kwargs=kwargs,
+                retrieval_mode=self.retrieval_mode,
+            )
+        except Exception as exc:
+            self.last_embedding_error = str(exc)
+            if self.fallback_to_tfidf:
+                return self._tfidf_fallback(**kwargs)
+            return []
+
+
+def build_default_rag_provider(
+) -> NullRagProvider | LocalTfidfRagProvider | QwenEmbeddingRagProvider:
+    if not RAG_ENABLED:
+        return NullRagProvider()
+    if RAG_RETRIEVAL_MODE == "tfidf":
+        return LocalTfidfRagProvider()
+    if RAG_RETRIEVAL_MODE == "qwen_embedding" or RAG_EMBEDDING_API_KEY:
+        return QwenEmbeddingRagProvider()
+    return LocalTfidfRagProvider()
 
 
 __all__ = [
     "LayoutRagProvider",
     "LocalTfidfRagProvider",
     "NullRagProvider",
+    "QwenEmbeddingRagProvider",
     "TranslationRagProvider",
     "build_default_rag_provider",
 ]

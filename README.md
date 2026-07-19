@@ -7,7 +7,7 @@
 - **场景理解**：原始 2:1 全景 → 1 张概览 + 4 张带方位的球面透视图 → Qwen 结构化场景清单
 - **翻译官**：同一图像全部参与者逐人七项评分 + 体验目标 + 形态初始值 + 场景清单 → 七项形态目标
 - **制图员**：修改前后形态指标 + 场景清单 + 专家建议 → 结构化空间布局方案与最终编辑文本
-- **可插拔 RAG**：默认关闭；开启后以 `ai4city-data/knowledge` 中的规范 PDF 为主要知识源，仓库规则仅作补充
+- **可插拔 RAG**：默认关闭；开启后以 `ai4city-data/knowledge` 中的规范 PDF 为主要知识源，支持 Qwen `text-embedding-v4` 语义检索与本地 TF-IDF 回退，仓库规则仅作补充
 - **提示词专家**：已废弃，合并至制图员
 - **学习 Agent**：占位接口，记录体验→形态翻译准确度（默认不启用修正）
 - **多人体验**：支持修改前/修改后多人体验指标 JSON 输入
@@ -118,7 +118,7 @@ python run_demo.py path/to/pano.jpg
 
 | 文件 | 职责 |
 |------|------|
-| `rag_provider.py` | `NullRagProvider` 与本地字符 TF-IDF Provider；只读提取 knowledge PDF、保留页码并缓存到项目输出目录 |
+| `rag_provider.py` | `NullRagProvider`、Qwen Embedding 与本地字符 TF-IDF Provider；只读提取 knowledge PDF、保留页码并缓存到项目输出目录 |
 | `knowledge_curator.py` | DeepSeek 离线知识整理：Flash 批处理、可选 Pro 复核、原文证据校验和结构化草稿 |
 | `data/mapping_rules.json` | 七项体验→七项形态的基础映射参数（启发式初值，待实验校准） |
 | `data/experience_morph_cases.json` | 旧版非实测案例样例；当前不参与 Task 2/3 计算 |

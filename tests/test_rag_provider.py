@@ -6,16 +6,48 @@ import subprocess
 import unittest
 import uuid
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from agents.cartographer_agent import CartographerAgent
 from agents.translator_agent import TranslatorAgent
 from config import EXPERIENCE_KEYS
 from knowledge_base.kb_store import KnowledgeBase
-from knowledge_base.rag_provider import LocalTfidfRagProvider, NullRagProvider
+from knowledge_base.rag_provider import (
+    LocalTfidfRagProvider,
+    NullRagProvider,
+    QwenEmbeddingRagProvider,
+    build_default_rag_provider,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+class FakeEmbeddingClient:
+    """不联网的 DashScope OpenAI-compatible Embedding 客户端替身。"""
+
+    def __init__(self) -> None:
+        self.embeddings = self
+        self.calls: list[list[str]] = []
+
+    def create(self, *, input, dimensions, **_kwargs):
+        texts = list(input)
+        self.calls.append(texts)
+        data = []
+        for index, text in enumerate(texts):
+            vector = [0.0] * dimensions
+            vector[0 if "社区" in text or "入口" in text else 1] = 1.0
+            data.append(SimpleNamespace(index=index, embedding=vector))
+        return SimpleNamespace(data=data)
+
+
+class FailingEmbeddingClient:
+    def __init__(self) -> None:
+        self.embeddings = self
+
+    def create(self, **_kwargs):
+        raise RuntimeError("simulated embedding outage")
 
 
 class RagProviderTests(unittest.TestCase):
@@ -84,6 +116,81 @@ class RagProviderTests(unittest.TestCase):
             set(results[0]) - {"id"},
         )
         self.assertIn("道路", results[0]["text"])
+
+    def test_qwen_embedding_retrieval_uses_cache_and_marks_result_mode(self) -> None:
+        community = self.root / "community.txt"
+        community.write_text("社区入口的休憩设施应保持消防通行。", encoding="utf-8")
+        other = self.root / "other.txt"
+        other.write_text("商业步行街的导视系统应保持连续。", encoding="utf-8")
+        cache_dir = self.root / "qwen-cache"
+        client = FakeEmbeddingClient()
+        provider = QwenEmbeddingRagProvider(
+            [community, other],
+            api_key="test-key-never-sent",
+            dimensions=3,
+            embedding_client=client,
+            cache_dir=cache_dir,
+            top_k=2,
+            min_score=0.0,
+        )
+        results = provider.retrieve(
+            baseline_metrics=self.baseline,
+            target_metrics=self.baseline,
+            scene_context="老旧社区入口",
+            expert_advice="保持消防通行",
+            scene_understanding={},
+        )
+        self.assertTrue(results)
+        self.assertEqual(results[0]["metadata"]["retrieval_mode"], "qwen_embedding")
+        self.assertIn("社区入口", results[0]["text"])
+        self.assertEqual(len(client.calls), 2)  # 一次文档批量 + 一次查询
+        self.assertTrue(list((cache_dir / "qwen_embeddings").glob("*.json")))
+
+        cached_client = FakeEmbeddingClient()
+        cached_provider = QwenEmbeddingRagProvider(
+            [community, other],
+            api_key="another-test-key-never-sent",
+            dimensions=3,
+            embedding_client=cached_client,
+            cache_dir=cache_dir,
+            top_k=2,
+            min_score=0.0,
+        )
+        cached_provider.retrieve(
+            baseline_metrics=self.baseline,
+            target_metrics=self.baseline,
+            scene_context="老旧社区入口",
+            expert_advice="保持消防通行",
+            scene_understanding={},
+        )
+        self.assertEqual(len(cached_client.calls), 1)  # 文档向量命中磁盘缓存
+
+    def test_qwen_embedding_failure_falls_back_to_tfidf(self) -> None:
+        provider = QwenEmbeddingRagProvider(
+            [self.knowledge],
+            api_key="test-key-never-sent",
+            dimensions=3,
+            embedding_client=FailingEmbeddingClient(),
+            cache_dir=self.root / "qwen-fallback-cache",
+            min_score=0.0,
+        )
+        results = provider.retrieve(
+            baseline_metrics=self.baseline,
+            target_metrics=self.baseline,
+            scene_context="街道停留区",
+            expert_advice="保持道路",
+            scene_understanding={},
+        )
+        self.assertTrue(results)
+        self.assertEqual(results[0]["metadata"]["retrieval_mode"], "tfidf_fallback")
+        self.assertIn("simulated embedding outage", provider.last_embedding_error)
+
+    def test_default_provider_selects_qwen_embedding_when_configured(self) -> None:
+        with (
+            patch("knowledge_base.rag_provider.RAG_ENABLED", True),
+            patch("knowledge_base.rag_provider.RAG_RETRIEVAL_MODE", "qwen_embedding"),
+        ):
+            self.assertIsInstance(build_default_rag_provider(), QwenEmbeddingRagProvider)
 
     def test_task3_scene_cases_are_weighted_limited_and_excluded_from_task2(self) -> None:
         case_file = self.root / "scene_prompt_examples.json"

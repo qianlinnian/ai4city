@@ -149,7 +149,7 @@ SCENE_UNDERSTANDING_ENABLED = os.getenv(
     "SCENE_UNDERSTANDING_ENABLED", "false"
 ).strip().lower() in {"1", "true", "yes"}
 
-# RAG 默认关闭。开启后仅在本地以 TF-IDF 检索，不调用远程 Embedding API。
+# RAG 默认关闭。开启后可选择本地 TF-IDF 或 Qwen 远程 Embedding 检索。
 RAG_ENABLED = os.getenv("RAG_ENABLED", "false").strip().lower() in {
     "1",
     "true",
@@ -159,6 +159,26 @@ RAG_TOP_K = max(1, int(os.getenv("RAG_TOP_K", "4")))
 RAG_MIN_SCORE = max(0.0, float(os.getenv("RAG_MIN_SCORE", "0.05")))
 RAG_INCLUDE_REPOSITORY_SOURCES = os.getenv(
     "RAG_INCLUDE_REPOSITORY_SOURCES", "true"
+).strip().lower() in {"1", "true", "yes"}
+RAG_RETRIEVAL_MODE = os.getenv("RAG_RETRIEVAL_MODE", "auto").strip().lower()
+if RAG_RETRIEVAL_MODE not in {"auto", "tfidf", "qwen_embedding"}:
+    raise ValueError(
+        "RAG_RETRIEVAL_MODE 仅支持 auto、tfidf 或 qwen_embedding"
+    )
+RAG_EMBEDDING_MODEL = os.getenv(
+    "RAG_EMBEDDING_MODEL", "text-embedding-v4"
+).strip()
+RAG_EMBEDDING_DIMENSIONS = max(
+    64, int(os.getenv("RAG_EMBEDDING_DIMENSIONS", "1024"))
+)
+RAG_EMBEDDING_BATCH_SIZE = max(
+    1, int(os.getenv("RAG_EMBEDDING_BATCH_SIZE", "10"))
+)
+RAG_EMBEDDING_TIMEOUT = max(
+    1.0, float(os.getenv("RAG_EMBEDDING_TIMEOUT", "30"))
+)
+RAG_EMBEDDING_FALLBACK_TO_TFIDF = os.getenv(
+    "RAG_EMBEDDING_FALLBACK_TO_TFIDF", "true"
 ).strip().lower() in {"1", "true", "yes"}
 
 # DeepSeek 仅用于离线知识整理；不会受 RUN_MODE 自动触发，CLI 必须显式 --execute。
@@ -205,6 +225,15 @@ else:
         "https://dashscope.aliyuncs.com/compatible-mode/v1",
     ).rstrip("/")
     LLM_MODEL = os.getenv("LLM_MODEL", "qwen3.7-plus").strip()
+
+# RAG Embedding 默认复用 Qwen/LLM 的兼容接口和密钥，也可单独配置。
+# 不在日志、会话或缓存中保存 Key。
+RAG_EMBEDDING_API_KEY = os.getenv(
+    "RAG_EMBEDDING_API_KEY", LLM_API_KEY
+).strip()
+RAG_EMBEDDING_BASE_URL = os.getenv(
+    "RAG_EMBEDDING_BASE_URL", LLM_BASE_URL
+).strip().rstrip("/")
 
 WORLDLABS_API_KEY = os.getenv("WORLDLABS_API_KEY", "").strip()
 WORLDLABS_BASE_URL = os.getenv("WORLDLABS_BASE_URL", "https://api.worldlabs.ai").rstrip("/")
