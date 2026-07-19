@@ -34,3 +34,9 @@ outputs/knowledge_drafts/
 # 本地发布诊断与测试临时目录不进入版本库
 rag_knowledge/last_publish_report.json
 tests/tmp*/
+assets/*
+edge_density_maps/*
+outputs/*
+segmentation_results/*
+skyline_boundary_maps/*
+TargetIMG/*
