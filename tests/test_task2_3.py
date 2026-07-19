@@ -282,6 +282,8 @@ class Task23TestCase(unittest.TestCase):
             self.assertEqual(plan.scene_prompt_profile, profile_key)
             self.assertIn(profile_label, system_text)
             self.assertIn("2至5项", system_text)
+            self.assertIn("唯一的最终执行清单", system_text)
+            self.assertIn("而不是遗漏某项动作", system_text)
             self.assertIn(f"场景Prompt模板: {profile_label}", user_text)
             self.assertTrue(any(profile_label in item for item in [plan.plan_summary]))
 
