@@ -58,23 +58,23 @@ SESSION: dict = {"state": None, "bundle": None}
 # percentage bar below every output component, but this pipeline has no
 # meaningful global percentage to expose.
 TRANSLATOR_LOADING_STEPS = (
-    "正在调用翻译 Agent",
-    "翻译 Agent 正在调用知识库",
-    "翻译 Agent 正在分析多参与者体感目标",
-    "翻译 Agent 正在生成七项形态要素目标",
+    "正在调用翻译智能体",
+    "翻译智能体正在调用知识库",
+    "翻译智能体正在分析多参与者体感目标",
+    "翻译智能体正在生成七项形态要素目标",
 )
 
 CARTOGRAPHER_LOADING_STEPS = (
-    "正在调用制图员 Agent",
-    "制图员 Agent 正在调用知识库",
-    "制图员 Agent 正在分析场景与空间约束",
-    "制图员 Agent 正在生成最终空间布局方案",
+    "正在调用制图员智能体",
+    "制图员智能体正在调用知识库",
+    "制图员智能体正在分析场景与空间约束",
+    "制图员智能体正在生成最终空间布局方案",
 )
 
 GENERATION_LOADING_STEPS = (
     "正在确认最终空间布局方案",
-    "正在调用 Seedream 进行全景编辑",
-    "Seedream 正在生成改造后全景图",
+    "正在调用图像生成智能体进行全景编辑",
+    "图像生成智能体正在生成改造后全景图",
     "正在提取改造后的七项形态要素",
 )
 
