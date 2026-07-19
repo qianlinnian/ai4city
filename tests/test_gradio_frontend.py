@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import unittest
-import json
-
 from app import gradio_app
 from config import MORPH_KEYS
 
@@ -26,16 +24,24 @@ class GradioFrontendTests(unittest.TestCase):
                 },
             },
         ]
-        records = gradio_app._parse_person_experience(
-            json.dumps(persons, ensure_ascii=False)
-        )
-        self.assertEqual([item["person_id"] for item in records], ["P01", "P02"])
+        records = gradio_app._df_to_persons(gradio_app._persons_to_df(persons))
+        self.assertEqual([item["person_id"] for item in records], ["p1", "p2"])
         self.assertEqual(len(records[0]["experience"]), 7)
         self.assertEqual(records[1]["experience"]["environmental_disturbance"], 1)
 
-    def test_person_experience_requires_json_array(self) -> None:
-        with self.assertRaisesRegex(ValueError, "JSON 数组"):
-            gradio_app._parse_person_experience('{"person_id": "P01"}')
+    def test_person_experience_rejects_blank_or_out_of_range_scores(self) -> None:
+        frame = gradio_app._empty_experience_df(1)
+        frame.loc[0, gradio_app.EXPERIENCE_LABELS_ZH["comfort"]] = 6
+        with self.assertRaisesRegex(ValueError, "必须位于1到5之间"):
+            gradio_app._df_to_persons(frame)
+
+        # pandas 3.x does not allow assigning a string into an int64 column.
+        # Use an object column so the UI's empty-cell validation is exercised.
+        comfort_col = gradio_app.EXPERIENCE_LABELS_ZH["comfort"]
+        frame[comfort_col] = frame[comfort_col].astype(object)
+        frame.loc[0, comfort_col] = ""
+        with self.assertRaisesRegex(ValueError, "不能为空"):
+            gradio_app._df_to_persons(frame)
 
     def test_percentage_sliders_convert_to_internal_zero_to_one(self) -> None:
         values = [25, 5, 40, 70, 12, 18, 4]
