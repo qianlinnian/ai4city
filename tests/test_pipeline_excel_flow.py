@@ -15,6 +15,7 @@ from pipeline.orchestrator import (
     VALIDATION_PENDING,
     PipelineOrchestrator,
 )
+from pipeline.review_records import render_review_round
 from schemas.models import (
     GenerationResult,
     ModificationPlan,
@@ -123,9 +124,15 @@ class PipelineExcelFlowTests(unittest.TestCase):
         )
         self.session_patch = patch.object(self.pipe, "_persist", return_value=None)
         self.session_patch.start()
+        self.review_patch = patch(
+            "pipeline.orchestrator.append_review_round",
+            return_value=Path("outputs/review_records/test_review.md"),
+        )
+        self.review_mock = self.review_patch.start()
 
     def tearDown(self):
         self.session_patch.stop()
+        self.review_patch.stop()
 
     def _through_generation(self):
         state = self.pipe.start_session(self.image, BASELINE)
@@ -159,6 +166,27 @@ class PipelineExcelFlowTests(unittest.TestCase):
         state = self.pipe.save_memory(state, score=4)
         self.assertEqual(state["stage"], COMPLETED)
         self.assertEqual(self.memory.last_payload["measured_after"], {})
+
+    def test_plan_rounds_create_markdown_review_entries(self):
+        state = self.pipe.start_session(self.image, BASELINE)
+        state = self.pipe.run_translator(state, EXPERIENCE)
+        state = self.pipe.confirm_morph(state, note="保留入口区域")
+        self.assertEqual(
+            state["review_record_path"], "outputs\\review_records\\test_review.md"
+        )
+        state = self.pipe.confirm_plan(state, "Expert-approved final plan")
+
+        self.assertEqual(self.review_mock.call_count, 2)
+        self.assertEqual(
+            self.review_mock.call_args_list[0].kwargs["event"], "制图员方案草案"
+        )
+        self.assertEqual(
+            self.review_mock.call_args_list[1].kwargs["event"], "专家确认最终方案"
+        )
+        markdown = render_review_round(state, event="专家确认最终方案")
+        self.assertIn("情景要素", markdown)
+        self.assertIn("最终执行空间布局方案", markdown)
+        self.assertIn("Expert-approved final plan", markdown)
 
     def test_external_post_edit_metrics_create_quality_report(self):
         state = self._through_generation()

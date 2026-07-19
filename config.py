@@ -42,6 +42,9 @@ UPLOAD_DIR = ROOT / "uploads"
 OUTPUT_DIR = ROOT / "outputs"
 IMAGE_OUT_DIR = OUTPUT_DIR / "images"
 SESSION_DIR = OUTPUT_DIR / "sessions"
+REVIEW_RECORD_DIR = Path(
+    os.getenv("REVIEW_RECORD_DIR", str(OUTPUT_DIR / "review_records"))
+).resolve()
 PANORAMA_VIEW_CACHE_DIR = Path(
     os.getenv("PANORAMA_VIEW_CACHE_DIR", str(OUTPUT_DIR / "panorama_views"))
 ).resolve()

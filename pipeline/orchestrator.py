@@ -27,7 +27,8 @@ from agents.memory_agent import MemoryAgent
 from agents.quality_checker_agent import QualityCheckerAgent, validate_morph_metrics
 from agents.scene_understanding_agent import SceneUnderstandingAgent
 from agents.translator_agent import TranslatorAgent
-from config import SESSION_DIR
+from config import REVIEW_RECORD_DIR, SESSION_DIR
+from pipeline.review_records import append_review_round
 from schemas.models import (
     ExperienceTargets,
     GenerationResult,
@@ -70,6 +71,7 @@ class PipelineOrchestrator:
         memory: MemoryAgent | None = None,
         scene_understander: SceneUnderstandingAgent | None = None,
         post_edit_metrics_extractor: PostEditMetricsExtractor | None = None,
+        review_record_dir: str | Path | None = None,
     ) -> None:
         # 保留历史关键字以兼容既有 UI；生成后指标复算由显式注入的
         # ``post_edit_metrics_extractor`` 控制，而不是由此参数隐式决定。
@@ -86,6 +88,7 @@ class PipelineOrchestrator:
         self.memory = memory or MemoryAgent()
         self.scene_understander = scene_understander or SceneUnderstandingAgent()
         self.post_edit_metrics_extractor = post_edit_metrics_extractor
+        self.review_record_dir = Path(review_record_dir or REVIEW_RECORD_DIR).resolve()
 
     def start_session(
         self,
@@ -145,6 +148,7 @@ class PipelineOrchestrator:
             "post_edit_metrics_error": None,
             "post_edit_experience": [],
             "memory_id": None,
+            "review_record_path": None,
             "stage": INPUT_PENDING,
         }
         self._persist(state)
@@ -255,6 +259,7 @@ class PipelineOrchestrator:
         updated["cartographer_scene_profile"] = plan.scene_prompt_profile
         updated["final_prompt"] = plan.draft_text
         updated["stage"] = PLAN_REVIEW
+        self._append_review_record(updated, event="制图员方案草案")
         self._persist(updated)
         return updated
 
@@ -276,6 +281,7 @@ class PipelineOrchestrator:
             updated["final_prompt"] = clean_plan
             updated["expert_plan_edited"] = True
         updated["stage"] = PLAN_CONFIRMED
+        self._append_review_record(updated, event="专家确认最终方案")
         self._persist(updated)
         return updated
 
@@ -443,6 +449,15 @@ class PipelineOrchestrator:
             json.dumps(dict(state), ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+
+    def _append_review_record(self, state: dict[str, Any], *, event: str) -> None:
+        """Persist a Markdown audit trail separate from the session JSON."""
+        path = append_review_round(
+            state,
+            event=event,
+            review_dir=self.review_record_dir,
+        )
+        state["review_record_path"] = str(path)
 
 
 def run_full_demo(

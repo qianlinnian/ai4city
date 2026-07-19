@@ -446,7 +446,13 @@ def step_confirm_morph(expert_advice, *slider_vals):
     )
     SESSION["state"] = state
     plan = state.get("modification_plan") or {}
-    return plan.get("draft_text", ""), _fmt_layout_plan(plan)
+    review_path = state.get("review_record_path") or ""
+    review_notice = (
+        f"\n\n### Markdown 复核记录\n`{review_path}`"
+        if review_path
+        else ""
+    )
+    return plan.get("draft_text", ""), _fmt_layout_plan(plan) + review_notice
 
 
 def step_generate(final_plan):
