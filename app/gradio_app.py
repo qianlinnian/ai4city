@@ -22,6 +22,7 @@ import json
 import os
 import sys
 import time
+from html import escape
 from pathlib import Path
 
 import gradio as gr
@@ -51,6 +52,71 @@ pipe = PipelineOrchestrator(
     ),
 )
 SESSION: dict = {"state": None, "bundle": None}
+
+# Keep the agent narration in the page itself.  ``gr.Progress`` renders a
+# percentage bar below every output component, but this pipeline has no
+# meaningful global percentage to expose.
+AGENT_LOADING_STEPS = (
+    "正在调用智能体",
+    "智能体正在调用知识库",
+    "智能体正在思考",
+    "智能体正在提取改造后的形态要素",
+)
+
+AGENT_LOADER_CSS = """
+#agent-loader { margin: 12px 0 18px; }
+#agent-loader .agent-loader-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 620px;
+    padding: 12px 16px;
+    border: 1px solid #fed7aa;
+    border-radius: 10px;
+    background: #fff7ed;
+    color: #9a3412;
+    font-size: 16px;
+    font-weight: 600;
+}
+#agent-loader .agent-loader-spinner {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    border: 3px solid #fdba74;
+    border-top-color: #ea580c;
+    border-radius: 50%;
+    animation: ai4city-agent-spin 0.8s linear infinite;
+}
+@keyframes ai4city-agent-spin { to { transform: rotate(360deg); } }
+"""
+
+
+def _show_agent_loader(message: str):
+    return gr.update(
+        value=(
+            '<div class="agent-loader-card">'
+            '<span class="agent-loader-spinner" aria-hidden="true"></span>'
+            f"<span>{escape(message)}</span>"
+            "</div>"
+        ),
+        visible=True,
+    )
+
+
+def _hide_agent_loader():
+    return gr.update(value="", visible=False)
+
+
+def _unchanged_outputs(count: int) -> tuple:
+    return tuple(gr.update() for _ in range(count))
+
+
+def _agent_loading_updates(output_count: int):
+    """Yield the fixed presentation states before the final pipeline call."""
+    for message in AGENT_LOADING_STEPS[:-1]:
+        yield (*_unchanged_outputs(output_count), _show_agent_loader(message))
+        time.sleep(5)
+    yield (*_unchanged_outputs(output_count), _show_agent_loader(AGENT_LOADING_STEPS[-1]))
 
 # 体验表格列：姓名 + 七项指标
 _EXP_NAME_COL = "姓名"
@@ -220,7 +286,6 @@ def refresh_image_choices():
 
 def on_select_image(
     image_name: str,
-    progress=gr.Progress(track_tqdm=False),
 ):
     """下拉选图 → 读 Excel + 分析图，填充前端。"""
     empty_exp = [3.0] * len(EXPERIENCE_KEYS)
@@ -246,13 +311,13 @@ def on_select_image(
         *empty_morph,
     )
     if not image_name:
-        return blank
+        yield (*blank, _hide_agent_loader())
+        return
 
-    progress(0.15, desc="正在进行数据处理")
     # Keep a short, visible loading beat while the four derived scene images and
     # Excel-backed bundle are prepared for the interface.
+    yield (*_unchanged_outputs(len(blank)), _show_agent_loader("正在进行数据处理"))
     time.sleep(0.5)
-    progress(0.55, desc="正在加载原图、边缘密度、语义分割与天际线结果")
     try:
         bundle = load_scene_bundle(image_name)
     except Exception as e:
@@ -284,9 +349,8 @@ def on_select_image(
 
     pre_df = _persons_to_df(persons)
     post_df = _suggest_post_edit_df(persons)
-    progress(1.0, desc="数据处理完成，场景已加载")
 
-    return (
+    yield (
         images.get("original"),
         images.get("edge_map"),
         images.get("seg_map"),
@@ -304,6 +368,7 @@ def on_select_image(
         post_df,
         *target_defaults,
         *_metrics_to_sliders(morph),
+        _hide_agent_loader(),
     )
 
 
@@ -383,20 +448,24 @@ def step_parse(
     return info
 
 
-def step_translate(*experience_values, progress=gr.Progress(track_tqdm=False)):
+def step_translate(*experience_values):
     state = SESSION.get("state")
     if not state:
         raise gr.Error("请先完成「确认加载场景」")
 
     targets = dict(zip(EXPERIENCE_KEYS, experience_values))
+    yield from _agent_loading_updates(1 + len(MORPH_KEYS))
     try:
         state = pipe.run_translator(
             state,
             targets,
-            progress_callback=lambda fraction, message: progress(fraction, desc=message),
         )
     except ValueError as exc:
+        yield (*_unchanged_outputs(1 + len(MORPH_KEYS)), _hide_agent_loader())
         raise gr.Error(str(exc)) from exc
+    except Exception:
+        yield (*_unchanged_outputs(1 + len(MORPH_KEYS)), _hide_agent_loader())
+        raise
     SESSION["state"] = state
 
     tr = state["morph_translation"]
@@ -426,7 +495,7 @@ def step_translate(*experience_values, progress=gr.Progress(track_tqdm=False)):
         f"学习Agent: {'已参考' if tr.get('learning_applied') else '启用'}"
     )
     sliders = _metrics_to_sliders(state["confirmed_target_metrics"])
-    return info, *sliders
+    yield info, *sliders, _hide_agent_loader()
 
 
 def _fmt_layout_plan(plan: dict) -> str:
@@ -452,20 +521,23 @@ def _fmt_layout_plan(plan: dict) -> str:
 def step_confirm_morph(
     expert_advice,
     *slider_vals,
-    progress=gr.Progress(track_tqdm=False),
 ):
     state = SESSION.get("state")
     if not state:
         raise gr.Error("请先完成「确认体验滑块 → 翻译官」")
     human_metrics = _sliders_to_metrics(list(slider_vals))
     note = (expert_advice or "").strip() or "前端人工确认形态要素"
-    state = pipe.confirm_morph(
-        state,
-        human_metrics=human_metrics,
-        note=note,
-        language="zh",
-        progress_callback=lambda fraction, message: progress(fraction, desc=message),
-    )
+    yield from _agent_loading_updates(2)
+    try:
+        state = pipe.confirm_morph(
+            state,
+            human_metrics=human_metrics,
+            note=note,
+            language="zh",
+        )
+    except Exception:
+        yield (*_unchanged_outputs(2), _hide_agent_loader())
+        raise
     SESSION["state"] = state
     plan = state.get("modification_plan") or {}
     review_path = state.get("review_record_path") or ""
@@ -474,10 +546,10 @@ def step_confirm_morph(
         if review_path
         else ""
     )
-    return plan.get("draft_text", ""), _fmt_layout_plan(plan) + review_notice
+    yield plan.get("draft_text", ""), _fmt_layout_plan(plan) + review_notice, _hide_agent_loader()
 
 
-def step_generate(final_plan, progress=gr.Progress(track_tqdm=False)):
+def step_generate(final_plan):
     state = SESSION.get("state")
     if not state:
         raise gr.Error("请先完成前面步骤")
@@ -494,9 +566,14 @@ def step_generate(final_plan, progress=gr.Progress(track_tqdm=False)):
     state["image_path"] = original
     state["image_name"] = Path(original).name
 
-    callback = lambda fraction, message: progress(fraction, desc=message)
-    state = pipe.confirm_plan(state, final_plan, progress_callback=callback)
-    state = pipe.generate_and_check(state, progress_callback=callback)
+    output_count = 3 + len(MORPH_KEYS)
+    yield from _agent_loading_updates(output_count)
+    try:
+        state = pipe.confirm_plan(state, final_plan)
+        state = pipe.generate_and_check(state)
+    except Exception:
+        yield (*_unchanged_outputs(output_count), _hide_agent_loader())
+        raise
     SESSION["state"] = state
 
     gen = state["generation"]
@@ -517,7 +594,7 @@ def step_generate(final_plan, progress=gr.Progress(track_tqdm=False)):
     )
     # 改造后体感表：按修改前人员预填建议分，便于对照填写
     post_df = _suggest_post_edit_df(state.get("pre_edit_experience") or bundle.get("persons"))
-    return out_path, original, post_df, *measured_sliders
+    yield out_path, original, post_df, *measured_sliders, _hide_agent_loader()
 
 
 def step_save_memory(score, notes, post_edit_df, *corrected_sliders):
@@ -570,6 +647,7 @@ def build_ui():
             **选图(Excel指标+分析图) → 体验滑块 → 翻译官 → 制图员 → Seedream 文生图 → 反馈入库**
             """
         )
+        agent_loader = gr.HTML(value="", visible=False, elem_id="agent-loader")
 
         with gr.Row():
             with gr.Column(scale=1):
@@ -693,10 +771,15 @@ def build_ui():
         image_dropdown.change(
             on_select_image,
             inputs=[image_dropdown],
-            outputs=select_outputs,
-            show_progress="full",
+            outputs=[*select_outputs, agent_loader],
+            show_progress="hidden",
         )
-        demo.load(on_select_image, inputs=[image_dropdown], outputs=select_outputs)
+        demo.load(
+            on_select_image,
+            inputs=[image_dropdown],
+            outputs=[*select_outputs, agent_loader],
+            show_progress="hidden",
+        )
 
         btn_parse.click(
             step_parse,
@@ -717,20 +800,20 @@ def build_ui():
         btn_translate.click(
             step_translate,
             inputs=experience_sliders,
-            outputs=[translate_md, *morph_sliders],
-            show_progress="full",
+            outputs=[translate_md, *morph_sliders, agent_loader],
+            show_progress="hidden",
         )
         btn_morph.click(
             step_confirm_morph,
             inputs=[expert_advice, *morph_sliders],
-            outputs=[plan_box, plan_rationale],
-            show_progress="full",
+            outputs=[plan_box, plan_rationale, agent_loader],
+            show_progress="hidden",
         )
         btn_gen.click(
             step_generate,
             inputs=[plan_box],
-            outputs=[out_img, compare_original_img, post_edit_df, *corrected_sliders],
-            show_progress="full",
+            outputs=[out_img, compare_original_img, post_edit_df, *corrected_sliders, agent_loader],
+            show_progress="hidden",
         )
         btn_mem.click(
             step_save_memory,
@@ -747,5 +830,6 @@ if __name__ == "__main__":
         server_name=os.getenv("GRADIO_SERVER_NAME", "127.0.0.1"),
         server_port=int(os.getenv("GRADIO_SERVER_PORT", "7860")),
         share=False,
+        css=AGENT_LOADER_CSS,
     )
 
