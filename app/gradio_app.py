@@ -57,11 +57,25 @@ SESSION: dict = {"state": None, "bundle": None}
 # Keep the agent narration in the page itself.  ``gr.Progress`` renders a
 # percentage bar below every output component, but this pipeline has no
 # meaningful global percentage to expose.
-AGENT_LOADING_STEPS = (
-    "正在调用智能体",
-    "智能体正在调用知识库",
-    "智能体正在思考",
-    "智能体正在提取改造后的形态要素",
+TRANSLATOR_LOADING_STEPS = (
+    "正在调用翻译 Agent",
+    "翻译 Agent 正在调用知识库",
+    "翻译 Agent 正在分析多参与者体感目标",
+    "翻译 Agent 正在生成七项形态要素目标",
+)
+
+CARTOGRAPHER_LOADING_STEPS = (
+    "正在调用制图员 Agent",
+    "制图员 Agent 正在调用知识库",
+    "制图员 Agent 正在分析场景与空间约束",
+    "制图员 Agent 正在生成最终空间布局方案",
+)
+
+GENERATION_LOADING_STEPS = (
+    "正在确认最终空间布局方案",
+    "正在调用 Seedream 进行全景编辑",
+    "Seedream 正在生成改造后全景图",
+    "正在提取改造后的七项形态要素",
 )
 
 AGENT_LOADER_CSS = """
@@ -135,15 +149,17 @@ def _unchanged_outputs(count: int) -> tuple:
     return tuple(gr.update() for _ in range(count))
 
 
-def _run_with_agent_loader(output_count: int, work):
+def _run_with_agent_loader(output_count: int, loading_steps: tuple[str, ...], work):
     """Run work after staged narration and refresh its elapsed time every second."""
+    if len(loading_steps) < 2:
+        raise ValueError("加载状态至少需要两个阶段")
     started_at = time.monotonic()
 
     def loading_update(message: str):
         elapsed = int(time.monotonic() - started_at)
         return (*_unchanged_outputs(output_count), _show_agent_loader(message, elapsed))
 
-    for message in AGENT_LOADING_STEPS[:-1]:
+    for message in loading_steps[:-1]:
         for _ in range(5):
             yield loading_update(message)
             time.sleep(1)
@@ -151,10 +167,10 @@ def _run_with_agent_loader(output_count: int, work):
     try:
         with ThreadPoolExecutor(max_workers=1, thread_name_prefix="ai4city-agent") as executor:
             future = executor.submit(work)
-            yield loading_update(AGENT_LOADING_STEPS[-1])
+            yield loading_update(loading_steps[-1])
             while not future.done():
                 time.sleep(1)
-                yield loading_update(AGENT_LOADING_STEPS[-1])
+                yield loading_update(loading_steps[-1])
             return future.result()
     except Exception:
         yield (*_unchanged_outputs(output_count), _hide_agent_loader())
@@ -499,6 +515,7 @@ def step_translate(*experience_values):
     try:
         state = yield from _run_with_agent_loader(
             1 + len(MORPH_KEYS),
+            TRANSLATOR_LOADING_STEPS,
             lambda: pipe.run_translator(state, targets),
         )
     except ValueError as exc:
@@ -566,6 +583,7 @@ def step_confirm_morph(
     note = (expert_advice or "").strip() or "前端人工确认形态要素"
     state = yield from _run_with_agent_loader(
         2,
+        CARTOGRAPHER_LOADING_STEPS,
         lambda: pipe.confirm_morph(
             state,
             human_metrics=human_metrics,
@@ -604,6 +622,7 @@ def step_generate(final_plan):
     output_count = 3 + len(MORPH_KEYS)
     state = yield from _run_with_agent_loader(
         output_count,
+        GENERATION_LOADING_STEPS,
         lambda: pipe.generate_and_check(pipe.confirm_plan(state, final_plan)),
     )
     SESSION["state"] = state
