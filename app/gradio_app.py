@@ -27,7 +27,21 @@ from html import escape
 from pathlib import Path
 
 import gradio as gr
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+
+# Prefer Chinese-capable fonts when a Windows desktop font is available.
+matplotlib.rcParams["font.sans-serif"] = [
+    "Microsoft YaHei",
+    "SimHei",
+    "Arial Unicode MS",
+    "DejaVu Sans",
+]
+matplotlib.rcParams["axes.unicode_minus"] = False
 
 _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
@@ -35,6 +49,7 @@ if str(_ROOT) not in sys.path:
 
 from config import (
     ASSETS_DIR,
+    EXPERIENCE_DIRECTIONS,
     EXPERIENCE_KEYS,
     EXPERIENCE_LABELS_ZH,
     FILLED_METRICS_XLSX,
@@ -298,6 +313,142 @@ def _suggest_post_edit_df(persons: list[dict] | None) -> pd.DataFrame:
             }
         )
     return _persons_to_df(suggested)
+
+
+_DIFF_HEADERS = [
+    "体验指标",
+    "改造前均值",
+    "目标值",
+    "改造后均值",
+    "改造后-改造前",
+    "改造后-目标",
+    "目标达成",
+]
+_ACHIEVE_EPS = 0.05
+
+
+def _empty_experience_diff_df() -> pd.DataFrame:
+    return pd.DataFrame(columns=_DIFF_HEADERS)
+
+
+def _average_experience(persons: list[dict] | None) -> dict[str, float]:
+    """Only aggregate displayed summaries; person-level records remain unchanged."""
+    if not persons:
+        return {key: 3.0 for key in EXPERIENCE_KEYS}
+    totals = {key: 0.0 for key in EXPERIENCE_KEYS}
+    for person in persons:
+        experience = person.get("experience") or {}
+        for key in EXPERIENCE_KEYS:
+            totals[key] += float(experience.get(key, 3.0))
+    return {key: round(totals[key] / len(persons), 2) for key in EXPERIENCE_KEYS}
+
+
+def _achievement_label(target: float, post: float, direction: str) -> str:
+    if abs(post - target) <= _ACHIEVE_EPS:
+        return "已达成"
+    if direction == "lower_is_better":
+        return "超额达成" if post < target else "未达成"
+    return "超额达成" if post > target else "未达成"
+
+
+def _build_experience_diff_df(
+    baseline: dict | None,
+    targets: dict | None,
+    post_average: dict | None,
+) -> pd.DataFrame:
+    baseline, targets, post_average = baseline or {}, targets or {}, post_average or {}
+    rows = []
+    for key in EXPERIENCE_KEYS:
+        before = float(baseline.get(key, 3.0))
+        target = float(targets.get(key, 3.0))
+        after = float(post_average.get(key, 3.0))
+        rows.append(
+            {
+                "体验指标": EXPERIENCE_LABELS_ZH[key],
+                "改造前均值": round(before, 2),
+                "目标值": round(target, 2),
+                "改造后均值": round(after, 2),
+                "改造后-改造前": round(after - before, 2),
+                "改造后-目标": round(after - target, 2),
+                "目标达成": _achievement_label(
+                    target,
+                    after,
+                    EXPERIENCE_DIRECTIONS.get(key, "higher_is_better"),
+                ),
+            }
+        )
+    return pd.DataFrame(rows, columns=_DIFF_HEADERS)
+
+
+def _fmt_experience_diff_summary(diff_df: pd.DataFrame) -> str:
+    if diff_df is None or diff_df.empty:
+        return "填写改造后多人体验后，将在此汇总改造前、目标与改造后的七项体验。"
+    status = diff_df["目标达成"].value_counts().to_dict()
+    return (
+        "**七项体验目标达成情况** · "
+        f"已达成 `{int(status.get('已达成', 0))}` / "
+        f"超额达成 `{int(status.get('超额达成', 0))}` / "
+        f"未达成 `{int(status.get('未达成', 0))}`\n\n"
+        "说明：表中差值均按原始评分相减；环境干扰感为反向指标，数值更低代表更好，"
+        "其目标达成判断已按反向规则计算。"
+    )
+
+
+def _build_experience_radar(
+    baseline: dict | None,
+    targets: dict | None,
+    post_average: dict | None,
+):
+    """Plot three summary profiles; it never replaces the source records."""
+    baseline, targets, post_average = baseline or {}, targets or {}, post_average or {}
+    labels = [EXPERIENCE_LABELS_ZH[key] for key in EXPERIENCE_KEYS]
+    angles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False).tolist()
+    closed_angles = angles + angles[:1]
+
+    def series(values: dict) -> list[float]:
+        points = [float(values.get(key, 3.0)) for key in EXPERIENCE_KEYS]
+        return points + points[:1]
+
+    figure, axis = plt.subplots(figsize=(6.2, 6.2), subplot_kw={"polar": True})
+    for name, values, color, linestyle in (
+        ("改造前均值", series(baseline), "#4C78A8", "--"),
+        ("目标值", series(targets), "#F58518", "-."),
+        ("改造后均值", series(post_average), "#54A24B", "-"),
+    ):
+        axis.plot(closed_angles, values, color=color, linestyle=linestyle, linewidth=2, label=name)
+        axis.fill(closed_angles, values, color=color, alpha=0.10)
+    axis.set_xticks(angles)
+    axis.set_xticklabels(labels, fontsize=10)
+    axis.set_ylim(1, 5)
+    axis.set_yticks([1, 2, 3, 4, 5])
+    axis.set_yticklabels(["1", "2", "3", "4", "5"], fontsize=8, color="#666666")
+    axis.set_title("七项体验对比雷达图", fontsize=13, pad=16)
+    axis.legend(loc="upper right", bbox_to_anchor=(1.30, 1.12), fontsize=9, frameon=False)
+    figure.tight_layout()
+    return figure
+
+
+def refresh_experience_diff(post_edit_df, *experience_values):
+    """Refresh only the derived comparison view, preserving person-level data."""
+    state = SESSION.get("state") or {}
+    bundle = SESSION.get("bundle") or {}
+    baseline = state.get("experience_baseline") or _average_experience(
+        state.get("pre_edit_experience") or bundle.get("persons") or []
+    )
+    targets = state.get("experience_targets") or {
+        key: float(value) for key, value in zip(EXPERIENCE_KEYS, experience_values)
+    }
+    if not targets:
+        targets = {key: 3.0 for key in EXPERIENCE_KEYS}
+    try:
+        post_people = _df_to_persons(post_edit_df)
+    except ValueError:
+        post_people = []
+    post_average = _average_experience(post_people) if post_people else {key: 3.0 for key in EXPERIENCE_KEYS}
+    diff_df = _build_experience_diff_df(baseline, targets, post_average)
+    return diff_df, _fmt_experience_diff_summary(diff_df), _build_experience_radar(
+        baseline, targets, post_average
+    )
 
 
 def _fmt_metrics(d: dict | None) -> str:
@@ -619,7 +770,7 @@ def step_generate(final_plan):
     state["image_path"] = original
     state["image_name"] = Path(original).name
 
-    output_count = 3 + len(MORPH_KEYS)
+    output_count = 3 + len(MORPH_KEYS) + 3
     state = yield from _run_with_agent_loader(
         output_count,
         GENERATION_LOADING_STEPS,
@@ -645,7 +796,17 @@ def step_generate(final_plan):
     )
     # 改造后体感表：按修改前人员预填建议分，便于对照填写
     post_df = _suggest_post_edit_df(state.get("pre_edit_experience") or bundle.get("persons"))
-    yield out_path, original, post_df, *measured_sliders, _hide_agent_loader()
+    diff_df, diff_md, radar = refresh_experience_diff(post_df)
+    yield (
+        out_path,
+        original,
+        post_df,
+        *measured_sliders,
+        diff_df,
+        diff_md,
+        radar,
+        _hide_agent_loader(),
+    )
 
 
 def step_save_memory(score, notes, post_edit_df, *corrected_sliders):
@@ -670,9 +831,13 @@ def step_save_memory(score, notes, post_edit_df, *corrected_sliders):
     )
     SESSION["state"] = state
     learning_stats = pipe.learning.get_stats()
+    diff_df, diff_md, radar = refresh_experience_diff(post_edit_df)
     return (
         f"已写入知识库，memory_id = {state['memory_id']}，session = {state['session_id']}\n"
-        f"学习Agent统计: {json.dumps(learning_stats, ensure_ascii=False)}"
+        f"学习Agent统计: {json.dumps(learning_stats, ensure_ascii=False)}",
+        diff_df,
+        diff_md,
+        radar,
     )
 
 
@@ -779,6 +944,24 @@ def build_ui():
             "改造后多人体验（可直接改单元格；生成后会按原班人马预填建议分）",
             interactive=True,
         )
+        gr.Markdown("### 体验前后差异（改造前 / 目标 / 改造后）")
+        experience_diff_df = gr.Dataframe(
+            value=_empty_experience_diff_df(),
+            headers=_DIFF_HEADERS,
+            datatype=["str"] + ["number"] * 5 + ["str"],
+            label="七项体验汇总（逐人评分保留在上方表格）",
+            interactive=False,
+            wrap=True,
+            row_count=(len(EXPERIENCE_KEYS), "fixed"),
+            column_count=(len(_DIFF_HEADERS), "fixed"),
+        )
+        experience_diff_md = gr.Markdown(
+            "填写改造后多人体验后，将在此汇总改造前、目标与改造后的七项体验。"
+        )
+        experience_radar = gr.Plot(
+            label="七项体验对比雷达图（蓝=改造前 / 橙=目标 / 绿=改造后）"
+        )
+        btn_refresh_diff = gr.Button("刷新体验前后差异")
         corrected_sliders = []
         for k in MORPH_KEYS:
             if k == "color_richness":
@@ -863,13 +1046,32 @@ def build_ui():
         btn_gen.click(
             step_generate,
             inputs=[plan_box],
-            outputs=[out_img, compare_original_img, post_edit_df, *corrected_sliders, agent_loader],
+            outputs=[
+                out_img,
+                compare_original_img,
+                post_edit_df,
+                *corrected_sliders,
+                experience_diff_df,
+                experience_diff_md,
+                experience_radar,
+                agent_loader,
+            ],
             show_progress="hidden",
+        )
+        post_edit_df.change(
+            refresh_experience_diff,
+            inputs=[post_edit_df, *experience_sliders],
+            outputs=[experience_diff_df, experience_diff_md, experience_radar],
+        )
+        btn_refresh_diff.click(
+            refresh_experience_diff,
+            inputs=[post_edit_df, *experience_sliders],
+            outputs=[experience_diff_df, experience_diff_md, experience_radar],
         )
         btn_mem.click(
             step_save_memory,
             inputs=[score, notes, post_edit_df, *corrected_sliders],
-            outputs=[mem_out],
+            outputs=[mem_out, experience_diff_df, experience_diff_md, experience_radar],
         )
 
     return demo

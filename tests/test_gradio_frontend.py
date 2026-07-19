@@ -51,6 +51,20 @@ class GradioFrontendTests(unittest.TestCase):
         self.assertEqual(metrics["color_richness"], 12.0)
         self.assertEqual(metrics["skyline_variance"], 0.04)
 
+    def test_experience_summary_treats_disturbance_as_reverse_metric(self) -> None:
+        baseline = {key: 3.0 for key in gradio_app.EXPERIENCE_KEYS}
+        targets = {key: 4.0 for key in gradio_app.EXPERIENCE_KEYS}
+        targets["environmental_disturbance"] = 2.0
+        post = {key: 4.2 for key in gradio_app.EXPERIENCE_KEYS}
+        post["environmental_disturbance"] = 1.5
+
+        frame = gradio_app._build_experience_diff_df(baseline, targets, post)
+        disturbance = frame.loc[
+            frame["体验指标"]
+            == gradio_app.EXPERIENCE_LABELS_ZH["environmental_disturbance"]
+        ].iloc[0]
+        self.assertEqual(disturbance["目标达成"], "超额达成")
+
     def test_page_builds_with_post_edit_metrics_adapter(self) -> None:
         demo = gradio_app.build_ui()
         self.assertEqual(type(demo).__name__, "Blocks")
