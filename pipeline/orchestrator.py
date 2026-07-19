@@ -54,6 +54,7 @@ class GeneratorProtocol(Protocol):
 
 
 GeneratorCallable = Callable[[str | Path, str], GenerationResult]
+PostEditMetricsExtractor = Callable[[str | Path], Mapping[str, float]]
 
 
 class PipelineOrchestrator:
@@ -68,10 +69,10 @@ class PipelineOrchestrator:
         quality: QualityCheckerAgent | None = None,
         memory: MemoryAgent | None = None,
         scene_understander: SceneUnderstandingAgent | None = None,
+        post_edit_metrics_extractor: PostEditMetricsExtractor | None = None,
     ) -> None:
-        # ``main`` still passes this historical keyword from the Gradio entry
-        # point. Task 1 is no longer run online, so the value is intentionally
-        # ignored; keeping the keyword avoids changing the proven UI contract.
+        # 保留历史关键字以兼容既有 UI；生成后指标复算由显式注入的
+        # ``post_edit_metrics_extractor`` 控制，而不是由此参数隐式决定。
         _ = force_metrics_fallback
         if generator is None and force_metrics_fallback is not None:
             from app.generation_backend import generate
@@ -84,6 +85,7 @@ class PipelineOrchestrator:
         self.quality = quality or QualityCheckerAgent()
         self.memory = memory or MemoryAgent()
         self.scene_understander = scene_understander or SceneUnderstandingAgent()
+        self.post_edit_metrics_extractor = post_edit_metrics_extractor
 
     def start_session(
         self,
@@ -140,6 +142,7 @@ class PipelineOrchestrator:
             "generation": None,
             "quality_report": None,
             "post_edit_metrics": None,
+            "post_edit_metrics_error": None,
             "post_edit_experience": [],
             "memory_id": None,
             "stage": INPUT_PENDING,
@@ -281,7 +284,12 @@ class PipelineOrchestrator:
         state: dict[str, Any],
         modified_metrics: Mapping[str, float] | None = None,
     ) -> dict[str, Any]:
-        """Run the injected generator; optionally attach offline post-edit metrics."""
+        """Run the generator, then calculate/record the seven post-edit metrics.
+
+        A supplied ``modified_metrics`` takes precedence for API or batch callers.
+        When a configured extractor fails, the generated image remains recorded and
+        the visible error is persisted instead of fabricating quality values.
+        """
 
         self._require_stage(state, PLAN_CONFIRMED)
         if self.generator is None:
@@ -289,7 +297,17 @@ class PipelineOrchestrator:
                 "未配置图像生成器；请注入 generator，或由前端生成后调用 record_generation"
             )
         result = self._run_generator(state["image_path"], state.get("final_prompt") or "")
-        return self.record_generation(state, result, modified_metrics=modified_metrics)
+        updated = self.record_generation(state, result, modified_metrics=modified_metrics)
+        if modified_metrics is not None or self.post_edit_metrics_extractor is None:
+            return updated
+        try:
+            measured = self.post_edit_metrics_extractor(result.output_image_path)
+        except Exception as exc:
+            failed = deepcopy(updated)
+            failed["post_edit_metrics_error"] = str(exc)
+            self._persist(failed)
+            return failed
+        return self.record_quality_metrics(updated, measured)
 
     def record_generation(
         self,
@@ -308,6 +326,7 @@ class PipelineOrchestrator:
             else GenerationResult(**dict(generation))
         )
         updated["generation"] = result.model_dump()
+        updated["post_edit_metrics_error"] = None
         updated["stage"] = GENERATED
         if modified_metrics is not None:
             updated = self.record_quality_metrics(updated, modified_metrics)
@@ -334,6 +353,7 @@ class PipelineOrchestrator:
         )
         updated["post_edit_metrics"] = report.measured_metrics.as_dict()
         updated["quality_report"] = report.model_dump()
+        updated["post_edit_metrics_error"] = None
         updated["stage"] = VALIDATION_PENDING
         self._persist(updated)
         return updated

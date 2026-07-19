@@ -51,7 +51,7 @@ class GradioFrontendTests(unittest.TestCase):
         self.assertEqual(metrics["color_richness"], 12.0)
         self.assertEqual(metrics["skyline_variance"], 0.04)
 
-    def test_page_builds_without_online_task1_dependency(self) -> None:
+    def test_page_builds_with_post_edit_metrics_adapter(self) -> None:
         demo = gradio_app.build_ui()
         self.assertEqual(type(demo).__name__, "Blocks")
         self.assertGreater(len(demo.blocks), 50)
@@ -59,7 +59,9 @@ class GradioFrontendTests(unittest.TestCase):
         self.assertNotIn("MorphMetricsExtractor", source)
         self.assertNotIn("gr.File(", source)
         self.assertIn("list_scene_choices", source)
-        self.assertIn("PipelineOrchestrator(force_metrics_fallback=True)", source)
+        self.assertIn("PipelineOrchestrator(", source)
+        self.assertIn("post_edit_metrics_extractor=", source)
+        self.assertIn("extract_post_edit_metrics", source)
         self.assertNotIn("app.generation_backend", source)
         self.assertNotIn("SCENE_UNDERSTANDING_ENABLED", source)
 

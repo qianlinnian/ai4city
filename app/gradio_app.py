@@ -36,12 +36,19 @@ from config import (
     FILLED_METRICS_XLSX,
     MORPH_KEYS,
     MORPH_LABELS_ZH,
+    POST_EDIT_METRICS_ENABLED,
     TARGET_IMG_DIR,
 )
+from app.post_edit_metrics import extract_post_edit_metrics
 from pipeline.orchestrator import PipelineOrchestrator
 from utils.scene_data import list_scene_choices, load_scene_bundle
 
-pipe = PipelineOrchestrator(force_metrics_fallback=True)
+pipe = PipelineOrchestrator(
+    force_metrics_fallback=True,
+    post_edit_metrics_extractor=(
+        extract_post_edit_metrics if POST_EDIT_METRICS_ENABLED else None
+    ),
+)
 SESSION: dict = {"state": None, "bundle": None}
 
 # 体验表格列：姓名 + 七项指标
@@ -461,6 +468,7 @@ def step_generate(final_plan):
 
     gen = state["generation"]
     qr = state.get("quality_report") or {}
+    metrics_error = str(state.get("post_edit_metrics_error") or "").strip()
     out_path = gen.get("output_image_path")
     if out_path:
         out_path = str(Path(out_path).resolve())
@@ -475,16 +483,31 @@ def step_generate(final_plan):
         if is_mock
         else "### 生成模式: **Seedream 实网 API**\n"
     )
+    if metrics_error:
+        quality_status = "提取失败（生成图仍已保留）"
+        quality_details = metrics_error
+    elif qr:
+        quality_status = "通过" if qr.get("passed") else "未通过"
+        quality_details = qr.get("details", "")
+    else:
+        quality_status = "尚未计算"
+        quality_details = "未配置生成后形态指标提取器。"
+
     report = (
         f"{mode_line}"
         f"### 输出路径: `{out_path}`（目录 `{TARGET_IMG_DIR}`）\n"
-        f"### 质检: {'通过' if qr.get('passed') else '未通过'}\n"
-        f"{qr.get('details', '')}\n\n"
+        f"### 质检: {quality_status}\n"
+        f"{quality_details}\n\n"
         f"### 实测形态要素\n{_fmt_metrics(qr.get('measured_metrics'))}\n\n"
         f"### 目标形态要素\n{_fmt_metrics(qr.get('target_metrics'))}\n\n"
         f"### 偏差\n```json\n{json.dumps(qr.get('deviations'), ensure_ascii=False, indent=2)}\n```"
     )
-    measured_sliders = _metrics_to_sliders(qr.get("measured_metrics") or {})
+    measured = qr.get("measured_metrics") or {}
+    measured_sliders = (
+        _metrics_to_sliders(measured)
+        if measured
+        else [gr.update() for _ in MORPH_KEYS]
+    )
     # 改造后体感表：按修改前人员预填建议分，便于对照填写
     post_df = _suggest_post_edit_df(state.get("pre_edit_experience") or bundle.get("persons"))
     return out_path, original, report, post_df, *measured_sliders

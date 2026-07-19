@@ -103,6 +103,10 @@ Task 3 当前提供三类可替换场景模板，统一放在 `agents/prompt_tem
 
 该格式遵循[火山引擎 Seedream 4.0–5.0 提示词指南](https://www.volcengine.com/docs/82379/1829186)：使用简洁自然语言明确编辑对象、操作和希望保持不变的部分。复杂编辑优先保持结构清楚并删除重复描述；若一次动作过多，应由专家拆分轮次，而不是堆叠无效风格词。
 
+### Task 4 后的形态复算与质检
+
+Gradio 取得生成图路径后，调用 `app/post_edit_metrics.py`，以既有 `morph_metrics_extractor.py` 复算绿视率、蓝视率、天空可视率、人造物占比、色彩丰富度、边缘密度和天际线变化率；然后调用 `QualityCheckerAgent` 与专家确认的目标值比较。默认配置为本地缓存的 `segformer-b2-ade20k`，可通过 `POST_EDIT_METRICS_MODEL_PROFILE=segformer-b5-ade20k` 切换到 B5。派生分割图、边缘图和天际线图写入 `outputs/post_edit_metrics`，不改写原始图片或数据目录。模型未缓存时默认不会静默下载，并在前端明确报告提取失败；生成图本身仍会保留。
+
 ## LangChain 调用层
 
 - 文本链：`ChatPromptTemplate | ChatOpenAI | StrOutputParser`。

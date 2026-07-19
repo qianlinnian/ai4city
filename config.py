@@ -235,6 +235,23 @@ RAG_EMBEDDING_BASE_URL = os.getenv(
     "RAG_EMBEDDING_BASE_URL", LLM_BASE_URL
 ).strip().rstrip("/")
 
+# ---------- 生成后 Task 1 形态指标复算 ----------
+# 只对生成结果运行既有提取器；派生图和缓存均写入项目 outputs，不改原始数据目录。
+POST_EDIT_METRICS_ENABLED = os.getenv(
+    "POST_EDIT_METRICS_ENABLED", "true"
+).strip().lower() in {"1", "true", "yes"}
+POST_EDIT_METRICS_MODEL_PROFILE = os.getenv(
+    "POST_EDIT_METRICS_MODEL_PROFILE", "segformer-b2-ade20k"
+).strip()
+POST_EDIT_METRICS_DEVICE = os.getenv("POST_EDIT_METRICS_DEVICE", "auto").strip()
+POST_EDIT_METRICS_ALLOW_MODEL_DOWNLOAD = os.getenv(
+    "POST_EDIT_METRICS_ALLOW_MODEL_DOWNLOAD", "false"
+).strip().lower() in {"1", "true", "yes"}
+POST_EDIT_METRICS_OUTPUT_DIR = Path(
+    os.getenv("POST_EDIT_METRICS_OUTPUT_DIR", str(OUTPUT_DIR / "post_edit_metrics"))
+).resolve()
+POST_EDIT_METRICS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
 WORLDLABS_API_KEY = os.getenv("WORLDLABS_API_KEY", "").strip()
 WORLDLABS_BASE_URL = os.getenv("WORLDLABS_BASE_URL", "https://api.worldlabs.ai").rstrip("/")
 # Marble 模型：marble-1.1（默认）/ marble-1.1-plus（更大户外场景，耗更多 credits）

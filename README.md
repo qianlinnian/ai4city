@@ -50,7 +50,7 @@ python run_demo.py path/to/pano.jpg
 ## 数据流
 
 1. 前端从只读后端目录选择全景图和项目大表行，不重复上传原始数据。
-2. Task 1 已离线完成；在线流程直接读取大表中的七项形态基线。
+2. Task 1 的原始图基线仍直接读取大表；Task 4 生成后，前端复用既有 Task 1 提取器对 TargetIMG 重新计算七项形态指标，再与目标值比较。
 3. 全景模块生成概览和四向透视图；Qwen 先输出结构化场景清单。
 4. 前端调节七项体验目标 → **翻译官** → 七项形态目标 → 专家确认。
 5. **制图员** 使用场景清单、形态前后值、RAG 参考和专家建议生成同一份可编辑布局/提示词对象。
@@ -119,6 +119,7 @@ python run_demo.py path/to/pano.jpg
 | 文件 | 职责 |
 |------|------|
 | `rag_provider.py` | `NullRagProvider`、Qwen Embedding 与本地字符 TF-IDF Provider；只读提取 knowledge PDF、保留页码并缓存到项目输出目录 |
+| `app/post_edit_metrics.py` | 生成后指标适配层：复用 `morph_metrics_extractor.py` 对 TargetIMG 计算七项指标，派生图仅写入 `outputs/post_edit_metrics/` |
 | `knowledge_curator.py` | DeepSeek 离线知识整理：Flash 批处理、可选 Pro 复核、原文证据校验和结构化草稿 |
 | `data/mapping_rules.json` | 七项体验→七项形态的基础映射参数（启发式初值，待实验校准） |
 | `data/experience_morph_cases.json` | 旧版非实测案例样例；当前不参与 Task 2/3 计算 |

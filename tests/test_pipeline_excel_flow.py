@@ -168,6 +168,40 @@ class PipelineExcelFlowTests(unittest.TestCase):
         self.assertEqual(state["post_edit_metrics"], modified)
         self.assertIn("green_view", state["quality_report"]["deviations"])
 
+    def test_generation_runs_injected_post_edit_metrics_extractor(self):
+        calls = []
+
+        def extract(image_path):
+            calls.append(Path(image_path))
+            return {**BASELINE, "green_view": 0.27}
+
+        self.pipe.post_edit_metrics_extractor = extract
+        state = self.pipe.start_session(self.image, BASELINE)
+        state = self.pipe.run_translator(state, EXPERIENCE)
+        state = self.pipe.confirm_morph(state)
+        state = self.pipe.confirm_plan(state, state["final_prompt"])
+        state = self.pipe.generate_and_check(state)
+
+        self.assertEqual(state["stage"], VALIDATION_PENDING)
+        self.assertEqual(state["post_edit_metrics"]["green_view"], 0.27)
+        self.assertIsNone(state["post_edit_metrics_error"])
+        self.assertEqual(calls, [self.image])
+
+    def test_generation_records_visible_metrics_extractor_error(self):
+        def extract(_image_path):
+            raise RuntimeError("segmentation model unavailable")
+
+        self.pipe.post_edit_metrics_extractor = extract
+        state = self.pipe.start_session(self.image, BASELINE)
+        state = self.pipe.run_translator(state, EXPERIENCE)
+        state = self.pipe.confirm_morph(state)
+        state = self.pipe.confirm_plan(state, state["final_prompt"])
+        state = self.pipe.generate_and_check(state)
+
+        self.assertEqual(state["stage"], GENERATED)
+        self.assertIsNone(state["quality_report"])
+        self.assertIn("segmentation model unavailable", state["post_edit_metrics_error"])
+
     def test_baseline_requires_all_seven_valid_values(self):
         incomplete = dict(BASELINE)
         incomplete.pop("sky_view")
