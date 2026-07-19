@@ -188,6 +188,29 @@ class PipelineExcelFlowTests(unittest.TestCase):
         self.assertIn("最终执行空间布局方案", markdown)
         self.assertIn("Expert-approved final plan", markdown)
 
+    def test_progress_callbacks_report_pipeline_stages(self):
+        events = []
+        callback = lambda fraction, message: events.append((fraction, message))
+        state = self.pipe.start_session(self.image, BASELINE)
+        state = self.pipe.run_translator(
+            state, EXPERIENCE, progress_callback=callback
+        )
+        self.assertTrue(any("Excel 基线" in message for _, message in events))
+        self.assertTrue(any("翻译官完成" in message for _, message in events))
+
+        events.clear()
+        state = self.pipe.confirm_morph(state, progress_callback=callback)
+        self.assertTrue(any("制图员正在构建" in message for _, message in events))
+        self.assertTrue(any("制图员完成" in message for _, message in events))
+
+        events.clear()
+        state = self.pipe.confirm_plan(
+            state, state["final_prompt"], progress_callback=callback
+        )
+        state = self.pipe.generate_and_check(state, progress_callback=callback)
+        self.assertTrue(any("Seedream" in message for _, message in events))
+        self.assertEqual(events[-1][0], 1.0)
+
     def test_external_post_edit_metrics_create_quality_report(self):
         state = self._through_generation()
         modified = {**BASELINE, "green_view": 0.27}

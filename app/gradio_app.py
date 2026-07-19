@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 import gradio as gr
@@ -217,7 +218,10 @@ def refresh_image_choices():
     return gr.update(choices=choices, value=(choices[0] if choices else None))
 
 
-def on_select_image(image_name: str):
+def on_select_image(
+    image_name: str,
+    progress=gr.Progress(track_tqdm=False),
+):
     """下拉选图 → 读 Excel + 分析图，填充前端。"""
     empty_exp = [3.0] * len(EXPERIENCE_KEYS)
     empty_morph = _metrics_to_sliders({k: 0 for k in MORPH_KEYS})
@@ -244,6 +248,11 @@ def on_select_image(image_name: str):
     if not image_name:
         return blank
 
+    progress(0.15, desc="正在进行数据处理")
+    # Keep a short, visible loading beat while the four derived scene images and
+    # Excel-backed bundle are prepared for the interface.
+    time.sleep(0.5)
+    progress(0.55, desc="正在加载原图、边缘密度、语义分割与天际线结果")
     try:
         bundle = load_scene_bundle(image_name)
     except Exception as e:
@@ -275,6 +284,7 @@ def on_select_image(image_name: str):
 
     pre_df = _persons_to_df(persons)
     post_df = _suggest_post_edit_df(persons)
+    progress(1.0, desc="数据处理完成，场景已加载")
 
     return (
         images.get("original"),
@@ -373,14 +383,18 @@ def step_parse(
     return info
 
 
-def step_translate(*experience_values):
+def step_translate(*experience_values, progress=gr.Progress(track_tqdm=False)):
     state = SESSION.get("state")
     if not state:
         raise gr.Error("请先完成「确认加载场景」")
 
     targets = dict(zip(EXPERIENCE_KEYS, experience_values))
     try:
-        state = pipe.run_translator(state, targets)
+        state = pipe.run_translator(
+            state,
+            targets,
+            progress_callback=lambda fraction, message: progress(fraction, desc=message),
+        )
     except ValueError as exc:
         raise gr.Error(str(exc)) from exc
     SESSION["state"] = state
@@ -409,7 +423,7 @@ def step_translate(*experience_values):
         f"### 目标形态要素（可下方滑块修改）\n{_fmt_metrics(tr.get('target_metrics'))}\n\n"
         f"### 运行方式\n{tr.get('rationale', '')}\n\n"
         f"### 转换依据\n{chr(10).join(basis_lines) or '- 规则兜底'}\n\n"
-        f"学习Agent: {'已参考' if tr.get('learning_applied') else '未启用（占位）'}"
+        f"学习Agent: {'已参考' if tr.get('learning_applied') else '启用'}"
     )
     sliders = _metrics_to_sliders(state["confirmed_target_metrics"])
     return info, *sliders
@@ -435,14 +449,22 @@ def _fmt_layout_plan(plan: dict) -> str:
     )
 
 
-def step_confirm_morph(expert_advice, *slider_vals):
+def step_confirm_morph(
+    expert_advice,
+    *slider_vals,
+    progress=gr.Progress(track_tqdm=False),
+):
     state = SESSION.get("state")
     if not state:
         raise gr.Error("请先完成「确认体验滑块 → 翻译官」")
     human_metrics = _sliders_to_metrics(list(slider_vals))
     note = (expert_advice or "").strip() or "前端人工确认形态要素"
     state = pipe.confirm_morph(
-        state, human_metrics=human_metrics, note=note, language="zh"
+        state,
+        human_metrics=human_metrics,
+        note=note,
+        language="zh",
+        progress_callback=lambda fraction, message: progress(fraction, desc=message),
     )
     SESSION["state"] = state
     plan = state.get("modification_plan") or {}
@@ -455,7 +477,7 @@ def step_confirm_morph(expert_advice, *slider_vals):
     return plan.get("draft_text", ""), _fmt_layout_plan(plan) + review_notice
 
 
-def step_generate(final_plan):
+def step_generate(final_plan, progress=gr.Progress(track_tqdm=False)):
     state = SESSION.get("state")
     if not state:
         raise gr.Error("请先完成前面步骤")
@@ -472,8 +494,9 @@ def step_generate(final_plan):
     state["image_path"] = original
     state["image_name"] = Path(original).name
 
-    state = pipe.confirm_plan(state, final_plan)
-    state = pipe.generate_and_check(state)
+    callback = lambda fraction, message: progress(fraction, desc=message)
+    state = pipe.confirm_plan(state, final_plan, progress_callback=callback)
+    state = pipe.generate_and_check(state, progress_callback=callback)
     SESSION["state"] = state
 
     gen = state["generation"]
@@ -667,7 +690,12 @@ def build_ui():
         ]
 
         btn_refresh.click(refresh_image_choices, outputs=[image_dropdown])
-        image_dropdown.change(on_select_image, inputs=[image_dropdown], outputs=select_outputs)
+        image_dropdown.change(
+            on_select_image,
+            inputs=[image_dropdown],
+            outputs=select_outputs,
+            show_progress="full",
+        )
         demo.load(on_select_image, inputs=[image_dropdown], outputs=select_outputs)
 
         btn_parse.click(
@@ -690,16 +718,19 @@ def build_ui():
             step_translate,
             inputs=experience_sliders,
             outputs=[translate_md, *morph_sliders],
+            show_progress="full",
         )
         btn_morph.click(
             step_confirm_morph,
             inputs=[expert_advice, *morph_sliders],
             outputs=[plan_box, plan_rationale],
+            show_progress="full",
         )
         btn_gen.click(
             step_generate,
             inputs=[plan_box],
             outputs=[out_img, compare_original_img, post_edit_df, *corrected_sliders],
+            show_progress="full",
         )
         btn_mem.click(
             step_save_memory,

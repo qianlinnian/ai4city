@@ -56,6 +56,7 @@ class GeneratorProtocol(Protocol):
 
 GeneratorCallable = Callable[[str | Path, str], GenerationResult]
 PostEditMetricsExtractor = Callable[[str | Path], Mapping[str, float]]
+ProgressCallback = Callable[[float, str], None]
 
 
 class PipelineOrchestrator:
@@ -160,10 +161,14 @@ class PipelineOrchestrator:
         experience_targets: dict,
         experience_records: list[dict] | None = None,
         experience_baseline: dict | None = None,
+        progress_callback: ProgressCallback | None = None,
     ) -> dict[str, Any]:
         """Confirm experience targets and produce morphology targets for review."""
 
         self._require_stage(state, INPUT_PENDING, MORPH_REVIEW)
+        self._notify_progress(
+            progress_callback, 0.08, "已读取原始全景图、Excel 基线与多人体验评分"
+        )
         updated = deepcopy(state)
         targets = ExperienceTargets(**experience_targets).as_dict()
         records = (
@@ -177,6 +182,9 @@ class PipelineOrchestrator:
         is_revision = bool(previous_translation and previous_experience_targets)
         prompt_variant = "revision" if is_revision else "initial"
         if not updated.get("scene_understanding"):
+            self._notify_progress(
+                progress_callback, 0.25, "正在解析全景场景：道路、绿化、建筑与基础设施"
+            )
             inventory = self.scene_understander.run(
                 updated.get("image_path", ""),
                 image_id=Path(updated.get("image_path", "")).stem,
@@ -185,6 +193,10 @@ class PipelineOrchestrator:
             updated["panorama_views"] = [
                 view.model_dump() for view in inventory.view_metadata
             ]
+        self._notify_progress(
+            progress_callback, 0.48, "正在准备体验目标、场景信息与相似案例检索"
+        )
+        self._notify_progress(progress_callback, 0.65, "翻译官正在生成七项形态指标目标")
         result = self.translator.run(
             experience_targets=targets,
             baseline_metrics=updated["baseline_metrics"],
@@ -209,7 +221,9 @@ class PipelineOrchestrator:
             getattr(self.translator, "last_reasonableness_report", {})
         )
         updated["stage"] = MORPH_REVIEW
+        self._notify_progress(progress_callback, 0.92, "正在检查指标边界、方向与场景合理性")
         self._persist(updated)
+        self._notify_progress(progress_callback, 1.0, "翻译官完成，等待专家确认形态目标")
         return updated
 
     def confirm_morph(
@@ -218,10 +232,12 @@ class PipelineOrchestrator:
         human_metrics: dict | None = None,
         note: str = "",
         language: str = "en",
+        progress_callback: ProgressCallback | None = None,
     ) -> dict[str, Any]:
         """Confirm morphology targets and produce a structured layout plan."""
 
         self._require_stage(state, MORPH_REVIEW)
+        self._notify_progress(progress_callback, 0.08, "正在记录专家确认的形态指标与意见")
         updated = deepcopy(state)
         if not updated.get("morph_translation"):
             raise ValueError("缺少翻译官结果，请先运行翻译官")
@@ -243,6 +259,10 @@ class PipelineOrchestrator:
             session_id=updated["session_id"],
             notes=note,
         )
+        self._notify_progress(progress_callback, 0.35, "正在检索场景规则与相似改造案例")
+        self._notify_progress(
+            progress_callback, 0.58, "制图员正在构建对象、位置、数量与空间关系"
+        )
         plan = self.cartographer.run(
             baseline_metrics=updated["baseline_metrics"],
             target_metrics=updated["confirmed_target_metrics"],
@@ -259,11 +279,18 @@ class PipelineOrchestrator:
         updated["cartographer_scene_profile"] = plan.scene_prompt_profile
         updated["final_prompt"] = plan.draft_text
         updated["stage"] = PLAN_REVIEW
+        self._notify_progress(progress_callback, 0.86, "正在写入场景方案 Markdown 复核记录")
         self._append_review_record(updated, event="制图员方案草案")
         self._persist(updated)
+        self._notify_progress(progress_callback, 1.0, "制图员完成，等待专家确认最终空间布局方案")
         return updated
 
-    def confirm_plan(self, state: dict[str, Any], human_plan: str) -> dict[str, Any]:
+    def confirm_plan(
+        self,
+        state: dict[str, Any],
+        human_plan: str,
+        progress_callback: ProgressCallback | None = None,
+    ) -> dict[str, Any]:
         """Confirm the editable natural-language generation prompt."""
 
         self._require_stage(state, PLAN_REVIEW)
@@ -271,6 +298,7 @@ class PipelineOrchestrator:
         if not clean_plan:
             raise ValueError("空间布局方案不能为空")
         updated = deepcopy(state)
+        self._notify_progress(progress_callback, 0.12, "正在保存专家确认的最终空间布局方案")
         if updated.get("modification_plan"):
             original = ModificationPlan(**updated["modification_plan"])
             edited = self.cartographer.apply_human_edit(original, clean_plan)
@@ -281,14 +309,17 @@ class PipelineOrchestrator:
             updated["final_prompt"] = clean_plan
             updated["expert_plan_edited"] = True
         updated["stage"] = PLAN_CONFIRMED
+        self._notify_progress(progress_callback, 0.36, "正在追加专家确认轮次到 Markdown 复核记录")
         self._append_review_record(updated, event="专家确认最终方案")
         self._persist(updated)
+        self._notify_progress(progress_callback, 1.0, "最终方案已确认，即将进入图像编辑")
         return updated
 
     def generate_and_check(
         self,
         state: dict[str, Any],
         modified_metrics: Mapping[str, float] | None = None,
+        progress_callback: ProgressCallback | None = None,
     ) -> dict[str, Any]:
         """Run the generator, then calculate/record the seven post-edit metrics.
 
@@ -302,18 +333,25 @@ class PipelineOrchestrator:
             raise RuntimeError(
                 "未配置图像生成器；请注入 generator，或由前端生成后调用 record_generation"
             )
+        self._notify_progress(progress_callback, 0.08, "正在准备原始全景图与专家确认的编辑方案")
+        self._notify_progress(progress_callback, 0.22, "正在调用 Seedream 进行全景图编辑")
         result = self._run_generator(state["image_path"], state.get("final_prompt") or "")
         updated = self.record_generation(state, result, modified_metrics=modified_metrics)
         if modified_metrics is not None or self.post_edit_metrics_extractor is None:
+            self._notify_progress(progress_callback, 1.0, "图像编辑完成")
             return updated
+        self._notify_progress(progress_callback, 0.72, "图像编辑完成，正在复算生成图的七项形态指标")
         try:
             measured = self.post_edit_metrics_extractor(result.output_image_path)
         except Exception as exc:
             failed = deepcopy(updated)
             failed["post_edit_metrics_error"] = str(exc)
             self._persist(failed)
+            self._notify_progress(progress_callback, 1.0, "图像已生成，但七项指标提取未完成")
             return failed
-        return self.record_quality_metrics(updated, measured)
+        result_state = self.record_quality_metrics(updated, measured)
+        self._notify_progress(progress_callback, 1.0, "生成与七项指标比对完成")
+        return result_state
 
     def record_generation(
         self,
@@ -449,6 +487,13 @@ class PipelineOrchestrator:
             json.dumps(dict(state), ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+
+    @staticmethod
+    def _notify_progress(
+        callback: ProgressCallback | None, fraction: float, message: str
+    ) -> None:
+        if callback is not None:
+            callback(max(0.0, min(1.0, float(fraction))), message)
 
     def _append_review_record(self, state: dict[str, Any], *, event: str) -> None:
         """Persist a Markdown audit trail separate from the session JSON."""
