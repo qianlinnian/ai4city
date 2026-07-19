@@ -22,6 +22,7 @@ import json
 import os
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from html import escape
 from pathlib import Path
 
@@ -98,17 +99,28 @@ AGENT_LOADER_CSS = """
     border-radius: 50%;
     animation: ai4city-agent-spin 0.8s linear infinite;
 }
+#agent-loader .agent-loader-elapsed {
+    margin-left: 2px;
+    color: #c2410c;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+}
 @keyframes ai4city-agent-spin { to { transform: rotate(360deg); } }
 """
 
 
-def _show_agent_loader(message: str):
+def _show_agent_loader(message: str, elapsed_seconds: int | None = None):
+    elapsed = ""
+    if elapsed_seconds is not None:
+        minutes, seconds = divmod(max(0, elapsed_seconds), 60)
+        elapsed = f'<span class="agent-loader-elapsed">已耗时 {minutes:02d}:{seconds:02d}</span>'
     return gr.update(
         value=(
             '<div class="agent-loader-backdrop">'
             '<div class="agent-loader-card" role="status" aria-live="polite">'
             '<span class="agent-loader-spinner" aria-hidden="true"></span>'
-            f"<span>{escape(message)}</span></div>"
+            f"<span>{escape(message)}</span>{elapsed}</div>"
             "</div>"
         ),
         visible=True,
@@ -123,12 +135,30 @@ def _unchanged_outputs(count: int) -> tuple:
     return tuple(gr.update() for _ in range(count))
 
 
-def _agent_loading_updates(output_count: int):
-    """Yield the fixed presentation states before the final pipeline call."""
+def _run_with_agent_loader(output_count: int, work):
+    """Run work after staged narration and refresh its elapsed time every second."""
+    started_at = time.monotonic()
+
+    def loading_update(message: str):
+        elapsed = int(time.monotonic() - started_at)
+        return (*_unchanged_outputs(output_count), _show_agent_loader(message, elapsed))
+
     for message in AGENT_LOADING_STEPS[:-1]:
-        yield (*_unchanged_outputs(output_count), _show_agent_loader(message))
-        time.sleep(5)
-    yield (*_unchanged_outputs(output_count), _show_agent_loader(AGENT_LOADING_STEPS[-1]))
+        for _ in range(5):
+            yield loading_update(message)
+            time.sleep(1)
+
+    try:
+        with ThreadPoolExecutor(max_workers=1, thread_name_prefix="ai4city-agent") as executor:
+            future = executor.submit(work)
+            yield loading_update(AGENT_LOADING_STEPS[-1])
+            while not future.done():
+                time.sleep(1)
+                yield loading_update(AGENT_LOADING_STEPS[-1])
+            return future.result()
+    except Exception:
+        yield (*_unchanged_outputs(output_count), _hide_agent_loader())
+        raise
 
 # 体验表格列：姓名 + 七项指标
 _EXP_NAME_COL = "姓名"
@@ -466,18 +496,13 @@ def step_translate(*experience_values):
         raise gr.Error("请先完成「确认加载场景」")
 
     targets = dict(zip(EXPERIENCE_KEYS, experience_values))
-    yield from _agent_loading_updates(1 + len(MORPH_KEYS))
     try:
-        state = pipe.run_translator(
-            state,
-            targets,
+        state = yield from _run_with_agent_loader(
+            1 + len(MORPH_KEYS),
+            lambda: pipe.run_translator(state, targets),
         )
     except ValueError as exc:
-        yield (*_unchanged_outputs(1 + len(MORPH_KEYS)), _hide_agent_loader())
         raise gr.Error(str(exc)) from exc
-    except Exception:
-        yield (*_unchanged_outputs(1 + len(MORPH_KEYS)), _hide_agent_loader())
-        raise
     SESSION["state"] = state
 
     tr = state["morph_translation"]
@@ -539,17 +564,15 @@ def step_confirm_morph(
         raise gr.Error("请先完成「确认体验滑块 → 翻译官」")
     human_metrics = _sliders_to_metrics(list(slider_vals))
     note = (expert_advice or "").strip() or "前端人工确认形态要素"
-    yield from _agent_loading_updates(2)
-    try:
-        state = pipe.confirm_morph(
+    state = yield from _run_with_agent_loader(
+        2,
+        lambda: pipe.confirm_morph(
             state,
             human_metrics=human_metrics,
             note=note,
             language="zh",
-        )
-    except Exception:
-        yield (*_unchanged_outputs(2), _hide_agent_loader())
-        raise
+        ),
+    )
     SESSION["state"] = state
     plan = state.get("modification_plan") or {}
     review_path = state.get("review_record_path") or ""
@@ -579,13 +602,10 @@ def step_generate(final_plan):
     state["image_name"] = Path(original).name
 
     output_count = 3 + len(MORPH_KEYS)
-    yield from _agent_loading_updates(output_count)
-    try:
-        state = pipe.confirm_plan(state, final_plan)
-        state = pipe.generate_and_check(state)
-    except Exception:
-        yield (*_unchanged_outputs(output_count), _hide_agent_loader())
-        raise
+    state = yield from _run_with_agent_loader(
+        output_count,
+        lambda: pipe.generate_and_check(pipe.confirm_plan(state, final_plan)),
+    )
     SESSION["state"] = state
 
     gen = state["generation"]
