@@ -281,8 +281,9 @@ SEEDREAM_API_KEY = os.getenv("SEEDREAM_API_KEY", os.getenv("ARK_API_KEY", "")).s
 SEEDREAM_BASE_URL = os.getenv(
     "SEEDREAM_BASE_URL", "https://ark.cn-beijing.volces.com"
 ).rstrip("/")
-SEEDREAM_MODEL = os.getenv("SEEDREAM_MODEL", "doubao-seedream-5-0-260128").strip()
-# 2K / 3K / 4K / 2048x1024 / auto（auto=按原图比例估算）
+# Seedream 5.0 Pro（默认）；lite 示例: doubao-seedream-5-0-260128
+SEEDREAM_MODEL = os.getenv("SEEDREAM_MODEL", "doubao-seedream-5-0-pro-260628").strip()
+# Pro 常用 1K / 2K；lite 可用 2K / 3K；也可 2048x1024 / auto
 SEEDREAM_SIZE = os.getenv("SEEDREAM_SIZE", "2K").strip()
 SEEDREAM_RESPONSE_FORMAT = os.getenv("SEEDREAM_RESPONSE_FORMAT", "url").strip()
 SEEDREAM_WATERMARK = os.getenv("SEEDREAM_WATERMARK", "false").strip().lower() in (

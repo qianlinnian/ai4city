@@ -11,7 +11,8 @@
   POST https://ark.cn-beijing.volces.com/api/v3/images/generations
   - 鉴权: Authorization: Bearer {ARK_API_KEY}
   - 图生图: 传入 prompt + image（URL 或 base64 data URI）
-  - 模型: doubao-seedream-5-0-260128（Seedream 5.0 lite）
+  - 模型: doubao-seedream-5-0-pro-260628（Seedream 5.0 Pro）
+  - 注意: Pro 不支持 sequential_image_generation（组图参数，仅 lite/4.x 有）
 
 【输入】
   - image_name: str   图片完整文件名（在 assets/ 下按文件名查找）
@@ -265,13 +266,18 @@ class SeedreamAgent:
         }
 
     @staticmethod
+    def _is_pro_model(model: str) -> bool:
+        """Seedream 5.0 Pro 模型 ID 含 pro；与 lite/4.x 参数集不同。"""
+        return "pro" in (model or "").lower()
+
+    @staticmethod
     def _prepare_image_bytes(
         image_path: Path,
         max_bytes: int = 9 * 1024 * 1024,
     ) -> tuple[bytes, str]:
         """
         准备上传字节。超过 max_bytes 时自动 JPEG 压缩/缩小，
-        避免 Seedream 10MB 限制导致误回退 MOCK。
+        避免 Seedream 上传体积限制导致误回退 MOCK。
         返回 (bytes, mime_subtype) 如 (..., \"jpeg\")。
         """
         from io import BytesIO
@@ -331,9 +337,12 @@ class SeedreamAgent:
             f"无法将图片压缩到 ≤{max_bytes/1024/1024:.0f}MB: {image_path.name}"
         )
 
-    @classmethod
-    def _image_to_data_uri(cls, image_path: Path) -> str:
-        raw, mime_ext = cls._prepare_image_bytes(image_path)
+    def _image_to_data_uri(self, image_path: Path) -> str:
+        # Pro 单图上限约 30MB；lite/4.x 约 10MB。留余量避免边界失败。
+        max_bytes = (
+            28 * 1024 * 1024 if self._is_pro_model(self.model) else 9 * 1024 * 1024
+        )
+        raw, mime_ext = self._prepare_image_bytes(image_path, max_bytes=max_bytes)
         b64 = base64.b64encode(raw).decode("ascii")
         return f"data:image/{mime_ext};base64,{b64}"
 
@@ -371,16 +380,19 @@ class SeedreamAgent:
         image_ref = self._image_to_data_uri(image_path)
         resolved_size = self._resolve_size(image_path, size)
 
+        # Pro 图生图仅需 model/prompt/image/size 等；勿传 sequential_*（会 400）。
+        # lite / 4.x 才支持组图参数，单图时显式 disabled。
         payload: dict[str, Any] = {
             "model": self.model,
             "prompt": prompt,
             "image": image_ref,
-            "sequential_image_generation": "disabled",
             "response_format": response_format,
             "size": resolved_size,
             "stream": False,
             "watermark": watermark,
         }
+        if not self._is_pro_model(self.model):
+            payload["sequential_image_generation"] = "disabled"
 
         url = f"{self.base_url}{SEEDREAM_ENDPOINT}"
         print(f"[Seedream] 请求 model={self.model}, size={resolved_size}")

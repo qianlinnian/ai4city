@@ -19,6 +19,7 @@ Gradio 前端（人机协同主界面）v2
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -37,7 +38,6 @@ from config import (
     MORPH_KEYS,
     MORPH_LABELS_ZH,
     POST_EDIT_METRICS_ENABLED,
-    TARGET_IMG_DIR,
 )
 from app.post_edit_metrics import extract_post_edit_metrics
 from pipeline.orchestrator import PipelineOrchestrator
@@ -472,40 +472,14 @@ def step_generate(final_plan):
 
     gen = state["generation"]
     qr = state.get("quality_report") or {}
-    metrics_error = str(state.get("post_edit_metrics_error") or "").strip()
     out_path = gen.get("output_image_path")
     if out_path:
         out_path = str(Path(out_path).resolve())
         if not Path(out_path).is_file():
             raise gr.Error(f"生成文件不存在，无法展示: {out_path}")
 
-    is_mock = bool(gen.get("mock"))
-    fallback_err = (gen.get("raw") or {}).get("fallback_error")
-    mode_line = (
-        f"### 生成模式: **MOCK 演示**（非真实 Seedream）\n"
-        f"回退原因: `{fallback_err or (gen.get('raw') or {}).get('note', '')}`\n"
-        if is_mock
-        else "### 生成模式: **Seedream 实网 API**\n"
-    )
-    if metrics_error:
-        quality_status = "提取失败（生成图仍已保留）"
-        quality_details = metrics_error
-    elif qr:
-        quality_status = "通过" if qr.get("passed") else "未通过"
-        quality_details = qr.get("details", "")
-    else:
-        quality_status = "尚未计算"
-        quality_details = "未配置生成后形态指标提取器。"
-
-    report = (
-        f"{mode_line}"
-        f"### 输出路径: `{out_path}`（目录 `{TARGET_IMG_DIR}`）\n"
-        f"### 质检: {quality_status}\n"
-        f"{quality_details}\n\n"
-        f"### 实测形态要素\n{_fmt_metrics(qr.get('measured_metrics'))}\n\n"
-        f"### 目标形态要素\n{_fmt_metrics(qr.get('target_metrics'))}\n\n"
-        f"### 偏差\n```json\n{json.dumps(qr.get('deviations'), ensure_ascii=False, indent=2)}\n```"
-    )
+    # Task 4 branch keeps the generation UI concise: use measured values only
+    # to prefill correction sliders, without a separate textual quality report.
     measured = qr.get("measured_metrics") or {}
     measured_sliders = (
         _metrics_to_sliders(measured)
@@ -514,7 +488,7 @@ def step_generate(final_plan):
     )
     # 改造后体感表：按修改前人员预填建议分，便于对照填写
     post_df = _suggest_post_edit_df(state.get("pre_edit_experience") or bundle.get("persons"))
-    return out_path, original, report, post_df, *measured_sliders
+    return out_path, original, post_df, *measured_sliders
 
 
 def step_save_memory(score, notes, post_edit_df, *corrected_sliders):
@@ -633,7 +607,7 @@ def build_ui():
             lines=8,
         )
         plan_rationale = gr.Markdown("")
-        btn_gen = gr.Button("④ 确认方案 → Seedream 文生图 + 质检", variant="primary")
+        btn_gen = gr.Button("④ 确认方案 → Seedream 文生图", variant="primary")
 
         gr.Markdown("### 改造前后对比")
         with gr.Row():
@@ -641,7 +615,6 @@ def build_ui():
             compare_original_img = gr.Image(
                 label="原图对照（改造前）", type="filepath", height=360
             )
-        quality_md = gr.Markdown("质检报告将显示在这里")
 
         gr.Markdown("### 改造后多人体验（表格填写，1–5 分）+ 指标纠偏")
         post_edit_df = _make_experience_dataframe(
@@ -720,7 +693,7 @@ def build_ui():
         btn_gen.click(
             step_generate,
             inputs=[plan_box],
-            outputs=[out_img, compare_original_img, quality_md, post_edit_df, *corrected_sliders],
+            outputs=[out_img, compare_original_img, post_edit_df, *corrected_sliders],
         )
         btn_mem.click(
             step_save_memory,
@@ -734,7 +707,8 @@ def build_ui():
 if __name__ == "__main__":
     demo = build_ui()
     demo.launch(
-        server_name="127.0.0.1",
-        server_port=7860,
+        server_name=os.getenv("GRADIO_SERVER_NAME", "127.0.0.1"),
+        server_port=int(os.getenv("GRADIO_SERVER_PORT", "7860")),
         share=False,
     )
+
