@@ -25,6 +25,8 @@ from pathlib import Path
 import gradio as gr
 import pandas as pd
 
+import os
+
 _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -36,7 +38,6 @@ from config import (
     FILLED_METRICS_XLSX,
     MORPH_KEYS,
     MORPH_LABELS_ZH,
-    TARGET_IMG_DIR,
 )
 from pipeline.orchestrator import PipelineOrchestrator
 from utils.scene_data import list_scene_choices, load_scene_bundle
@@ -463,27 +464,11 @@ def step_generate(final_plan):
         if not Path(out_path).is_file():
             raise gr.Error(f"生成文件不存在，无法展示: {out_path}")
 
-    is_mock = bool(gen.get("mock"))
-    fallback_err = (gen.get("raw") or {}).get("fallback_error")
-    mode_line = (
-        f"### 生成模式: **MOCK 演示**（非真实 Seedream）\n"
-        f"回退原因: `{fallback_err or (gen.get('raw') or {}).get('note', '')}`\n"
-        if is_mock
-        else "### 生成模式: **Seedream 实网 API**\n"
-    )
-    report = (
-        f"{mode_line}"
-        f"### 输出路径: `{out_path}`（目录 `{TARGET_IMG_DIR}`）\n"
-        f"### 质检: {'通过' if qr.get('passed') else '未通过'}\n"
-        f"{qr.get('details', '')}\n\n"
-        f"### 实测形态要素\n{_fmt_metrics(qr.get('measured_metrics'))}\n\n"
-        f"### 目标形态要素\n{_fmt_metrics(qr.get('target_metrics'))}\n\n"
-        f"### 偏差\n```json\n{json.dumps(qr.get('deviations'), ensure_ascii=False, indent=2)}\n```"
-    )
+    # 纠偏滑块仍用后台实测值预填；前端不再展示质检报告
     measured_sliders = _metrics_to_sliders(qr.get("measured_metrics") or {})
     # 改造后体感表：按修改前人员预填建议分，便于对照填写
     post_df = _suggest_post_edit_df(state.get("pre_edit_experience") or bundle.get("persons"))
-    return out_path, original, report, post_df, *measured_sliders
+    return out_path, original, post_df, *measured_sliders
 
 
 def step_save_memory(score, notes, post_edit_df, *corrected_sliders):
@@ -599,7 +584,7 @@ def build_ui():
 
         plan_box = gr.Textbox(label="人工干预②：自然语言修改方案（可润色）", lines=8)
         plan_rationale = gr.Markdown("")
-        btn_gen = gr.Button("④ 确认方案 → Seedream 文生图 + 质检", variant="primary")
+        btn_gen = gr.Button("④ 确认方案 → Seedream 文生图", variant="primary")
 
         gr.Markdown("### 改造前后对比")
         with gr.Row():
@@ -607,7 +592,6 @@ def build_ui():
             compare_original_img = gr.Image(
                 label="原图对照（改造前）", type="filepath", height=360
             )
-        quality_md = gr.Markdown("质检报告将显示在这里")
 
         gr.Markdown("### 改造后多人体验（表格填写，1–5 分）+ 指标纠偏")
         post_edit_df = _make_experience_dataframe(
@@ -686,7 +670,7 @@ def build_ui():
         btn_gen.click(
             step_generate,
             inputs=[plan_box],
-            outputs=[out_img, compare_original_img, quality_md, post_edit_df, *corrected_sliders],
+            outputs=[out_img, compare_original_img, post_edit_df, *corrected_sliders],
         )
         btn_mem.click(
             step_save_memory,
@@ -704,3 +688,5 @@ if __name__ == "__main__":
         server_port=7860,
         share=False,
     )
+
+
