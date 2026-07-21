@@ -50,6 +50,7 @@ import copy
 import json
 import math
 import sys
+import time
 from pathlib import Path
 from statistics import median
 from typing import Any
@@ -94,6 +95,7 @@ class TranslatorAgent:
         # 根据 RAG_ENABLED 选择本地检索或显式关闭 Provider，也支持测试注入。
         self.rag_provider = rag_provider or build_default_rag_provider()
         self.last_reasonableness_report: dict[str, Any] = {}
+        self.last_timing: dict[str, float] = {}
 
     def run(
         self,
@@ -108,6 +110,7 @@ class TranslatorAgent:
         previous_experience_targets: dict | None = None,
         previous_target_metrics: dict | None = None,
     ) -> MorphTranslationResult:
+        started_at = time.perf_counter()
         if prompt_variant not in {"initial", "revision"}:
             raise ValueError("prompt_variant 必须是 initial 或 revision")
         if isinstance(experience_targets, ExperienceTargets):
@@ -129,12 +132,15 @@ class TranslatorAgent:
             scene_payload = scene_understanding.compact_for_prompt()
         else:
             scene_payload = dict(scene_understanding or {})
+        rag_started_at = time.perf_counter()
         rag_context = self._retrieve_optional_rag(
             records,
             targets,
             morph_base,
             scene_context,
         )
+        rag_seconds = time.perf_counter() - rag_started_at
+        model_started_at = time.perf_counter()
         target = self._generate_via_prompt(
             records=records,
             targets=targets,
@@ -147,6 +153,7 @@ class TranslatorAgent:
             previous_experience_targets=previous_experience_targets,
             previous_target_metrics=previous_target_metrics,
         )
+        model_seconds = time.perf_counter() - model_started_at
 
         if target is not None:
             conversion_basis = [
@@ -192,7 +199,7 @@ class TranslatorAgent:
                 TranslationEvidence(
                     method="rag",
                     reference_id=str(item.get("chunk_id") or item.get("id", "")),
-                    summary="本地RAG提供给Prompt的非指令性参考条目",
+                    summary="本地RAG提供的参考条目",
                     score=item.get("score"),
                 )
                 for item in rag_context
@@ -200,7 +207,7 @@ class TranslatorAgent:
 
         delta = {k: round(target[k] - morph_base[k], 4) for k in MORPH_KEYS}
 
-        return MorphTranslationResult(
+        result = MorphTranslationResult(
             baseline_metrics=MorphMetrics(**{k: morph_base[k] for k in MORPH_KEYS}),
             target_metrics=MorphMetrics(**{k: target[k] for k in MORPH_KEYS}),
             delta_from_baseline=delta,
@@ -218,6 +225,16 @@ class TranslatorAgent:
             learning_applied=False,
             prompt_variant=prompt_variant,
         )
+        self.last_timing = {
+            "rag_seconds": round(rag_seconds, 3),
+            "llm_prompt_and_parse_seconds": round(model_seconds, 3),
+            "postprocess_seconds": round(
+                max(0.0, time.perf_counter() - started_at - rag_seconds - model_seconds),
+                3,
+            ),
+            "total_seconds": round(time.perf_counter() - started_at, 3),
+        }
+        return result
 
     def apply_human_override(
         self,

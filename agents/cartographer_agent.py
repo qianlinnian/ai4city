@@ -48,6 +48,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+import time
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -86,6 +87,8 @@ class CartographerAgent:
         self.kb = knowledge_base or default_kb
         # 根据 RAG_ENABLED 选择本地检索或显式关闭 Provider，也支持测试注入。
         self.rag_provider = rag_provider or build_default_rag_provider()
+        # Runtime diagnostics only; never affects the generated plan.
+        self.last_timing: dict[str, float] = {}
 
     def run(
         self,
@@ -100,6 +103,7 @@ class CartographerAgent:
         scene_understanding: dict | PanoramaSceneInventory | None = None,
         scene_type: str = "",
     ) -> ModificationPlan:
+        started_at = time.perf_counter()
         exp_base = normalize_experience_values(experience_baseline)
         exp_targets = normalize_experience_values(experience_targets)
         if isinstance(scene_understanding, PanoramaSceneInventory):
@@ -108,6 +112,7 @@ class CartographerAgent:
             scene_payload = dict(scene_understanding or {})
         scene_profile = resolve_scene_prompt_profile(scene_type, scene_context)
         refs: list[dict] = []
+        rag_started_at = time.perf_counter()
         if self.rag_provider is not None and getattr(
             self.rag_provider, "enabled", True
         ) is not False:
@@ -132,6 +137,7 @@ class CartographerAgent:
             except Exception as exc:
                 print(f"[Cartographer] RAG检索失败，按空上下文继续: {exc}")
 
+        rag_seconds = time.perf_counter() - rag_started_at
         hints = self._build_layout_hints(
             baseline_metrics,
             target_metrics,
@@ -151,6 +157,7 @@ class CartographerAgent:
             scene_profile,
         )
         system_prompt = cartographer_system_prompt(scene_profile)
+        model_started_at = time.perf_counter()
         # 多图理解已形成结构化清单时，不重复上传图片；旧调用仍保留单图兼容。
         if scene_payload.get("status") == "ok":
             llm_text = llm_client.chat(system_prompt, user)
@@ -161,6 +168,7 @@ class CartographerAgent:
                 else llm_client.chat(system_prompt, user)
             )
         llm_plan = self._parse_llm_plan(llm_text)
+        llm_prompt_and_parse_seconds = time.perf_counter() - model_started_at
         fallback = self._build_structured_layout(
             baseline_metrics,
             target_metrics,
@@ -229,7 +237,7 @@ class CartographerAgent:
 
         rationale = self._build_rationale(baseline_metrics, target_metrics, exp_targets)
 
-        return ModificationPlan(
+        plan = ModificationPlan(
             draft_text=draft.strip(),
             language=language,
             plan_summary=plan_summary,
@@ -248,6 +256,16 @@ class CartographerAgent:
             ],
             scene_prompt_profile=scene_profile.key,
         )
+        total_seconds = time.perf_counter() - started_at
+        self.last_timing = {
+            "rag_seconds": round(rag_seconds, 3),
+            "llm_prompt_and_parse_seconds": round(llm_prompt_and_parse_seconds, 3),
+            "postprocess_seconds": round(
+                max(0.0, total_seconds - rag_seconds - llm_prompt_and_parse_seconds), 3
+            ),
+            "total_seconds": round(total_seconds, 3),
+        }
+        return plan
 
     def apply_human_edit(self, plan: ModificationPlan, human_text: str) -> ModificationPlan:
         """前端人工干预：覆盖自然语言修改方案。"""

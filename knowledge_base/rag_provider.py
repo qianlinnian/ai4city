@@ -73,6 +73,7 @@ class LocalTfidfRagProvider:
     """无需 Embedding API 的本地字符 TF-IDF 检索器。"""
 
     enabled = True
+    DYNAMIC_SOURCE_FILENAMES = {"learning_feedback.json", "memories.json"}
 
     def __init__(
         self,
@@ -83,6 +84,7 @@ class LocalTfidfRagProvider:
         chunk_size: int = 900,
         enabled: bool = True,
         cache_dir: str | Path = RAG_CACHE_DIR,
+        dynamic_source_paths: list[str | Path] | None = None,
     ) -> None:
         self.enabled = bool(enabled)
         self.top_k = max(1, int(top_k))
@@ -90,6 +92,13 @@ class LocalTfidfRagProvider:
         self.chunk_size = max(200, int(chunk_size))
         self.source_paths = [Path(item).resolve() for item in (
             source_paths if source_paths is not None else self.default_source_paths()
+        )]
+        # Dynamic feedback must not invalidate the stable document index.  It is
+        # handled by QwenEmbeddingRagProvider's incremental secondary index.
+        self.dynamic_source_paths = [Path(item).resolve() for item in (
+            dynamic_source_paths
+            if dynamic_source_paths is not None
+            else (self.default_dynamic_source_paths() if source_paths is None else [])
         )]
         self.cache_dir = Path(cache_dir).resolve()
         if self.cache_dir == DATA_DIR or self.cache_dir.is_relative_to(DATA_DIR):
@@ -112,15 +121,32 @@ class LocalTfidfRagProvider:
             if data_dir.is_dir():
                 candidates.extend(
                     path for path in sorted(data_dir.iterdir())
-                    if path.suffix.lower() in {".json", ".md", ".txt"}
+                    if (
+                        path.suffix.lower() in {".json", ".md", ".txt"}
+                        and path.name.lower() not in LocalTfidfRagProvider.DYNAMIC_SOURCE_FILENAMES
+                    )
                 )
             candidates.extend(
                 [
-                    ROOT / "docs" / "TASK2_3_FRAMEWORK.md",
                     ROOT / "_extracted_text" / "metrics_definition.txt",
                 ]
             )
         return [path for path in candidates if path.is_file()]
+
+    @staticmethod
+    def default_dynamic_source_paths() -> list[Path]:
+        """Feedback and memory sources that are indexed incrementally."""
+        if not RAG_INCLUDE_REPOSITORY_SOURCES:
+            return []
+        data_dir = ROOT / "knowledge_base" / "data"
+        return [
+            path
+            for path in sorted(data_dir.iterdir())
+            if (
+                path.is_file()
+                and path.name.lower() in LocalTfidfRagProvider.DYNAMIC_SOURCE_FILENAMES
+            )
+        ] if data_dir.is_dir() else []
 
     @property
     def indexed_chunk_count(self) -> int:
@@ -172,6 +198,9 @@ class LocalTfidfRagProvider:
         if isinstance(data, dict) and isinstance(data.get("rules"), list):
             records = data["rules"]
             record_type = "rule"
+        elif isinstance(data, dict) and isinstance(data.get("feedbacks"), list):
+            records = data["feedbacks"]
+            record_type = "learning_feedback"
         elif isinstance(data, dict) and isinstance(data.get("records"), list):
             records = data["records"]
             record_type = "case"
@@ -391,14 +420,16 @@ class LocalTfidfRagProvider:
         is_task2: bool,
         kwargs: dict[str, Any],
         retrieval_mode: str,
+        chunks: list[dict[str, Any]] | None = None,
     ) -> list[dict[str, Any]]:
         """保留 Task 2/3 的来源配额和场景案例约束，供两种检索器共用。"""
         import numpy as np
 
-        if len(base_scores) != len(self._chunks):
+        chunks = self._chunks if chunks is None else chunks
+        if len(base_scores) != len(chunks):
             raise ValueError("RAG 相似度数量与知识块数量不一致")
         adjusted_scores = np.asarray(base_scores, dtype=float).copy()
-        for index, chunk in enumerate(self._chunks):
+        for index, chunk in enumerate(chunks):
             source_name = Path(chunk["source"]).name.lower()
             base_score = float(base_scores[index])
             source_group = chunk.get("metadata", {}).get("source_group")
@@ -409,7 +440,7 @@ class LocalTfidfRagProvider:
             if is_task2:
                 if source_name == "mapping_rules.json":
                     adjusted_scores[index] += 0.08
-                elif "metrics_definition" in source_name or source_name == "task2_3_framework.md":
+                elif "metrics_definition" in source_name:
                     adjusted_scores[index] += 0.06
                 elif source_name == "experience_morph_cases.json":
                     adjusted_scores[index] += 0.03
@@ -438,8 +469,6 @@ class LocalTfidfRagProvider:
                         adjusted_scores[index] += 0.08
                 elif source_name in {"memories.json", "learning_feedback.json"}:
                     adjusted_scores[index] += 0.05
-                elif source_name == "task2_3_framework.md":
-                    adjusted_scores[index] += 0.03
         ranked = adjusted_scores.argsort()[::-1]
         eligible = [
             int(index)
@@ -447,14 +476,14 @@ class LocalTfidfRagProvider:
             if float(adjusted_scores[index]) >= self.min_score
             and not (
                 is_task2
-                and self._chunks[int(index)].get("metadata", {}).get("case_type")
+                and chunks[int(index)].get("metadata", {}).get("case_type")
                 == "task3_scene_prompt_example"
             )
         ]
         external = [
             index
             for index in eligible
-            if self._chunks[index].get("metadata", {}).get("source_group")
+            if chunks[index].get("metadata", {}).get("source_group")
             in {"curated_knowledge", "external_knowledge"}
         ]
         supplements = [index for index in eligible if index not in set(external)]
@@ -468,7 +497,7 @@ class LocalTfidfRagProvider:
         source_counts: dict[str, int] = {}
         for index in ordered:
             score = min(1.0, float(adjusted_scores[index]))
-            chunk = self._chunks[int(index)]
+            chunk = chunks[int(index)]
             source_name = Path(chunk["source"]).name.lower()
             source_limit = (
                 3
@@ -558,6 +587,9 @@ class QwenEmbeddingRagProvider(LocalTfidfRagProvider):
         self.fallback_to_tfidf = bool(fallback_to_tfidf)
         self._embedding_client = embedding_client
         self._embedding_matrix: Any = None
+        self._dynamic_chunks: list[dict[str, Any]] = []
+        self._dynamic_embedding_matrix: Any = None
+        self._dynamic_source_signature: tuple[tuple[str, int, int], ...] | None = None
         self._query_vectors: dict[str, Any] = {}
         self.last_embedding_error = ""
 
@@ -583,6 +615,58 @@ class QwenEmbeddingRagProvider(LocalTfidfRagProvider):
             json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
         ).hexdigest()
         return self.embedding_cache_dir / f"{digest}.json"
+
+    @property
+    def dynamic_embedding_cache_path(self) -> Path:
+        """Per-chunk cache: a feedback append only embeds the new chunk."""
+        payload = {
+            "version": 1,
+            "model": self.model,
+            "dimensions": self.dimensions,
+            "index": "dynamic-feedback",
+        }
+        digest = hashlib.sha256(
+            json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+        return self.embedding_cache_dir / f"{digest}.json"
+
+    def _dynamic_signature(self) -> tuple[tuple[str, int, int], ...]:
+        signature: list[tuple[str, int, int]] = []
+        for path in self.dynamic_source_paths:
+            try:
+                stat = path.stat()
+                signature.append((str(path), stat.st_mtime_ns, stat.st_size))
+            except OSError:
+                signature.append((str(path), -1, -1))
+        return tuple(signature)
+
+    def _load_dynamic_chunks(self) -> bool:
+        """Reload dynamic records only when their source files actually change."""
+        signature = self._dynamic_signature()
+        if signature == self._dynamic_source_signature:
+            return False
+        chunks: list[dict[str, Any]] = []
+        for path in self.dynamic_source_paths:
+            if not path.is_file():
+                continue
+            try:
+                if path.suffix.lower() == ".json":
+                    source_chunks = self._json_chunks(path)
+                elif path.suffix.lower() == ".pdf":
+                    source_chunks = self._pdf_chunks(path)
+                else:
+                    source_chunks = self._text_chunks(path)
+            except (OSError, ValueError, json.JSONDecodeError):
+                continue
+            for chunk in source_chunks:
+                metadata = dict(chunk.get("metadata") or {})
+                metadata.update(
+                    {"source_group": "dynamic_feedback", "dynamic_index": True}
+                )
+                chunks.append({**chunk, "metadata": metadata})
+        self._dynamic_chunks = chunks
+        self._dynamic_source_signature = signature
+        return True
 
     @staticmethod
     def _normalise_vector(values: Any, *, dimensions: int) -> Any:
@@ -690,6 +774,85 @@ class QwenEmbeddingRagProvider(LocalTfidfRagProvider):
             encoding="utf-8",
         )
 
+    @staticmethod
+    def _dynamic_chunk_cache_key(chunk: dict[str, Any]) -> str:
+        payload = {
+            "source": chunk["source"],
+            "chunk_id": chunk["chunk_id"],
+            "text": chunk["text"],
+        }
+        return hashlib.sha256(
+            json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+
+    def _load_dynamic_vector_cache(self) -> dict[str, Any]:
+        cache_path = self.dynamic_embedding_cache_path
+        if not cache_path.is_file():
+            return {}
+        try:
+            cached = json.loads(cache_path.read_text(encoding="utf-8"))
+            if (
+                cached.get("model") != self.model
+                or int(cached.get("dimensions", 0)) != self.dimensions
+            ):
+                return {}
+            entries = cached.get("entries")
+            return entries if isinstance(entries, dict) else {}
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            return {}
+
+    def _ensure_dynamic_embedding_index(self) -> None:
+        changed = self._load_dynamic_chunks()
+        if not changed and self._dynamic_embedding_matrix is not None:
+            return
+        if not self._dynamic_chunks:
+            self._dynamic_embedding_matrix = None
+            return
+
+        cached_entries = self._load_dynamic_vector_cache()
+        keys = [self._dynamic_chunk_cache_key(chunk) for chunk in self._dynamic_chunks]
+        vectors_by_key: dict[str, Any] = {}
+        missing_keys: list[str] = []
+        missing_texts: list[str] = []
+        for key, chunk in zip(keys, self._dynamic_chunks):
+            cached_vector = cached_entries.get(key)
+            if isinstance(cached_vector, list):
+                try:
+                    vectors_by_key[key] = self._normalise_vector(
+                        cached_vector, dimensions=self.dimensions
+                    )
+                    continue
+                except (TypeError, ValueError):
+                    pass
+            missing_keys.append(key)
+            missing_texts.append(chunk["text"])
+
+        if missing_texts:
+            new_vectors = self._embed_texts(missing_texts)
+            if len(new_vectors) != len(missing_keys):
+                raise RuntimeError("动态反馈 Embedding 返回数量不匹配")
+            vectors_by_key.update(dict(zip(missing_keys, new_vectors)))
+
+        import numpy as np
+
+        self._dynamic_embedding_matrix = np.vstack(
+            [vectors_by_key[key] for key in keys]
+        )
+        self.embedding_cache_dir.mkdir(parents=True, exist_ok=True)
+        self.dynamic_embedding_cache_path.write_text(
+            json.dumps(
+                {
+                    "model": self.model,
+                    "dimensions": self.dimensions,
+                    "entries": {
+                        key: vectors_by_key[key].tolist() for key in keys
+                    },
+                },
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+
     def _embedding_query(self, query: str) -> Any:
         cached = self._query_vectors.get(query)
         if cached is not None:
@@ -716,23 +879,69 @@ class QwenEmbeddingRagProvider(LocalTfidfRagProvider):
             retrieval_mode="tfidf_fallback",
         )
 
+    def _merge_semantic_results(
+        self,
+        static_results: list[dict[str, Any]],
+        dynamic_results: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Keep feedback useful without allowing it to crowd out stable evidence."""
+        dynamic_limit = min(2, max(1, self.top_k // 3))
+        selected_dynamic = 0
+        seen: set[str] = set()
+        merged: list[dict[str, Any]] = []
+        combined = [
+            *(dict(item, _dynamic=False) for item in static_results),
+            *(dict(item, _dynamic=True) for item in dynamic_results),
+        ]
+        combined.sort(key=lambda item: float(item.get("score") or 0.0), reverse=True)
+        for item in combined:
+            chunk_id = str(item.get("chunk_id") or item.get("id") or "")
+            if not chunk_id or chunk_id in seen:
+                continue
+            if item.pop("_dynamic", False):
+                if selected_dynamic >= dynamic_limit:
+                    continue
+                selected_dynamic += 1
+            else:
+                item.pop("_dynamic", None)
+            seen.add(chunk_id)
+            merged.append(item)
+            if len(merged) >= self.top_k:
+                break
+        return merged
+
     def retrieve(self, **kwargs: Any) -> list[dict[str, Any]]:
         if not self.enabled:
             return []
         try:
             self._ensure_embedding_index()
-            if self._embedding_matrix is None or not self._chunks:
+            self._ensure_dynamic_embedding_index()
+            if (
+                (self._embedding_matrix is None or not self._chunks)
+                and (self._dynamic_embedding_matrix is None or not self._dynamic_chunks)
+            ):
                 return []
             is_task2 = "experience_records" in kwargs
             query = self._task2_query(kwargs) if is_task2 else self._task3_query(kwargs)
             query_vector = self._embedding_query(query)
-            scores = self._embedding_matrix @ query_vector
-            return self._rank_results(
-                scores,
-                is_task2=is_task2,
-                kwargs=kwargs,
-                retrieval_mode=self.retrieval_mode,
-            )
+            static_results: list[dict[str, Any]] = []
+            if self._embedding_matrix is not None and self._chunks:
+                static_results = self._rank_results(
+                    self._embedding_matrix @ query_vector,
+                    is_task2=is_task2,
+                    kwargs=kwargs,
+                    retrieval_mode=self.retrieval_mode,
+                )
+            dynamic_results: list[dict[str, Any]] = []
+            if self._dynamic_embedding_matrix is not None and self._dynamic_chunks:
+                dynamic_results = self._rank_results(
+                    self._dynamic_embedding_matrix @ query_vector,
+                    is_task2=is_task2,
+                    kwargs=kwargs,
+                    retrieval_mode=self.retrieval_mode,
+                    chunks=self._dynamic_chunks,
+                )
+            return self._merge_semantic_results(static_results, dynamic_results)
         except Exception as exc:
             self.last_embedding_error = str(exc)
             if self.fallback_to_tfidf:

@@ -165,6 +165,70 @@ class RagProviderTests(unittest.TestCase):
         )
         self.assertEqual(len(cached_client.calls), 1)  # 文档向量命中磁盘缓存
 
+    def test_dynamic_feedback_uses_incremental_embedding_cache(self) -> None:
+        static_source = self.root / "static.txt"
+        static_source.write_text("社区入口应保持消防通行与连续步行空间。", encoding="utf-8")
+        feedback_source = self.root / "learning_feedback.json"
+        feedbacks = [
+            {"id": "feedback-1", "notes": "社区入口座椅不得阻塞消防通道"}
+        ]
+        feedback_source.write_text(
+            json.dumps({"feedbacks": feedbacks}, ensure_ascii=False), encoding="utf-8"
+        )
+        cache_dir = self.root / "incremental-cache"
+        first_client = FakeEmbeddingClient()
+        first_provider = QwenEmbeddingRagProvider(
+            [static_source],
+            dynamic_source_paths=[feedback_source],
+            api_key="test-key-never-sent",
+            dimensions=3,
+            embedding_client=first_client,
+            cache_dir=cache_dir,
+            top_k=2,
+            min_score=0.0,
+        )
+        first_results = first_provider.retrieve(
+            baseline_metrics=self.baseline,
+            target_metrics=self.baseline,
+            scene_context="社区入口",
+            expert_advice="保持消防通行",
+            scene_understanding={},
+        )
+        self.assertEqual([len(batch) for batch in first_client.calls], [1, 1, 1])
+        self.assertTrue(
+            any(
+                item["metadata"].get("source_group") == "dynamic_feedback"
+                for item in first_results
+            )
+        )
+
+        feedbacks.append(
+            {"id": "feedback-2", "notes": "社区入口绿化不应遮挡安全视线"}
+        )
+        feedback_source.write_text(
+            json.dumps({"feedbacks": feedbacks}, ensure_ascii=False), encoding="utf-8"
+        )
+        second_client = FakeEmbeddingClient()
+        second_provider = QwenEmbeddingRagProvider(
+            [static_source],
+            dynamic_source_paths=[feedback_source],
+            api_key="test-key-never-sent",
+            dimensions=3,
+            embedding_client=second_client,
+            cache_dir=cache_dir,
+            top_k=2,
+            min_score=0.0,
+        )
+        second_provider.retrieve(
+            baseline_metrics=self.baseline,
+            target_metrics=self.baseline,
+            scene_context="社区入口",
+            expert_advice="保持消防通行",
+            scene_understanding={},
+        )
+        # Static documents stay cached; only the appended feedback plus query embed.
+        self.assertEqual([len(batch) for batch in second_client.calls], [1, 1])
+
     def test_qwen_embedding_failure_falls_back_to_tfidf(self) -> None:
         provider = QwenEmbeddingRagProvider(
             [self.knowledge],

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import sys
+import time
 import uuid
 from collections.abc import Callable, Mapping
 from copy import deepcopy
@@ -165,6 +166,8 @@ class PipelineOrchestrator:
     ) -> dict[str, Any]:
         """Confirm experience targets and produce morphology targets for review."""
 
+        started_at = time.perf_counter()
+        scene_seconds = 0.0
         self._require_stage(state, INPUT_PENDING, MORPH_REVIEW)
         self._notify_progress(
             progress_callback, 0.08, "已读取原始全景图、Excel 基线与多人体验评分"
@@ -185,10 +188,12 @@ class PipelineOrchestrator:
             self._notify_progress(
                 progress_callback, 0.25, "正在解析全景场景：道路、绿化、建筑与基础设施"
             )
+            scene_started_at = time.perf_counter()
             inventory = self.scene_understander.run(
                 updated.get("image_path", ""),
                 image_id=Path(updated.get("image_path", "")).stem,
             )
+            scene_seconds = time.perf_counter() - scene_started_at
             updated["scene_understanding"] = inventory.model_dump()
             updated["panorama_views"] = [
                 view.model_dump() for view in inventory.view_metadata
@@ -197,6 +202,7 @@ class PipelineOrchestrator:
             progress_callback, 0.48, "正在准备体验目标、场景信息与相似案例检索"
         )
         self._notify_progress(progress_callback, 0.65, "翻译官正在生成七项形态指标目标")
+        translator_started_at = time.perf_counter()
         result = self.translator.run(
             experience_targets=targets,
             baseline_metrics=updated["baseline_metrics"],
@@ -209,6 +215,7 @@ class PipelineOrchestrator:
             previous_experience_targets=previous_experience_targets,
             previous_target_metrics=previous_translation.get("target_metrics"),
         )
+        translator_seconds = time.perf_counter() - translator_started_at
 
         updated["pre_edit_experience"] = result.experience_records
         updated["experience_baseline"] = result.experience_baseline
@@ -220,9 +227,19 @@ class PipelineOrchestrator:
         updated["task2_reasonableness"] = deepcopy(
             getattr(self.translator, "last_reasonableness_report", {})
         )
+        updated["task2_timing"] = {
+            "scene_understanding_seconds": round(scene_seconds, 3),
+            "translator_seconds": round(translator_seconds, 3),
+            **getattr(self.translator, "last_timing", {}),
+            "before_persist_seconds": round(time.perf_counter() - started_at, 3),
+        }
         updated["stage"] = MORPH_REVIEW
         self._notify_progress(progress_callback, 0.92, "正在检查指标边界、方向与场景合理性")
         self._persist(updated)
+        print(
+            "[Task2 timing] "
+            + json.dumps(updated["task2_timing"], ensure_ascii=False, sort_keys=True)
+        )
         self._notify_progress(progress_callback, 1.0, "翻译官完成，等待专家确认形态目标")
         return updated
 
@@ -236,6 +253,7 @@ class PipelineOrchestrator:
     ) -> dict[str, Any]:
         """Confirm morphology targets and produce a structured layout plan."""
 
+        started_at = time.perf_counter()
         self._require_stage(state, MORPH_REVIEW)
         self._notify_progress(progress_callback, 0.08, "正在记录专家确认的形态指标与意见")
         updated = deepcopy(state)
@@ -251,6 +269,7 @@ class PipelineOrchestrator:
         updated["confirmed_target_metrics"] = translation.target_metrics.model_dump()
         updated["expert_morph_note"] = note
 
+        feedback_started_at = time.perf_counter()
         self.learning.record_translation_feedback(
             experience_baseline=updated["experience_baseline"],
             experience_targets=updated["experience_targets"],
@@ -259,10 +278,12 @@ class PipelineOrchestrator:
             session_id=updated["session_id"],
             notes=note,
         )
+        feedback_seconds = time.perf_counter() - feedback_started_at
         self._notify_progress(progress_callback, 0.35, "正在检索场景规则与相似改造案例")
         self._notify_progress(
             progress_callback, 0.58, "制图员正在构建对象、位置、数量与空间关系"
         )
+        cartographer_started_at = time.perf_counter()
         plan = self.cartographer.run(
             baseline_metrics=updated["baseline_metrics"],
             target_metrics=updated["confirmed_target_metrics"],
@@ -275,13 +296,27 @@ class PipelineOrchestrator:
             scene_understanding=updated.get("scene_understanding"),
             scene_type=str((updated.get("scene_context") or {}).get("space_type", "")),
         )
+        cartographer_seconds = time.perf_counter() - cartographer_started_at
         updated["modification_plan"] = plan.model_dump()
         updated["cartographer_scene_profile"] = plan.scene_prompt_profile
         updated["final_prompt"] = plan.draft_text
         updated["stage"] = PLAN_REVIEW
         self._notify_progress(progress_callback, 0.86, "正在写入场景方案 Markdown 复核记录")
+        review_started_at = time.perf_counter()
         self._append_review_record(updated, event="制图员方案草案")
+        review_record_seconds = time.perf_counter() - review_started_at
+        updated["task3_timing"] = {
+            "feedback_seconds": round(feedback_seconds, 3),
+            "cartographer_seconds": round(cartographer_seconds, 3),
+            **getattr(self.cartographer, "last_timing", {}),
+            "review_record_seconds": round(review_record_seconds, 3),
+            "before_persist_seconds": round(time.perf_counter() - started_at, 3),
+        }
         self._persist(updated)
+        print(
+            "[Task3 timing] "
+            + json.dumps(updated["task3_timing"], ensure_ascii=False, sort_keys=True)
+        )
         self._notify_progress(progress_callback, 1.0, "制图员完成，等待专家确认最终空间布局方案")
         return updated
 
@@ -293,6 +328,7 @@ class PipelineOrchestrator:
     ) -> dict[str, Any]:
         """Confirm the editable natural-language generation prompt."""
 
+        started_at = time.perf_counter()
         self._require_stage(state, PLAN_REVIEW)
         clean_plan = str(human_plan).strip()
         if not clean_plan:
@@ -310,8 +346,18 @@ class PipelineOrchestrator:
             updated["expert_plan_edited"] = True
         updated["stage"] = PLAN_CONFIRMED
         self._notify_progress(progress_callback, 0.36, "正在追加专家确认轮次到 Markdown 复核记录")
+        review_started_at = time.perf_counter()
         self._append_review_record(updated, event="专家确认最终方案")
+        review_record_seconds = time.perf_counter() - review_started_at
+        updated["task4_plan_timing"] = {
+            "confirm_plan_seconds": round(time.perf_counter() - started_at, 3),
+            "review_record_seconds": round(review_record_seconds, 3),
+        }
         self._persist(updated)
+        print(
+            "[Task4 plan timing] "
+            + json.dumps(updated["task4_plan_timing"], ensure_ascii=False, sort_keys=True)
+        )
         self._notify_progress(progress_callback, 1.0, "最终方案已确认，即将进入图像编辑")
         return updated
 
@@ -335,21 +381,62 @@ class PipelineOrchestrator:
             )
         self._notify_progress(progress_callback, 0.08, "正在准备原始全景图与专家确认的编辑方案")
         self._notify_progress(progress_callback, 0.22, "正在调用 Seedream 进行全景图编辑")
+        started_at = time.perf_counter()
+        generation_started_at = time.perf_counter()
         result = self._run_generator(state["image_path"], state.get("final_prompt") or "")
+        generation_seconds = time.perf_counter() - generation_started_at
+        record_started_at = time.perf_counter()
         updated = self.record_generation(state, result, modified_metrics=modified_metrics)
+        record_generation_seconds = time.perf_counter() - record_started_at
         if modified_metrics is not None or self.post_edit_metrics_extractor is None:
+            updated["task4_timing"] = {
+                "generation_seconds": round(generation_seconds, 3),
+                "record_generation_seconds": round(record_generation_seconds, 3),
+                "total_seconds": round(time.perf_counter() - started_at, 3),
+            }
+            self._persist(updated)
+            print(
+                "[Task4 timing] "
+                + json.dumps(updated["task4_timing"], ensure_ascii=False, sort_keys=True)
+            )
             self._notify_progress(progress_callback, 1.0, "图像编辑完成")
             return updated
         self._notify_progress(progress_callback, 0.72, "图像编辑完成，正在复算生成图的七项形态指标")
+        metrics_started_at = time.perf_counter()
         try:
             measured = self.post_edit_metrics_extractor(result.output_image_path)
         except Exception as exc:
             failed = deepcopy(updated)
             failed["post_edit_metrics_error"] = str(exc)
+            failed["task4_timing"] = {
+                "generation_seconds": round(generation_seconds, 3),
+                "record_generation_seconds": round(record_generation_seconds, 3),
+                "post_metrics_seconds": round(time.perf_counter() - metrics_started_at, 3),
+                "total_seconds": round(time.perf_counter() - started_at, 3),
+            }
             self._persist(failed)
+            print(
+                "[Task4 timing] "
+                + json.dumps(failed["task4_timing"], ensure_ascii=False, sort_keys=True)
+            )
             self._notify_progress(progress_callback, 1.0, "图像已生成，但七项指标提取未完成")
             return failed
+        post_metrics_seconds = time.perf_counter() - metrics_started_at
+        quality_started_at = time.perf_counter()
         result_state = self.record_quality_metrics(updated, measured)
+        quality_seconds = time.perf_counter() - quality_started_at
+        result_state["task4_timing"] = {
+            "generation_seconds": round(generation_seconds, 3),
+            "record_generation_seconds": round(record_generation_seconds, 3),
+            "post_metrics_seconds": round(post_metrics_seconds, 3),
+            "quality_seconds": round(quality_seconds, 3),
+            "total_seconds": round(time.perf_counter() - started_at, 3),
+        }
+        self._persist(result_state)
+        print(
+            "[Task4 timing] "
+            + json.dumps(result_state["task4_timing"], ensure_ascii=False, sort_keys=True)
+        )
         self._notify_progress(progress_callback, 1.0, "生成与七项指标比对完成")
         return result_state
 
